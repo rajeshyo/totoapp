@@ -1,5 +1,5 @@
 // ===== API Configuration =====
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://totoapp.onrender.com/api';
 
 // Helper function to make API calls with authorization
 async function apiCall(endpoint, method = 'GET', body = null) {
@@ -283,11 +283,15 @@ async function pollCustomerRide() {
       rideSubmitBtn.textContent = 'চালকের জন্য অপেক্ষা করুন';
       
       acceptedRideCard.classList.remove('hidden');
-      document.getElementById('acceptedDriverName').textContent = ride.driverId ? `ড্রাইভার #${ride.driverId}` : 'নিযুক্ত হচ্ছে...';
+      document.getElementById('acceptedDriverName').textContent = ride.driverId ? `${ride.driverId.firstName} ${ride.driverId.lastName}` : 'নিযুক্ত হচ্ছে...';
       document.getElementById('acceptedStart').textContent = ride.pickupLocation.address || 'পিকআপ';
       document.getElementById('acceptedEnd').textContent = ride.dropoffLocation.address || 'গন্তব্য';
       document.getElementById('acceptedDistance').textContent = `${ride.distance} km`;
       document.getElementById('acceptedFare').textContent = `₹${ride.fare}`;
+      // Display driver phone number if element exists
+      if (document.getElementById('acceptedDriverPhone') && ride.driverId) {
+        document.getElementById('acceptedDriverPhone').textContent = `📞 ${ride.driverId.phone}`;
+      }
     }
   } catch (error) {
     console.error("Error polling ride:", error);

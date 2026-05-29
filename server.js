@@ -11,11 +11,41 @@ const ridesRoutes = require('./routes/rides');
 
 const app = express();
 
-// Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  credentials: true
-}));
+// Allowed Origins for CORS
+const allowedOrigins = [
+  'http://localhost:5000',      // Local Express server
+  'http://localhost:3000',      // Local fallback
+  'http://127.0.0.1:5000',      // Local IP
+  'http://127.0.0.1:3000',      // Local IP fallback
+  'https://totoapp.onrender.com', // Production
+  'https://totobooking.vercel.app', // Alternative production
+  'https://totobooking.netlify.app' // Alternative production
+];
+
+// CORS Configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      // For development, allow all localhost
+      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

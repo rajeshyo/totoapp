@@ -77,7 +77,9 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
         startTime: new Date()
       },
       { new: true }
-    ).populate('passengerId', 'firstName lastName phone');
+    )
+    .populate('passengerId', 'firstName lastName phone profilePhoto')
+    .populate('driverId', 'firstName lastName phone profilePhoto');
 
     if (!ride) {
       return res.status(404).json({
