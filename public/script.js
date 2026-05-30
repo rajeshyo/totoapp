@@ -94,6 +94,7 @@ const FARE_PER_TRIP_BASE = 20;
 let currentUser = JSON.parse(localStorage.getItem('toto_active_user')) || null;
 let activeRideId = localStorage.getItem('toto_active_ride_id') || null;
 let pollInterval = null;
+let rejectedRides = {}; // Track rejected rides with timestamp: { rideId: timestamp }
 
 // --- Global Notification Alert ---
 function showPopup(title, message, icon = '🔔') {
@@ -276,14 +277,19 @@ async function pollCustomerRide() {
       return;
     }
 
+    // Hide booking form and show finding/accepted state
+    document.querySelector('.ride-booking-card').classList.add('hidden');
+    document.querySelector('.popular-section').classList.add('hidden');
+
     if (ride.rideStatus === 'pending') {
-      rideSubmitBtn.disabled = true;
-      rideSubmitBtn.textContent = 'টোটো খোঁজা হচ্ছে...';
-      rideSubmitBtn.style.opacity = "0.7";
+      // Show finding message
       acceptedRideCard.classList.add('hidden');
+      const findingCard = document.getElementById('findingRideCard') || createFindingCard();
+      findingCard.classList.remove('hidden');
     } else if (ride.rideStatus === 'accepted' || ride.rideStatus === 'in_progress') {
-      rideSubmitBtn.disabled = true;
-      rideSubmitBtn.textContent = 'চালকের জন্য অপেক্ষা করুন';
+      // Hide finding message and show accepted ride card
+      const findingCard = document.getElementById('findingRideCard');
+      if (findingCard) findingCard.classList.add('hidden');
       
       acceptedRideCard.classList.remove('hidden');
       document.getElementById('acceptedDriverName').textContent = ride.driverId ? `${ride.driverId.firstName} ${ride.driverId.lastName}` : 'নিযুক্ত হচ্ছে...';
@@ -301,11 +307,38 @@ async function pollCustomerRide() {
   }
 }
 
+function createFindingCard() {
+  const findingCard = document.createElement('div');
+  findingCard.id = 'findingRideCard';
+  findingCard.className = 'card info-card state-card';
+  findingCard.innerHTML = `
+    <div class="state-header green-theme">
+      <span class="live-pulse green"></span>
+      <h3>আমরা আপনার জন্য খুঁজছি</h3>
+    </div>
+    <div class="center-block">
+      <p class="muted-text">কাছাকাছি একটি টোটো খুঁজে বের করা হচ্ছে...</p>
+      <p style="font-size: 2rem; margin: 20px 0;">🔍</p>
+    </div>
+  `;
+  document.querySelector('.dashboard').appendChild(findingCard);
+  return findingCard;
+}
+
 function resetCustomerUI() {
+  // Show booking form and popular section
+  document.querySelector('.ride-booking-card').classList.remove('hidden');
+  document.querySelector('.popular-section').classList.remove('hidden');
+  
+  // Hide ride status cards
+  acceptedRideCard.classList.add('hidden');
+  const findingCard = document.getElementById('findingRideCard');
+  if (findingCard) findingCard.classList.add('hidden');
+  
+  // Reset form
   rideSubmitBtn.disabled = false;
   rideSubmitBtn.textContent = 'রাইড খুঁজুন';
   rideSubmitBtn.style.opacity = "1";
-  acceptedRideCard.classList.add('hidden');
   currentLocationInput.value = '';
   destinationInput.value = '';
   pricePreviewCard.classList.add('hidden');
@@ -441,7 +474,20 @@ async function listenToPendingQueue() {
 
   try {
     const response = await apiCall('/rides/pending');
-    const rides = response.rides || [];
+    let rides = response.rides || [];
+
+    // Filter out recently rejected rides (within 60 seconds)
+    const now = Date.now();
+    rides = rides.filter(ride => {
+      if (rejectedRides[ride._id] && rejectedRides[ride._id] > now) {
+        return false; // Hide this ride, it was recently rejected
+      }
+      // Clean up expired rejections
+      if (rejectedRides[ride._id] && rejectedRides[ride._id] <= now) {
+        delete rejectedRides[ride._id];
+      }
+      return true;
+    });
 
     requestCountBadge.textContent = rides.length.toString();
     
@@ -510,6 +556,9 @@ async function rejectRide(rideId) {
     const response = await apiCall(`/rides/reject/${rideId}`, 'POST');
 
     if (response.success) {
+      // Track rejected ride for 60 seconds to avoid showing it again
+      rejectedRides[rideId] = Date.now() + (60 * 1000); // 60 seconds from now
+      
       showPopup('সফল', 'রাইড প্রত্যাখ্যান করা হয়েছে।', '✅');
       // Refresh the pending rides list
       listenToPendingQueue();
