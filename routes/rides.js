@@ -243,4 +243,38 @@ router.post('/cancel/:rideId', authMiddleware, async (req, res) => {
   }
 });
 
+// REJECT RIDE (Driver)
+router.post('/reject/:rideId', authMiddleware, async (req, res) => {
+  try {
+    const ride = await Ride.findByIdAndUpdate(
+      req.params.rideId,
+      { 
+        driverId: null,
+        rideStatus: 'pending'  // Back to pending for other drivers
+      },
+      { new: true }
+    )
+    .populate('passengerId', 'firstName lastName phone profilePhoto')
+    .populate('driverId', 'firstName lastName phone profilePhoto');
+
+    if (!ride) {
+      return res.status(404).json({
+        success: false,
+        message: 'Ride not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Ride rejected successfully',
+      ride
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to reject ride'
+    });
+  }
+});
+
 module.exports = router;

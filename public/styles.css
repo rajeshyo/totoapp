@@ -133,7 +133,7 @@ body {
 .profile-info-text { display: flex; flex-direction: column; }
 .profile-name { font-size: 0.85rem; font-weight: 700; }
 .profile-role { font-size: 0.7rem; color: var(--text-muted); }
-.main-content { padding: 16px; flex: 1; padding-bottom: 90px; }
+.main-content { padding: 16px; flex: 1; padding-bottom: 100px; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; }
 .card { background: var(--surface); border-radius: var(--radius-xl); padding: 20px; border: 1px solid var(--border-light); box-shadow: var(--shadow-card); margin-bottom: 18px; }
 
 /* Auth Views */
@@ -158,6 +158,7 @@ body {
 /* Buttons */
 .button { border: none; border-radius: var(--radius-md); padding: 14px 24px; font-size: 1rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
 .button.primary { background: var(--primary-gradient); color: #ffffff; box-shadow: 0 6px 18px rgba(9, 102, 62, 0.2); }
+.button.secondary { background: var(--secondary-color, #6c757d); color: white; }
 .button.danger { background: var(--danger-color); color: white; }
 .btn-xl { padding: 16px; border-radius: var(--radius-lg); }
 .full-width { width: 100%; }
@@ -227,9 +228,11 @@ input:checked + .slider:before { transform: translateX(24px); }
 .request-item p { margin: 0 0 6px; font-size: 0.9rem; }
 .request-actions { display: flex; gap: 10px; margin-top: 12px; }
 .request-actions .button { flex: 1; padding: 10px; font-size: 0.85rem; }
+.request-stream-container { flex: 1; overflow-y: auto; padding-right: 4px; }
+.request-list { display: flex; flex-direction: column; }
 
 /* Bottom Nav */
-.bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; height: 72px; background: #ffffff; border-top: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-around; z-index: 80; border-radius: 0 0 32px 32px; }
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 72px; background: #ffffff; border-top: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-around; z-index: 80; border-radius: 0 0 32px 32px; max-width: 414px; margin: 0 auto; width: 100%; }
 .nav-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--text-muted); cursor: pointer; padding: 6px; width: 22%; }
 .nav-item .nav-icon { font-size: 1.25rem; }
 .nav-item .nav-label { font-size: 0.72rem; font-weight: 600; }

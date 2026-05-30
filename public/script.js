@@ -252,7 +252,10 @@ showLoginBtn.addEventListener('click', () => {
 // --- Customer Logic ---
 function setupCustomerDashboard() {
   if (activeRideId) {
-    pollCustomerRide();
+    // Start continuous polling
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(pollCustomerRide, 3000);
+    pollCustomerRide(); // Initial call
   } else {
     resetCustomerUI();
   }
@@ -455,6 +458,7 @@ async function listenToPendingQueue() {
         <p>💰 ভাড়া: <span class="text-green">₹${ride.fare}</span> (${ride.distance} km)</p>
         <div class="request-actions">
           <button class="button primary accept-btn" data-id="${ride._id}">গ্রহণ করুন</button>
+          <button class="button secondary reject-btn" data-id="${ride._id}">প্রত্যাখ্যান করুন</button>
         </div>
       `;
       rideRequestsContainer.appendChild(item);
@@ -464,7 +468,11 @@ async function listenToPendingQueue() {
       btn.addEventListener('click', (e) => acceptRide(e.target.dataset.id));
     });
 
-    // Poll for updates
+    document.querySelectorAll('.reject-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => rejectRide(e.target.dataset.id));
+    });
+
+    // Poll for updates every 3 seconds
     if (pollInterval) clearInterval(pollInterval);
     pollInterval = setInterval(listenToPendingQueue, 3000);
   } catch (error) {
@@ -483,11 +491,27 @@ async function acceptRide(rideId) {
       rideRequestsContainer.innerHTML = '<p class="muted-text center-block">আপনার একটি ট্রিপ চলমান রয়েছে।</p>';
       requestCountBadge.textContent = '0';
       
+      if (pollInterval) clearInterval(pollInterval);
       listenToDriverActiveRide();
     }
   } catch (error) {
     console.error("Accept ride error:", error);
     showPopup('ত্রুটি', 'রাইডটি ইতিমধ্যে অন্য কেউ নিয়ে নিয়েছে অথবা বাতিল হয়েছে।', '⚠️');
+  }
+}
+
+async function rejectRide(rideId) {
+  try {
+    const response = await apiCall(`/rides/reject/${rideId}`, 'POST');
+
+    if (response.success) {
+      showPopup('সফল', 'রাইড প্রত্যাখ্যান করা হয়েছে।', '✅');
+      // Refresh the pending rides list
+      listenToPendingQueue();
+    }
+  } catch (error) {
+    console.error("Reject ride error:", error);
+    showPopup('ত্রুটি', error.message || 'রাইড প্রত্যাখ্যান করতে সমস্যা হয়েছে।', '❌');
   }
 }
 
@@ -503,10 +527,17 @@ async function listenToDriverActiveRide() {
       activeRideId = null;
       driverAcceptedRideCard.classList.add('hidden');
       
+      showPopup('ট্রিপ শেষ', 'যাত্রী ট্রিপটি সমাপ্ত করেছেন।', '✅');
+      
+      // Reset to show available rides again
       if (availabilityToggleCheckbox.checked) {
+        rideRequestsContainer.innerHTML = '<p class="muted-text center-block">উপলব্ধ রাইড খুঁজছি...</p>';
+        requestCountBadge.textContent = '0';
+        
+        // Restart polling for new rides
+        if (pollInterval) clearInterval(pollInterval);
         listenToPendingQueue();
       }
-      showPopup('ট্রিপ শেষ', 'যাত্রী ট্রিপটি সমাপ্ত করেছেন।', '✅');
       return;
     }
 
