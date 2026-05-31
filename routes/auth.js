@@ -8,13 +8,29 @@ const router = express.Router();
 // SIGNUP
 router.post('/signup', async (req, res) => {
   try {
-    const { phone, firstName, lastName, password, userType = 'passenger' } = req.body;
+    const { phone, firstName, lastName, password, userType = 'passenger', vehicleNumber } = req.body;
 
     // Validate input
     if (!phone || !firstName || !lastName || !password) {
       return res.status(400).json({
         success: false,
         message: 'All fields are required'
+      });
+    }
+
+    // Validate phone - must be 10 digits
+    if (!/^\d{10}$/.test(phone)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number must be 10 digits'
+      });
+    }
+
+    // Validate vehicle number for drivers
+    if (userType === 'driver' && !vehicleNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vehicle number is required for drivers'
       });
     }
 
@@ -33,7 +49,8 @@ router.post('/signup', async (req, res) => {
       firstName,
       lastName,
       password,
-      userType
+      userType,
+      vehicleNumber: userType === 'driver' ? vehicleNumber : null
     });
 
     await user.save();
@@ -70,6 +87,14 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Phone and password are required'
+      });
+    }
+
+    // Validate phone - must be 10 digits
+    if (!/^\d{10}$/.test(phone)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number must be 10 digits'
       });
     }
 

@@ -86,6 +86,8 @@ const popupTitle = document.getElementById('popupTitle');
 const popupMessage = document.getElementById('popupMessage');
 const popupIcon = document.getElementById('popupIcon');
 const popupCloseBtn = document.getElementById('popupCloseBtn');
+const userTypeSelect = document.getElementById('userType');
+const vehicleNumberWrapper = document.getElementById('vehicleNumberWrapper');
 
 const STOP_DISTANCE_KM = 2.4; 
 const FARE_PER_TRIP_BASE = 20;
@@ -179,6 +181,21 @@ signupForm.addEventListener('submit', async event => {
   const lastName = document.getElementById('lastName').value.trim();
   const password = document.getElementById('password').value;
   const userType = document.getElementById('userType').value || 'passenger';
+  const vehicleNumber = document.getElementById('vehicleNumber').value.trim();
+  
+  // Validate phone number - must be 10 digits
+  if (!/^\d{10}$/.test(phone)) {
+    authMessage.style.color = 'var(--danger-color)';
+    authMessage.textContent = 'ফোন নম্বর ১০ অঙ্কের হতে হবে।';
+    return;
+  }
+  
+  // Validate vehicle number for drivers
+  if (userType === 'driver' && !vehicleNumber) {
+    authMessage.style.color = 'var(--danger-color)';
+    authMessage.textContent = 'গাড়ির নম্বর প্রয়োজনীয়।';
+    return;
+  }
   
   authMessage.textContent = 'অ্যাকাউন্ট তৈরি হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...';
   authMessage.style.color = '#09663e';
@@ -189,7 +206,8 @@ signupForm.addEventListener('submit', async event => {
       firstName,
       lastName,
       password,
-      userType
+      userType,
+      vehicleNumber: userType === 'driver' ? vehicleNumber : undefined
     });
 
     if (response.success) {
@@ -211,6 +229,13 @@ loginForm.addEventListener('submit', async event => {
   const phone = document.getElementById('loginPhone').value.trim();
   const password = document.getElementById('loginPassword').value;
   
+  // Validate phone number - must be 10 digits
+  if (!/^\d{10}$/.test(phone)) {
+    authMessage.style.color = 'var(--danger-color)';
+    authMessage.textContent = 'ফোন নম্বর ১০ অঙ্কের হতে হবে।';
+    return;
+  }
+  
   authMessage.textContent = 'লগইন করা হচ্ছে...';
   authMessage.style.color = '#09663e';
   
@@ -231,6 +256,15 @@ loginForm.addEventListener('submit', async event => {
     console.error("Login error:", error);
     authMessage.style.color = 'var(--danger-color)';
     authMessage.textContent = error.message || 'লগইন ব্যর্থ হয়েছে।';
+  }
+});
+
+// Toggle vehicle number field visibility based on user type
+userTypeSelect?.addEventListener('change', () => {
+  if (userTypeSelect.value === 'driver') {
+    vehicleNumberWrapper.classList.remove('hidden');
+  } else {
+    vehicleNumberWrapper.classList.add('hidden');
   }
 });
 
@@ -297,9 +331,13 @@ async function pollCustomerRide() {
       document.getElementById('acceptedEnd').textContent = ride.dropoffLocation.address || 'গন্তব্য';
       document.getElementById('acceptedDistance').textContent = `${ride.distance} km`;
       document.getElementById('acceptedFare').textContent = `₹${ride.fare}`;
-      // Display driver phone number if element exists
+      // Display driver phone number - only last 4 digits
       if (document.getElementById('acceptedDriverPhone') && ride.driverId) {
-        document.getElementById('acceptedDriverPhone').textContent = `📞 ${ride.driverId.phone}`;
+        const fullPhone = ride.driverId.phone;
+        const lastFour = fullPhone.slice(-4);
+        document.getElementById('acceptedDriverPhone').textContent = `📞 ****${lastFour}`;
+        // Store full phone for call button
+        document.getElementById('driverCallBtn').href = `tel:${fullPhone}`;
       }
     }
   } catch (error) {
@@ -323,6 +361,51 @@ function createFindingCard() {
   `;
   document.querySelector('.dashboard').appendChild(findingCard);
   return findingCard;
+}
+
+// Call functions
+function callDriver() {
+  const btn = document.getElementById('driverCallBtn');
+  const phone = btn.href.replace('tel:', '');
+  window.location.href = `tel:${phone}`;
+}
+
+function callCustomer() {
+  const btn = document.getElementById('customerCallBtn');
+  const phone = btn.href.replace('tel:', '');
+  window.location.href = `tel:${phone}`;
+}
+
+// Daily stats tracking
+function getOrInitializeDailyStats() {
+  const today = new Date().toDateString();
+  const stats = JSON.parse(localStorage.getItem('toto_daily_stats')) || {};
+  
+  if (stats.date !== today) {
+    // New day, reset stats
+    stats.date = today;
+    stats.totalRides = 0;
+    stats.totalIncome = 0;
+  }
+  
+  return stats;
+}
+
+function updateDailyStats(fareAmount) {
+  const stats = getOrInitializeDailyStats();
+  stats.totalRides = (stats.totalRides || 0) + 1;
+  stats.totalIncome = (stats.totalIncome || 0) + fareAmount;
+  localStorage.setItem('toto_daily_stats', JSON.stringify(stats));
+  updateStatsDisplay();
+}
+
+function updateStatsDisplay() {
+  const stats = getOrInitializeDailyStats();
+  const ridesEl = document.getElementById('todayRidesCount');
+  const incomeEl = document.getElementById('todayIncomeAmount');
+  
+  if (ridesEl) ridesEl.textContent = stats.totalRides || '0';
+  if (incomeEl) incomeEl.textContent = `₹${stats.totalIncome || 0}`;
 }
 
 function resetCustomerUI() {
@@ -445,6 +528,8 @@ function setupDriverDashboard() {
   if (activeRideId) {
     listenToDriverActiveRide();
   }
+  // Update daily stats display
+  updateStatsDisplay();
 }
 
 availabilityToggleCheckbox.addEventListener('change', () => {
@@ -581,6 +666,11 @@ async function listenToDriverActiveRide() {
       activeRideId = null;
       driverAcceptedRideCard.classList.add('hidden');
       
+      // Track daily earnings if ride completed (not cancelled)
+      if (ride.rideStatus === 'completed') {
+        updateDailyStats(ride.fare);
+      }
+      
       showPopup('ট্রিপ শেষ', 'যাত্রী ট্রিপটি সমাপ্ত করেছেন।', '✅');
       
       // Reset to show available rides again with fast polling
@@ -601,6 +691,13 @@ async function listenToDriverActiveRide() {
     driverAcceptedRideCard.classList.remove('hidden');
     
     document.getElementById('driverAcceptedCustomerName').textContent = `${ride.passengerId.firstName} ${ride.passengerId.lastName}`;
+    // Display customer phone - only last 4 digits
+    const customerPhone = ride.passengerId.phone;
+    const customerLastFour = customerPhone.slice(-4);
+    document.getElementById('driverAcceptedCustomerPhone').textContent = `****${customerLastFour}`;
+    // Update call button with full phone
+    document.getElementById('customerCallBtn').href = `tel:${customerPhone}`;
+    
     document.getElementById('driverAcceptedStart').textContent = ride.pickupLocation.address;
     document.getElementById('driverAcceptedEnd').textContent = ride.dropoffLocation.address;
     document.getElementById('driverAcceptedDistance').textContent = `${ride.distance} km`;

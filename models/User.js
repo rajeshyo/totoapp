@@ -36,6 +36,11 @@ const userSchema = new mongoose.Schema({
     enum: ['passenger', 'driver'],
     default: 'passenger'
   },
+  vehicleNumber: {
+    type: String,
+    default: null,
+    trim: true
+  },
   isActive: {
     type: Boolean,
     default: true
