@@ -48,7 +48,7 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  animation: splashFadeOut 1s ease-in 13s forwards;
+  animation: splashFadeOut 1s ease-in 9s forwards;
 }
 
 .splash-container {

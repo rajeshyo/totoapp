@@ -79,7 +79,7 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
       { new: true }
     )
     .populate('passengerId', 'firstName lastName phone profilePhoto')
-    .populate('driverId', 'firstName lastName phone profilePhoto');
+    .populate('driverId', 'firstName lastName phone profilePhoto vehicleNumber');
 
     if (!ride) {
       return res.status(404).json({
@@ -168,7 +168,7 @@ router.get('/:rideId', authMiddleware, async (req, res) => {
   try {
     const ride = await Ride.findById(req.params.rideId)
       .populate('passengerId', 'firstName lastName phone profilePhoto')
-      .populate('driverId', 'firstName lastName phone profilePhoto');
+      .populate('driverId', 'firstName lastName phone profilePhoto vehicleNumber');
 
     if (!ride) {
       return res.status(404).json({
@@ -199,7 +199,7 @@ router.get('/user/rides', authMiddleware, async (req, res) => {
       ]
     })
       .populate('passengerId', 'firstName lastName phone profilePhoto')
-      .populate('driverId', 'firstName lastName phone profilePhoto')
+      .populate('driverId', 'firstName lastName phone profilePhoto vehicleNumber')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -255,7 +255,7 @@ router.post('/reject/:rideId', authMiddleware, async (req, res) => {
       { new: true }
     )
     .populate('passengerId', 'firstName lastName phone profilePhoto')
-    .populate('driverId', 'firstName lastName phone profilePhoto');
+    .populate('driverId', 'firstName lastName phone profilePhoto vehicleNumber');
 
     if (!ride) {
       return res.status(404).json({

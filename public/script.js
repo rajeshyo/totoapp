@@ -34,10 +34,10 @@ window.addEventListener('load', () => {
   const splashScreen = document.getElementById('splashScreen');
   
   if (splashScreen && !currentUser) {
-    // Show splash screen only if not logged in
+    // Show splash screen only if not logged in - 10 seconds
     setTimeout(() => {
       splashScreen.style.display = 'none';
-    }, 13000); // 13 seconds (animation handles the rest)
+    }, 10000); // 10 seconds
   } else if (splashScreen && currentUser) {
     // Hide splash screen immediately if user is logged in
     splashScreen.style.display = 'none';
@@ -177,6 +177,9 @@ function showSection(section) {
   authView.classList.add('hidden');
   customerDashboard.classList.add('hidden');
   driverDashboard.classList.add('hidden');
+  profilePage.classList.add('hidden');
+  rideHistoryPage.classList.add('hidden');
+  favoriteRidesPage.classList.add('hidden');
   section.classList.remove('hidden');
 }
 
@@ -344,6 +347,11 @@ document.getElementById('logoutProfileBtn')?.addEventListener('click', () => {
   activeRideId = null;
   clearAllListeners();
   renderApp();
+});
+
+// Edit profile button
+document.getElementById('editProfileBtn')?.addEventListener('click', () => {
+  showPopup('প্রোফাইল এডিট', 'প্রোফাইল এডিট ফিচার শীঘ্রই আসছে', 'ℹ️');
 });
 
 // User type selector for signup
