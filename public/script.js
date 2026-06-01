@@ -28,13 +28,19 @@ function notifyCustomerRideAccepted(driverName, driverPhone) {
 // ===== API Configuration =====
 const API_BASE_URL = 'https://totoapp.onrender.com/api';
 
-// Splash screen handler - show for 13 seconds
+// Splash screen handler - show only if user not logged in
 window.addEventListener('load', () => {
+  const currentUser = localStorage.getItem('toto_active_user');
   const splashScreen = document.getElementById('splashScreen');
-  if (splashScreen) {
+  
+  if (splashScreen && !currentUser) {
+    // Show splash screen only if not logged in
     setTimeout(() => {
       splashScreen.style.display = 'none';
     }, 13000); // 13 seconds (animation handles the rest)
+  } else if (splashScreen && currentUser) {
+    // Hide splash screen immediately if user is logged in
+    splashScreen.style.display = 'none';
   }
 
   // Request notification permission
@@ -93,6 +99,9 @@ const showSignupBtn = document.getElementById('showSignupBtn');
 const showLoginBtn = document.getElementById('showLoginBtn');
 const customerDashboard = document.getElementById('customerDashboard');
 const driverDashboard = document.getElementById('driverDashboard');
+const profilePage = document.getElementById('profilePage');
+const rideHistoryPage = document.getElementById('rideHistoryPage');
+const favoriteRidesPage = document.getElementById('favoriteRidesPage');
 const mainHeader = document.getElementById('mainHeader');
 const appBottomNav = document.getElementById('appBottomNav');
 
@@ -188,13 +197,8 @@ function renderApp() {
   profileRoleEl.textContent = currentUser.userType === 'passenger' ? 'যাত্রী (Passenger)' : 'টোটো চালক (Driver)';
   profileAvatarEl.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.firstName}`;
 
-  if (currentUser.userType === 'passenger') {
-    showSection(customerDashboard);
-    setupCustomerDashboard();
-  } else {
-    showSection(driverDashboard);
-    setupDriverDashboard();
-  }
+  // Show home dashboard by default
+  showHomePage();
 }
 
 function clearAllListeners() {
@@ -202,6 +206,97 @@ function clearAllListeners() {
     clearInterval(pollInterval);
     pollInterval = null;
   }
+}
+
+// --- Navigation Functions ---
+function showHomePage() {
+  if (currentUser.userType === 'passenger') {
+    showSection(customerDashboard);
+    setupCustomerDashboard();
+  } else {
+    showSection(driverDashboard);
+    setupDriverDashboard();
+  }
+  updateNavButtons('home');
+}
+
+function showProfilePage() {
+  showSection(profilePage);
+  updateNavButtons('profile');
+  displayProfileInfo();
+}
+
+function showRideHistoryPage() {
+  showSection(rideHistoryPage);
+  updateNavButtons('history');
+  displayRideHistory();
+}
+
+function showFavoritesPage() {
+  showSection(favoriteRidesPage);
+  updateNavButtons('favorites');
+  displayFavorites();
+}
+
+function updateNavButtons(active) {
+  document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+  if (active === 'home') document.getElementById('navHomeBtn').classList.add('active');
+  if (active === 'profile') document.getElementById('navProfileBtn').classList.add('active');
+  if (active === 'history') document.getElementById('navHistoryBtn').classList.add('active');
+  if (active === 'favorites') document.getElementById('navFavBtn').classList.add('active');
+}
+
+function displayProfileInfo() {
+  document.getElementById('profilePageName').textContent = `${currentUser.firstName} ${currentUser.lastName}`;
+  document.getElementById('profilePageUserType').textContent = currentUser.userType === 'driver' ? 'টোটো চালক' : 'যাত্রী';
+  document.getElementById('profilePagePhone').textContent = `***${currentUser.phone.slice(-4)}`;
+  document.getElementById('profilePageEmail').textContent = currentUser.email || 'লেখা নেই';
+  document.getElementById('profilePagePhoneFull').textContent = currentUser.phone;
+  document.getElementById('profilePageAvatar').src = `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.firstName}`;
+  
+  if (currentUser.userType === 'driver') {
+    document.getElementById('vehicleNumberDetail').classList.remove('hidden');
+    document.getElementById('profilePageVehicle').textContent = currentUser.vehicleNumber || 'না আছে';
+  } else {
+    document.getElementById('vehicleNumberDetail').classList.add('hidden');
+  }
+  
+  const stats = getOrInitializeDailyStats();
+  document.getElementById('profilePageTotalRides').textContent = stats.totalRides;
+  document.getElementById('profilePageRating').textContent = '⭐ 4.8 (120 রিভিউ)';
+}
+
+function displayRideHistory() {
+  // This would fetch from backend in a real app
+  // For now, show a placeholder message
+  const historyList = document.getElementById('rideHistoryList');
+  historyList.innerHTML = '<p class="muted-text center-block">আপনার রাইড হিস্টরি এখানে দেখা যাবে</p>';
+}
+
+function displayFavorites() {
+  const favoritesList = document.getElementById('favoritesList');
+  const favorites = JSON.parse(localStorage.getItem('toto_favorites') || '[]');
+  
+  if (favorites.length === 0) {
+    favoritesList.innerHTML = '<p class="muted-text center-block">কোনো প্রিয় স্থান নেই</p>';
+  } else {
+    favoritesList.innerHTML = favorites.map(fav => `
+      <div class="favorite-item">
+        <div class="favorite-info">
+          <p class="favorite-label">📍 ${fav.type}</p>
+          <p class="favorite-address">${fav.address}</p>
+        </div>
+        <div class="favorite-action">
+          <button onclick="bookFavorite('${fav.address}')">বুক করুন</button>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function bookFavorite(address) {
+  showHomePage();
+  showPopup('প্রিয় স্থান', `${address} এ বুকিং শুরু হয়েছে`, '✅');
 }
 
 // --- Menu Functions ---
@@ -222,17 +317,34 @@ sidebarLogoutBtn.addEventListener('click', () => {
   renderApp();
 });
 
-// Refresh button handler
-const refreshBtn = document.getElementById('refreshBtn');
-if (refreshBtn) {
-  refreshBtn.addEventListener('click', () => {
-    refreshBtn.style.animation = 'spin 0.6s ease-in-out';
+// Refresh button handler - moved to bottom nav
+const navRefreshBtn = document.getElementById('navRefreshBtn');
+if (navRefreshBtn) {
+  navRefreshBtn.addEventListener('click', () => {
+    navRefreshBtn.style.animation = 'spin 0.6s ease-in-out';
     setTimeout(() => {
-      refreshBtn.style.animation = '';
+      navRefreshBtn.style.animation = '';
     }, 600);
     location.reload();
   });
 }
+
+// Bottom navigation button handlers
+document.getElementById('navHomeBtn')?.addEventListener('click', showHomePage);
+document.getElementById('navProfileBtn')?.addEventListener('click', showProfilePage);
+document.getElementById('navHistoryBtn')?.addEventListener('click', showRideHistoryPage);
+document.getElementById('navFavBtn')?.addEventListener('click', showFavoritesPage);
+
+// Logout button in profile page
+document.getElementById('logoutProfileBtn')?.addEventListener('click', () => {
+  localStorage.removeItem('toto_active_user');
+  localStorage.removeItem('toto_token');
+  localStorage.removeItem('toto_active_ride_id');
+  currentUser = null;
+  activeRideId = null;
+  clearAllListeners();
+  renderApp();
+});
 
 // User type selector for signup
 document.querySelectorAll('.type-option').forEach(btn => {

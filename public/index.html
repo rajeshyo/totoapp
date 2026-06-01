@@ -72,12 +72,6 @@
         <div class="brand">Toto<span>Bondhu</span></div>
       </div>
       <div class="profile-area">
-        <button id="refreshBtn" class="icon-button" title="রিফ্রেশ">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M23 4v6h-6M1 20v-6h6"/>
-            <path d="M3.51 9a9 9 0 0114.85-3.36M20.49 15a9 9 0 01-14.85 3.36"/>
-          </svg>
-        </button>
         <div class="profile-meta">
           <img id="profileAvatar" class="avatar" alt="User Profile" src="" />
           <div class="profile-info-text">
@@ -320,6 +314,67 @@
           </div>
         </div>
       </section>
+
+      <!-- Profile Page -->
+      <section id="profilePage" class="dashboard hidden">
+        <div class="profile-page-header">
+          <h2>আমার প্রোফাইল</h2>
+        </div>
+        <div class="card profile-card">
+          <div class="profile-card-header">
+            <img id="profilePageAvatar" class="profile-card-avatar" alt="Profile" src="" />
+            <div class="profile-basic-info">
+              <h3 id="profilePageName">-</h3>
+              <p id="profilePageUserType">-</p>
+              <p id="profilePagePhone">-</p>
+            </div>
+          </div>
+          <div class="profile-details">
+            <div class="detail-item">
+              <span class="detail-label">✉️ ইমেইল:</span>
+              <span id="profilePageEmail">-</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">📱 ফোন:</span>
+              <span id="profilePagePhoneFull">-</span>
+            </div>
+            <div id="vehicleNumberDetail" class="detail-item hidden">
+              <span class="detail-label">🔢 গাড়ির নম্বর:</span>
+              <span id="profilePageVehicle">-</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">📊 মোট রাইড:</span>
+              <span id="profilePageTotalRides">-</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">⭐ রেটিং:</span>
+              <span id="profilePageRating">-</span>
+            </div>
+          </div>
+          <button id="editProfileBtn" class="button primary full-width">প্রোফাইল এডিট করুন</button>
+          <button id="logoutProfileBtn" class="button secondary full-width">লগআউট</button>
+        </div>
+      </section>
+
+      <!-- Ride History Page -->
+      <section id="rideHistoryPage" class="dashboard hidden">
+        <div class="page-header">
+          <h2>রাইড হিস্টরি</h2>
+        </div>
+        <div id="rideHistoryList" class="ride-list">
+          <p class="muted-text center-block">কোনো রাইড নেই</p>
+        </div>
+      </section>
+
+      <!-- Favorite Rides Page -->
+      <section id="favoriteRidesPage" class="dashboard hidden">
+        <div class="page-header">
+          <h2>প্রিয় স্থান</h2>
+        </div>
+        <div id="favoritesList" class="favorites-list">
+          <p class="muted-text center-block">কোনো প্রিয় স্থান নেই</p>
+        </div>
+      </section>
     </main>
 
     <footer class="bottom-nav hidden" id="appBottomNav">
@@ -329,7 +384,7 @@
       </button>
       <button class="nav-item" id="navFavBtn">
         <span class="nav-icon">❤️</span>
-        <span class="nav-label">প্রিয় স্থান</span>
+        <span class="nav-label">প্রিয়</span>
       </button>
       <button class="nav-item" id="navHistoryBtn">
         <span class="nav-icon">📅</span>
@@ -338,6 +393,10 @@
       <button class="nav-item" id="navProfileBtn">
         <span class="nav-icon">👤</span>
         <span class="nav-label">প্রোফাইল</span>
+      </button>
+      <button class="nav-item" id="navRefreshBtn" title="রিফ্রেশ">
+        <span class="nav-icon">🔄</span>
+        <span class="nav-label">রিফ্রেশ</span>
       </button>
     </footer>
   </div>
