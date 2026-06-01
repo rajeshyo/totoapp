@@ -10,6 +10,39 @@
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+  <!-- Splash Screen -->
+  <div id="splashScreen" class="splash-screen">
+    <div class="splash-container">
+      <div class="splash-logo">🛺</div>
+      <h1 class="splash-title">Toto<span>Bondhu</span></h1>
+      <p class="splash-subtitle">আপনার পথচলার সাথী</p>
+      
+      <div class="splash-tips">
+        <div class="tip-item">
+          <span class="tip-icon">📍</span>
+          <p><strong>সহজ বুকিং</strong> - মাত্র দুটি ক্লিকে আপনার গন্তব্য নির্বাচন করুন</p>
+        </div>
+        <div class="tip-item">
+          <span class="tip-icon">🚗</span>
+          <p><strong>নিরাপদ যাত্রা</strong> - সকল চালক যাচাইকৃত এবং রেটিং প্রাপ্ত</p>
+        </div>
+        <div class="tip-item">
+          <span class="tip-icon">💰</span>
+          <p><strong>স্বচ্ছ মূল্য</strong> - কোনো লুকানো খরচ নেই, সবকিছু স্পষ্ট</p>
+        </div>
+        <div class="tip-item">
+          <span class="tip-icon">⭐</span>
+          <p><strong>বিশ্বস্ত সেবা</strong> - সর্বোত্তম গ্রাহক সেবা এবং সহায়তা</p>
+        </div>
+      </div>
+      
+      <div class="splash-loading">
+        <div class="loader"></div>
+        <p>লোড হচ্ছে...</p>
+      </div>
+    </div>
+  </div>
+
   <div class="app-shell">
     
     <div id="sideMenuOverlay" class="menu-overlay hidden"></div>
@@ -39,6 +72,12 @@
         <div class="brand">Toto<span>Bondhu</span></div>
       </div>
       <div class="profile-area">
+        <button id="refreshBtn" class="icon-button" title="রিফ্রেশ">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M23 4v6h-6M1 20v-6h6"/>
+            <path d="M3.51 9a9 9 0 0114.85-3.36M20.49 15a9 9 0 01-14.85 3.36"/>
+          </svg>
+        </button>
         <div class="profile-meta">
           <img id="profileAvatar" class="avatar" alt="User Profile" src="" />
           <div class="profile-info-text">
@@ -80,6 +119,20 @@
           </div>
 
           <div id="signupPanel" class="hidden">
+            <div class="user-type-selector">
+              <p class="selector-label">আপনি কী?</p>
+              <div class="type-options">
+                <button type="button" class="type-option passenger-type active" data-type="passenger">
+                  <span class="type-icon">👤</span>
+                  <span class="type-label">যাত্রী</span>
+                </button>
+                <button type="button" class="type-option driver-type" data-type="driver">
+                  <span class="type-icon">🚗</span>
+                  <span class="type-label">চালক</span>
+                </button>
+              </div>
+            </div>
+            
             <form id="signupForm" class="form-grid">
               <div class="input-wrapper">
                 <span class="input-icon">📞</span>
@@ -97,17 +150,11 @@
                 <span class="input-icon">🔒</span>
                 <input type="password" id="password" placeholder="নতুন পাসওয়ার্ড" required />
               </div>
-              <div class="input-wrapper custom-select">
-                <span class="input-icon">👤</span>
-                <select id="userType" required>
-                  <option value="passenger">আমি একজন যাত্রী</option>
-                  <option value="driver">আমি একজন চালক</option>
-                </select>
-              </div>
               <div class="input-wrapper hidden" id="vehicleNumberWrapper">
                 <span class="input-icon">🚗</span>
                 <input type="text" id="vehicleNumber" placeholder="গাড়ির নম্বর (যেমন: WB54T1234)" />
               </div>
+              <input type="hidden" id="userType" value="passenger" />
               <button type="submit" class="button primary full-width btn-xl">অ্যাকাউন্ট তৈরি করুন</button>
             </form>
           </div>
@@ -192,7 +239,7 @@
             <div class="snap-details">
               <h4 id="acceptedDriverName">চালকের নাম</h4>
               <p id="acceptedDriverPhone" class="car-no">📞 ****</p>
-              <p class="car-no">🔢 WB 54 T 1234</p>
+              <p id="acceptedVehicleNumber" class="car-no">🔢 -</p>
             </div>
             <a href="tel:0" id="driverCallBtn" class="call-action-btn" onclick="callDriver()">📞 কল করুন</a>
           </div>

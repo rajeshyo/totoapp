@@ -1,5 +1,54 @@
+// ===== Notification Helpers =====
+function sendNotification(title, options = {}) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, {
+      icon: '🛺',
+      badge: '🛺',
+      ...options
+    });
+  }
+}
+
+function notifyDriversOfRide(rideId, pickupLocation, fare) {
+  sendNotification('নতুন রাইড অনুরোধ', {
+    body: `${pickupLocation} থেকে - ₹${fare} ভাড়া`,
+    tag: `ride-${rideId}`,
+    requireInteraction: true
+  });
+}
+
+function notifyCustomerRideAccepted(driverName, driverPhone) {
+  sendNotification('চালক গ্রহণ করেছেন', {
+    body: `${driverName} আপনার রাইড গ্রহণ করেছেন`,
+    tag: 'ride-accepted',
+    requireInteraction: false
+  });
+}
+
 // ===== API Configuration =====
 const API_BASE_URL = 'https://totoapp.onrender.com/api';
+
+// Splash screen handler - show for 13 seconds
+window.addEventListener('load', () => {
+  const splashScreen = document.getElementById('splashScreen');
+  if (splashScreen) {
+    setTimeout(() => {
+      splashScreen.style.display = 'none';
+    }, 13000); // 13 seconds (animation handles the rest)
+  }
+
+  // Request notification permission
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+
+  // Register service worker for push notifications
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(err => {
+      console.log('Service worker registration failed:', err);
+    });
+  }
+});
 
 // Helper function to make API calls with authorization
 async function apiCall(endpoint, method = 'GET', body = null) {
@@ -173,6 +222,49 @@ sidebarLogoutBtn.addEventListener('click', () => {
   renderApp();
 });
 
+// Refresh button handler
+const refreshBtn = document.getElementById('refreshBtn');
+if (refreshBtn) {
+  refreshBtn.addEventListener('click', () => {
+    refreshBtn.style.animation = 'spin 0.6s ease-in-out';
+    setTimeout(() => {
+      refreshBtn.style.animation = '';
+    }, 600);
+    location.reload();
+  });
+}
+
+// User type selector for signup
+document.querySelectorAll('.type-option').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.type-option').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const userType = btn.dataset.type;
+    document.getElementById('userType').value = userType;
+    
+    // Show/hide vehicle number field
+    const vehicleWrapper = document.getElementById('vehicleNumberWrapper');
+    if (userType === 'driver') {
+      vehicleWrapper.classList.remove('hidden');
+    } else {
+      vehicleWrapper.classList.add('hidden');
+    }
+  });
+});
+
+// Initialize passenger type selector on page load
+document.addEventListener('DOMContentLoaded', () => {
+  const passengerBtn = document.querySelector('.passenger-type');
+  if (passengerBtn && !passengerBtn.classList.contains('active')) {
+    passengerBtn.classList.add('active');
+  }
+  document.getElementById('userType').value = 'passenger';
+  const vehicleWrapper = document.getElementById('vehicleNumberWrapper');
+  if (vehicleWrapper) {
+    vehicleWrapper.classList.add('hidden');
+  }
+});
+
 // --- Auth Event Listeners ---
 signupForm.addEventListener('submit', async event => {
   event.preventDefault();
@@ -338,6 +430,10 @@ async function pollCustomerRide() {
         document.getElementById('acceptedDriverPhone').textContent = `📞 ****${lastFour}`;
         // Store full phone for call button
         document.getElementById('driverCallBtn').href = `tel:${fullPhone}`;
+        // Display vehicle number
+        if (ride.driverId.vehicleNumber && document.getElementById('acceptedVehicleNumber')) {
+          document.getElementById('acceptedVehicleNumber').textContent = `🔢 ${ride.driverId.vehicleNumber}`;
+        }
       }
     }
   } catch (error) {
@@ -467,6 +563,9 @@ rideRequestForm.addEventListener('submit', async event => {
       if (pollInterval) clearInterval(pollInterval);
       pollCustomerRide(); // Initial call
       pollInterval = setInterval(pollCustomerRide, 1500);
+      
+      // Notify all drivers of new ride request
+      notifyDriversOfRide(activeRideId, pickupAddress, response.ride.fare);
       
       showPopup('অনুরোধ পাঠানো হয়েছে', 'আপনার টোটো বুকিং অনুরোধটি চালকদের পাঠানো হয়েছে।', '✅');
     }
@@ -621,6 +720,12 @@ async function acceptRide(rideId) {
     if (response.success) {
       activeRideId = rideId;
       localStorage.setItem('toto_active_ride_id', activeRideId);
+      
+      // Notify customer that ride was accepted
+      if (response.ride && response.ride.passengerId) {
+        const passengerName = response.ride.passengerId.firstName || 'যাত্রী';
+        notifyCustomerRideAccepted('চালক', ''); // Notify customer
+      }
       
       rideRequestsContainer.innerHTML = '<p class="muted-text center-block">আপনার একটি ট্রিপ চলমান রয়েছে।</p>';
       requestCountBadge.textContent = '0';
