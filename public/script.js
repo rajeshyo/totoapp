@@ -299,7 +299,9 @@ function displayProfileInfo() {
   document.getElementById('profilePageRating').textContent = `⭐ ${rating} (${reviews} রিভিউ)`;
 }
 
-  const historyList = document.getElementById('rideHistoryList')  if (!historyList) return;
+async function displayRideHistory() {
+  const historyList = document.getElementById('rideHistoryList');
+  if (!historyList) return;
   
   historyList.innerHTML = '<p class="muted-text center-block">লোড হচ্ছে...</p>';
   
