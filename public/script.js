@@ -297,11 +297,11 @@ function displayRideHistory() {
 function displayFavorites() {
   const favoritesList = document.getElementById('favoritesList');
   const popularPlaces = [
-    { name: 'স্কুল মোড়', stopId: '1' },
-    { name: 'কলেজ মোড়', stopId: '2' },
-    { name: 'বাজার হাট', stopId: '3' },
-    { name: 'হসপিটাল মোড়', stopId: '4' },
-    { name: 'রেল স্টেশন', stopId: '5' },
+    { name: '🏫 স্কুল মোড়', stopId: '1' },
+    { name: '🎓 কলেজ মোড়', stopId: '2' },
+    { name: '🛍️ বাজার হাট', stopId: '3' },
+    { name: '🏥 হাসপাতাল মোড়', stopId: '4' },
+    { name: '🚉 রেল স্টেশন', stopId: '5' },
   ];
   
   if (popularPlaces.length === 0) {
@@ -310,17 +310,17 @@ function displayFavorites() {
     favoritesList.innerHTML = popularPlaces.map(place => `
       <div class="favorite-item">
         <div class="favorite-info">
-          <p class="favorite-address">📍 ${place.name}</p>
+          <p class="favorite-address" style="font-size: 1.05rem;">${place.name}</p>
         </div>
         <div class="favorite-action">
-          <button onclick="bookFavorite('${place.stopId}', '${place.name}')">বুক করুন</button>
+          <button class="button primary" style="padding: 8px 16px; font-size: 0.85rem;" onclick="bookFavorite('${place.stopId}', '${place.name}')">বুক করুন</button>
         </div>
       </div>
     `).join('');
   }
 }
 
-function bookFavorite(stopId, stopName) {
+window.bookFavorite = function(stopId, stopName) {
   if (activeRideId) {
     showPopup('অপেক্ষা করুন', 'আপনার একটি রাইড ইতিমধ্যে খোঁজা হচ্ছে।', '⏳');
     return;
@@ -333,7 +333,7 @@ function bookFavorite(stopId, stopName) {
   }
   updateRidePreview();
   setTimeout(() => {
-    rideRequestForm.dispatchEvent(new Event('submit'));
+    rideRequestForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
   }, 300);
 }
 
