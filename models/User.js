@@ -41,14 +41,6 @@ const userSchema = new mongoose.Schema({
     default: null,
     trim: true
   },
-  averageRating: {
-    type: Number,
-    default: 0
-  },
-  totalReviews: {
-    type: Number,
-    default: 0
-  },
   isActive: {
     type: Boolean,
     default: true

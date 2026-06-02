@@ -299,11 +299,47 @@ function displayProfileInfo() {
   document.getElementById('profilePageRating').textContent = `⭐ ${rating} (${reviews} রিভিউ)`;
 }
 
-function displayRideHistory() {
-  // This would fetch from backend in a real app
-  // For now, show a placeholder message
-  const historyList = document.getElementById('rideHistoryList');
-  historyList.innerHTML = '<p class="muted-text center-block">আপনার রাইড হিস্টরি এখানে দেখা যাবে</p>';
+  const historyList = document.getElementById('rideHistoryList')  if (!historyList) return;
+  
+  historyList.innerHTML = '<p class="muted-text center-block">লোড হচ্ছে...</p>';
+  
+  try {
+    const response = await apiCall('/rides/user/rides');
+    
+    if (!response.success || !response.rides || response.rides.length === 0) {
+      historyList.innerHTML = '<p class="muted-text center-block">আপনার কোনো রাইড হিস্টরি নেই</p>';
+      return;
+    }
+
+    historyList.innerHTML = response.rides.map(ride => {
+      const isPassenger = currentUser.userType === 'passenger';
+      const otherUser = isPassenger ? ride.driverId : ride.passengerId;
+      const otherUserName = otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : (isPassenger ? 'খোঁজা হচ্ছে...' : 'অজানা');
+      const rideDate = new Date(ride.createdAt).toLocaleString('bn-BD', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      
+      let statusText = '⏳ চলমান';
+      if (ride.rideStatus === 'completed') statusText = '✅ সম্পন্ন';
+      else if (ride.rideStatus === 'cancelled') statusText = '❌ বাতিল';
+
+      return `
+        <div class="request-item" style="margin-bottom: 15px;">
+          <p>👤 <strong>${isPassenger ? 'চালক' : 'যাত্রী'}: ${otherUserName}</strong> <span class="badge" style="float: right;">${rideDate}</span></p>
+          ${ride.driverId && ride.driverId.vehicleNumber ? `<p>🔢 গাড়ি: <strong>${ride.driverId.vehicleNumber}</strong></p>` : ''}
+          <p>📍 পিকআপ: ${ride.pickupLocation.address}</p>
+          <p>🏁 গন্তব্য: ${ride.dropoffLocation.address}</p>
+          <p>💰 ভাড়া: <span class="text-green">₹${ride.fare}</span></p>
+          <div class="request-actions" style="margin-top: 10px;">
+            <div class="status-badge ${ride.rideStatus}" style="width: 100%; text-align: center; display: block; padding: 10px; background: var(--surface-dim); border-radius: 8px; font-weight: bold;">
+              ${statusText}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (error) {
+    console.error("Error loading ride history:", error);
+    historyList.innerHTML = '<p class="muted-text center-block">হিস্টরি লোড করতে সমস্যা হয়েছে।</p>';
+  }
 }
 
 function displayFavorites() {
