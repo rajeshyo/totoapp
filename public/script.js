@@ -200,6 +200,24 @@ function renderApp() {
   profileRoleEl.textContent = currentUser.userType === 'passenger' ? 'যাত্রী (Passenger)' : 'টোটো চালক (Driver)';
   profileAvatarEl.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.firstName}`;
 
+  // Hide Favorites Menu for Drivers
+  const navFavBtn = document.getElementById('navFavBtn');
+  if (currentUser.userType === 'driver') {
+    if (navFavBtn) navFavBtn.classList.add('hidden');
+    document.querySelectorAll('.menu-item').forEach(item => {
+      if (item.textContent.includes('প্রিয়') || item.textContent.includes('Favorite')) {
+        item.classList.add('hidden');
+      }
+    });
+  } else {
+    if (navFavBtn) navFavBtn.classList.remove('hidden');
+    document.querySelectorAll('.menu-item').forEach(item => {
+      if (item.textContent.includes('প্রিয়') || item.textContent.includes('Favorite')) {
+        item.classList.remove('hidden');
+      }
+    });
+  }
+
   // Show home dashboard by default
   showHomePage();
 }
