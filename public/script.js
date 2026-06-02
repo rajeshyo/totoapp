@@ -241,9 +241,19 @@ function showHomePage() {
   updateNavButtons('home');
 }
 
-function showProfilePage() {
+async function showProfilePage() {
   showSection(profilePage);
   updateNavButtons('profile');
+  
+  // Fetch fresh profile data to get latest ratings
+  try {
+    const response = await apiCall('/auth/profile');
+    if (response.success) {
+      currentUser = response.user;
+      localStorage.setItem('toto_active_user', JSON.stringify(currentUser));
+    }
+  } catch (err) {}
+  
   displayProfileInfo();
 }
 
@@ -284,7 +294,9 @@ function displayProfileInfo() {
   
   const stats = getOrInitializeDailyStats();
   document.getElementById('profilePageTotalRides').textContent = stats.totalRides;
-  document.getElementById('profilePageRating').textContent = '⭐ 4.8 (120 রিভিউ)';
+  const rating = currentUser.averageRating || 0;
+  const reviews = currentUser.totalReviews || 0;
+  document.getElementById('profilePageRating').textContent = `⭐ ${rating} (${reviews} রিভিউ)`;
 }
 
 function displayRideHistory() {
@@ -618,11 +630,21 @@ async function pollCustomerRide() {
     const response = await apiCall(`/rides/${activeRideId}`);
     const ride = response.ride;
 
-    if (ride.rideStatus === 'completed' || ride.rideStatus === 'cancelled') {
+    if (ride.rideStatus === 'completed') {
+      const driverName = ride.driverId ? `${ride.driverId.firstName} ${ride.driverId.lastName}` : 'চালক';
+      const rideIdToRate = activeRideId;
+      
       localStorage.removeItem('toto_active_ride_id');
       activeRideId = null;
       resetCustomerUI();
-      showPopup('সফলতা', 'আপনার ট্রিপটি সফলভাবে সম্পন্ন হয়েছে। ধন্যবাদ!', '🎉');
+      
+      showRatingPopup(rideIdToRate, driverName);
+      return;
+    } else if (ride.rideStatus === 'cancelled') {
+      localStorage.removeItem('toto_active_ride_id');
+      activeRideId = null;
+      resetCustomerUI();
+      showPopup('বাতিল', 'আপনার ট্রিপটি বাতিল হয়েছে।', '⚠️');
       return;
     }
 
@@ -1048,3 +1070,65 @@ window.addEventListener('load', () => {
     startDriverPoll();
   }
 });
+
+// --- Rating Popup UI ---
+function showRatingPopup(rideId, driverName) {
+  let modal = document.getElementById('ratingModal');
+  
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'ratingModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;justify-content:center;align-items:center;';
+    modal.innerHTML = `
+      <div class="card" style="width:90%;max-width:400px;background:var(--surface-color, #fff);padding:20px;border-radius:12px;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+        <h3 style="margin-top:0;margin-bottom:10px;">ট্রিপ সম্পন্ন হয়েছে! 🎉</h3>
+        <p style="color:var(--text-muted);margin-bottom:15px;">আপনার চালক <strong id="ratingDriverName" style="color:var(--text-color);"></strong> কে রেটিং দিন</p>
+        <div id="starContainer" style="font-size:2.5rem;margin:15px 0;cursor:pointer;display:flex;justify-content:center;gap:10px;">
+          <span class="star" data-val="1">☆</span>
+          <span class="star" data-val="2">☆</span>
+          <span class="star" data-val="3">☆</span>
+          <span class="star" data-val="4">☆</span>
+          <span class="star" data-val="5">☆</span>
+        </div>
+        <button id="submitRatingBtn" class="button primary" style="width:100%;margin-bottom:10px;">সাবমিট</button>
+        <button id="skipRatingBtn" class="button secondary" style="width:100%;background:none;color:#888;border:none;">স্কিপ করুন</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    let selectedRating = 0;
+    const stars = modal.querySelectorAll('.star');
+    stars.forEach(star => {
+      star.addEventListener('click', (e) => {
+        selectedRating = parseInt(e.target.dataset.val);
+        stars.forEach(s => {
+          if (parseInt(s.dataset.val) <= selectedRating) { s.textContent = '★'; s.style.color = '#f5b041'; } 
+          else { s.textContent = '☆'; s.style.color = '#ccc'; }
+        });
+      });
+    });
+
+    document.getElementById('submitRatingBtn').addEventListener('click', async () => {
+      if (selectedRating > 0) {
+        const btn = document.getElementById('submitRatingBtn');
+        btn.textContent = 'অপেক্ষা করুন...';
+        try { await apiCall(`/rides/rate/${modal.dataset.rideId}`, 'POST', { rating: selectedRating }); } catch(e) {}
+        btn.textContent = 'সাবমিট';
+      }
+      modal.style.display = 'none';
+      showPopup('ধন্যবাদ', 'আপনার মতামতের জন্য ধন্যবাদ!', '🎉');
+    });
+
+    document.getElementById('skipRatingBtn').addEventListener('click', () => {
+      modal.style.display = 'none';
+      showPopup('ধন্যবাদ', 'আপনার ট্রিপটি সফলভাবে সম্পন্ন হয়েছে।', '🎉');
+    });
+  }
+
+  document.getElementById('ratingDriverName').textContent = driverName;
+  modal.dataset.rideId = rideId;
+
+  // Reset stars
+  modal.querySelectorAll('.star').forEach(s => { s.textContent = '☆'; s.style.color = '#ccc'; });
+  modal.style.display = 'flex';
+}
