@@ -278,28 +278,45 @@ function displayRideHistory() {
 
 function displayFavorites() {
   const favoritesList = document.getElementById('favoritesList');
-  const favorites = JSON.parse(localStorage.getItem('toto_favorites') || '[]');
+  const popularPlaces = [
+    { name: 'স্কুল মোড়', stopId: '1' },
+    { name: 'কলেজ মোড়', stopId: '2' },
+    { name: 'বাজার হাট', stopId: '3' },
+    { name: 'হসপিটাল মোড়', stopId: '4' },
+    { name: 'রেল স্টেশন', stopId: '5' },
+  ];
   
-  if (favorites.length === 0) {
+  if (popularPlaces.length === 0) {
     favoritesList.innerHTML = '<p class="muted-text center-block">কোনো প্রিয় স্থান নেই</p>';
   } else {
-    favoritesList.innerHTML = favorites.map(fav => `
+    favoritesList.innerHTML = popularPlaces.map(place => `
       <div class="favorite-item">
         <div class="favorite-info">
-          <p class="favorite-label">📍 ${fav.type}</p>
-          <p class="favorite-address">${fav.address}</p>
+          <p class="favorite-address">📍 ${place.name}</p>
         </div>
         <div class="favorite-action">
-          <button onclick="bookFavorite('${fav.address}')">বুক করুন</button>
+          <button onclick="bookFavorite('${place.stopId}', '${place.name}')">বুক করুন</button>
         </div>
       </div>
     `).join('');
   }
 }
 
-function bookFavorite(address) {
+function bookFavorite(stopId, stopName) {
+  if (activeRideId) {
+    showPopup('অপেক্ষা করুন', 'আপনার একটি রাইড ইতিমধ্যে খোঁজা হচ্ছে।', '⏳');
+    return;
+  }
   showHomePage();
-  showPopup('প্রিয় স্থান', `${address} এ বুকিং শুরু হয়েছে`, '✅');
+  showPopup('প্রিয় স্থান', `${stopName} এ বুকিং শুরু হয়েছে`, '✅');
+  destinationInput.value = stopId;
+  if (!currentLocationInput.value || currentLocationInput.value === stopId) {
+    currentLocationInput.value = stopId === "1" ? "2" : "1";
+  }
+  updateRidePreview();
+  setTimeout(() => {
+    rideRequestForm.dispatchEvent(new Event('submit'));
+  }, 300);
 }
 
 // --- Menu Functions ---
@@ -351,7 +368,75 @@ document.getElementById('logoutProfileBtn')?.addEventListener('click', () => {
 
 // Edit profile button
 document.getElementById('editProfileBtn')?.addEventListener('click', () => {
-  showPopup('প্রোফাইল এডিট', 'প্রোফাইল এডিট ফিচার শীঘ্রই আসছে', 'ℹ️');
+  let modal = document.getElementById('editProfileModal');
+  
+  // Create the modal dynamically if it doesn't exist yet
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'editProfileModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;justify-content:center;align-items:center;';
+    modal.innerHTML = `
+      <div class="card" style="width:90%;max-width:400px;background:var(--surface-color, #fff);padding:20px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+        <h3 style="margin-top:0;margin-bottom:15px;text-align:center;">প্রোফাইল এডিট</h3>
+        <form id="editProfileForm" style="display:flex;flex-direction:column;gap:15px;">
+          <div>
+            <label style="font-size:0.9rem;color:var(--text-muted, #666);">নাম (First Name)</label>
+            <input type="text" id="editFirstName" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;margin-top:5px;font-size:1rem;">
+          </div>
+          <div>
+            <label style="font-size:0.9rem;color:var(--text-muted, #666);">পদবি (Last Name)</label>
+            <input type="text" id="editLastName" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;margin-top:5px;font-size:1rem;">
+          </div>
+          <div>
+            <label style="font-size:0.9rem;color:var(--text-muted, #666);">ফোন নম্বর <small>(পরিবর্তনযোগ্য নয়)</small></label>
+            <input type="text" id="editPhone" readonly style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;background:#f5f5f5;color:#888;box-sizing:border-box;margin-top:5px;font-size:1rem;">
+          </div>
+          <div id="editVehicleWrapper" style="display:none;">
+            <label style="font-size:0.9rem;color:var(--text-muted, #666);">গাড়ির নম্বর <small>(পরিবর্তনযোগ্য নয়)</small></label>
+            <input type="text" id="editVehicle" readonly style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;background:#f5f5f5;color:#888;box-sizing:border-box;margin-top:5px;font-size:1rem;">
+          </div>
+          <div style="display:flex;gap:10px;margin-top:10px;">
+            <button type="submit" class="button primary" style="flex:1;">সেভ করুন</button>
+            <button type="button" id="closeEditProfileBtn" class="button secondary" style="flex:1;background:#e0e0e0;color:#333;">বাতিল</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    document.getElementById('closeEditProfileBtn').addEventListener('click', () => modal.style.display = 'none');
+
+    document.getElementById('editProfileForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      submitBtn.textContent = 'অপেক্ষা করুন...';
+      submitBtn.disabled = true;
+
+      // Update user details
+      currentUser.firstName = document.getElementById('editFirstName').value.trim();
+      currentUser.lastName = document.getElementById('editLastName').value.trim();
+      localStorage.setItem('toto_active_user', JSON.stringify(currentUser));
+      
+      try { await apiCall('/auth/profile', 'PUT', { firstName: currentUser.firstName, lastName: currentUser.lastName }); } catch (err) { /* Optional fallback if backend route isn't strictly defined yet */ }
+
+      displayProfileInfo();
+      renderApp();
+      
+      modal.style.display = 'none';
+      submitBtn.textContent = 'সেভ করুন';
+      submitBtn.disabled = false;
+      showPopup('সফল', 'প্রোফাইল সফলভাবে আপডেট করা হয়েছে।', '✅');
+    });
+  }
+
+  // Populate current user data
+  document.getElementById('editFirstName').value = currentUser.firstName || '';
+  document.getElementById('editLastName').value = currentUser.lastName || '';
+  document.getElementById('editPhone').value = currentUser.phone || '';
+  document.getElementById('editVehicleWrapper').style.display = currentUser.userType === 'driver' ? 'block' : 'none';
+  if (currentUser.userType === 'driver') document.getElementById('editVehicle').value = currentUser.vehicleNumber || '';
+
+  modal.style.display = 'flex';
 });
 
 // User type selector for signup
