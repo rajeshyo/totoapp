@@ -668,6 +668,30 @@ function setupCustomerDashboard() {
   } else {
     resetCustomerUI();
   }
+
+  appendCustomerFooter();
+}
+
+function appendCustomerFooter() {
+  if (document.getElementById('totoBondhuFooter')) return;
+  
+  const footer = document.createElement('div');
+  footer.id = 'totoBondhuFooter';
+  
+  
+  // Gradient overlay so text is highly readable over the image
+  const overlay = document.createElement('div');
+  
+  footer.appendChild(overlay);
+
+  const content = document.createElement('div');
+  
+  content.innerHTML = `
+    <img src="image/footer.png" alt="Footer Image" class="footer-image" />
+  `;
+  
+  footer.appendChild(content);
+  customerDashboard.appendChild(footer);
 }
 
 async function pollCustomerRide() {
@@ -747,7 +771,13 @@ function createFindingCard() {
       <p style="font-size: 2rem; margin: 20px 0;">🔍</p>
     </div>
   `;
-  document.querySelector('.dashboard').appendChild(findingCard);
+  
+  const acceptedCard = document.getElementById('acceptedRideCard');
+  if (acceptedCard) {
+    acceptedCard.parentNode.insertBefore(findingCard, acceptedCard);
+  } else {
+    document.getElementById('customerDashboard').appendChild(findingCard);
+  }
   return findingCard;
 }
 

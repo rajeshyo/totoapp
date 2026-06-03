@@ -246,7 +246,13 @@ body {
 }
 .menu-item:hover, .menu-item:active { background: var(--surface-dim); color: var(--primary-brand); }
 .menu-footer { padding: 20px; border-top: 1px solid var(--border-light); }
+.footer-image{
+  width: 100%;
+  height: 200px;
+  margin-top: 76px;
+  object-fit: cover;
 
+}
 /* Headers & Content */
 .topbar {
   display: flex; align-items: center; justify-content: space-between;
