@@ -375,16 +375,25 @@ window.bookFavorite = function(stopId, stopName) {
     showPopup('অপেক্ষা করুন', 'আপনার একটি রাইড ইতিমধ্যে খোঁজা হচ্ছে।', '⏳');
     return;
   }
-  showHomePage();
-  showPopup('প্রিয় স্থান', `${stopName} এ বুকিং শুরু হয়েছে`, '✅');
-  destinationInput.value = stopId;
-  if (!currentLocationInput.value || currentLocationInput.value === stopId) {
-    currentLocationInput.value = stopId === "1" ? "2" : "1";
+  
+  if (!currentLocationInput.value) {
+    showHomePage();
+    showPopup('শুরুর স্থান প্রয়োজন', 'দয়া করে প্রথমে আপনার শুরুর স্থান (পিকআপ) নির্বাচন করুন।', '📍');
+    return;
   }
+
+  if (currentLocationInput.value === stopId) {
+    showHomePage();
+    showPopup('ত্রুটি', 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না।', '❌');
+    return;
+  }
+
+  showHomePage();
+  destinationInput.value = stopId;
+  destinationInput.dispatchEvent(new Event('change')); // Sync searchable dropdown
   updateRidePreview();
-  setTimeout(() => {
-    rideRequestForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-  }, 300);
+  
+  showPopup('গন্তব্য সেট হয়েছে', `${stopName} গন্তব্য হিসেবে সেট করা হয়েছে। ভাড়া চেক করে রাইড খুঁজুন।`, '✅');
 }
 
 // --- Menu Functions ---
@@ -892,13 +901,23 @@ stopChips.forEach(chip => {
       showPopup('অপেক্ষা করুন', 'আপনার একটি রাইড ইতিমধ্যে খোঁজা হচ্ছে।', '⏳');
       return;
     }
-    const destId = e.target.dataset.stopId;
-    destinationInput.value = destId;
-    if (!currentLocationInput.value || currentLocationInput.value === destId) {
-      currentLocationInput.value = destId === "1" ? "2" : "1";
+    
+    // IMPROVEMENT: Explicitly require pickup location to avoid confusion
+    if (!currentLocationInput.value) {
+      showPopup('শুরুর স্থান প্রয়োজন', 'দয়া করে প্রথমে উপরের তালিকা থেকে আপনার শুরুর স্থান (পিকআপ) নির্বাচন করুন।', '📍');
+      return;
     }
+
+    const destId = e.target.dataset.stopId;
+    
+    if (currentLocationInput.value === destId) {
+      showPopup('ত্রুটি', 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না।', '❌');
+      return;
+    }
+
+    destinationInput.value = destId;
+    destinationInput.dispatchEvent(new Event('change')); // Sync searchable dropdown
     updateRidePreview();
-    rideRequestForm.dispatchEvent(new Event('submit'));
   });
 });
 
