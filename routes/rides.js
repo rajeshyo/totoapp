@@ -175,11 +175,15 @@ router.post('/start/:rideId', authMiddleware, async (req, res) => {
   }
 });
 
-// END RIDE (Driver)
+// END RIDE (Driver or Passenger)
 router.post('/end/:rideId', authMiddleware, async (req, res) => {
   try {
     const ride = await Ride.findOneAndUpdate(
-      { _id: req.params.rideId, driverId: req.userId, rideStatus: { $in: ['accepted', 'in_progress'] } },
+      { 
+        _id: req.params.rideId, 
+        $or: [{ driverId: req.userId }, { passengerId: req.userId }],
+        rideStatus: { $in: ['accepted', 'in_progress'] } 
+      },
       { 
         rideStatus: 'completed',
         endTime: new Date(),
@@ -263,7 +267,11 @@ router.get('/user/rides', authMiddleware, async (req, res) => {
 router.post('/cancel/:rideId', authMiddleware, async (req, res) => {
   try {
     const ride = await Ride.findOneAndUpdate(
-      { _id: req.params.rideId, rideStatus: { $in: ['pending', 'accepted'] } },
+      { 
+        _id: req.params.rideId, 
+        $or: [{ passengerId: req.userId }, { driverId: req.userId }],
+        rideStatus: { $in: ['pending', 'accepted'] } 
+      },
       { rideStatus: 'cancelled' },
       { new: true }
     );
