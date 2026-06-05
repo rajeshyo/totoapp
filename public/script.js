@@ -147,8 +147,8 @@ const popupCloseBtn = document.getElementById('popupCloseBtn');
 const userTypeSelect = document.getElementById('userType');
 const vehicleNumberWrapper = document.getElementById('vehicleNumberWrapper');
 
-const STOP_DISTANCE_KM = 2.4; 
-const FARE_PER_TRIP_BASE = 20;
+const STOP_DISTANCE_KM = 1; 
+const FARE_PER_TRIP_BASE = 10;
 
 // --- Global State & Listeners ---
 let currentUser = JSON.parse(localStorage.getItem('toto_active_user')) || null;
@@ -915,7 +915,7 @@ function updateRidePreview() {
   const drop = destinationInput.value;
   if (!pickup || !drop || pickup === drop) { pricePreviewCard.classList.add('hidden'); return; }
   const distance = Number((Math.abs(Number(pickup) - Number(drop)) * STOP_DISTANCE_KM).toFixed(1));
-  const fare = FARE_PER_TRIP_BASE * Math.max(1, Math.floor(distance / 2));
+  const fare = FARE_PER_TRIP_BASE * Math.max(1, distance);
   distanceInfoInput.value = `${distance} km`;
   fareInfoInput.value = `₹${fare}`;
   pricePreviewCard.classList.remove('hidden');
