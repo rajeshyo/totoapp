@@ -114,8 +114,8 @@ router.get('/pending', authMiddleware, async (req, res) => {
 // ACCEPT RIDE (Driver)
 router.post('/accept/:rideId', authMiddleware, async (req, res) => {
   try {
-    const ride = await Ride.findByIdAndUpdate(
-      req.params.rideId,
+    const ride = await Ride.findOneAndUpdate(
+      { _id: req.params.rideId, rideStatus: 'pending' },
       { 
         driverId: req.userId, 
         rideStatus: 'accepted',
@@ -127,9 +127,9 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
     .populate('driverId', 'firstName lastName phone profilePhoto vehicleNumber');
 
     if (!ride) {
-      return res.status(404).json({
+      return res.status(400).json({
         success: false,
-        message: 'Ride not found'
+        message: 'রাইডটি ইতিমধ্যে অন্য কেউ নিয়ে নিয়েছে অথবা বাতিল হয়েছে।'
       });
     }
 
@@ -149,16 +149,16 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
 // START RIDE (Driver)
 router.post('/start/:rideId', authMiddleware, async (req, res) => {
   try {
-    const ride = await Ride.findByIdAndUpdate(
-      req.params.rideId,
+    const ride = await Ride.findOneAndUpdate(
+      { _id: req.params.rideId, driverId: req.userId, rideStatus: 'accepted' },
       { rideStatus: 'in_progress' },
       { new: true }
     );
 
     if (!ride) {
-      return res.status(404).json({
+      return res.status(400).json({
         success: false,
-        message: 'Ride not found'
+        message: 'Ride not found or invalid state'
       });
     }
 
@@ -178,8 +178,8 @@ router.post('/start/:rideId', authMiddleware, async (req, res) => {
 // END RIDE (Driver)
 router.post('/end/:rideId', authMiddleware, async (req, res) => {
   try {
-    const ride = await Ride.findByIdAndUpdate(
-      req.params.rideId,
+    const ride = await Ride.findOneAndUpdate(
+      { _id: req.params.rideId, driverId: req.userId, rideStatus: { $in: ['accepted', 'in_progress'] } },
       { 
         rideStatus: 'completed',
         endTime: new Date(),
@@ -189,9 +189,9 @@ router.post('/end/:rideId', authMiddleware, async (req, res) => {
     );
 
     if (!ride) {
-      return res.status(404).json({
+      return res.status(400).json({
         success: false,
-        message: 'Ride not found'
+        message: 'Ride not found or invalid state'
       });
     }
 
@@ -262,16 +262,16 @@ router.get('/user/rides', authMiddleware, async (req, res) => {
 // CANCEL RIDE
 router.post('/cancel/:rideId', authMiddleware, async (req, res) => {
   try {
-    const ride = await Ride.findByIdAndUpdate(
-      req.params.rideId,
+    const ride = await Ride.findOneAndUpdate(
+      { _id: req.params.rideId, rideStatus: { $in: ['pending', 'accepted'] } },
       { rideStatus: 'cancelled' },
       { new: true }
     );
 
     if (!ride) {
-      return res.status(404).json({
+      return res.status(400).json({
         success: false,
-        message: 'Ride not found'
+        message: 'Ride not found or cannot be cancelled'
       });
     }
 
@@ -291,16 +291,9 @@ router.post('/cancel/:rideId', authMiddleware, async (req, res) => {
 // REJECT RIDE (Driver)
 router.post('/reject/:rideId', authMiddleware, async (req, res) => {
   try {
-    const ride = await Ride.findByIdAndUpdate(
-      req.params.rideId,
-      { 
-        driverId: null,
-        rideStatus: 'pending'  // Back to pending for other drivers
-      },
-      { new: true }
-    )
-    .populate('passengerId', 'firstName lastName phone profilePhoto')
-    .populate('driverId', 'firstName lastName phone profilePhoto vehicleNumber');
+    // We just verify the ride exists, but we don't modify it. 
+    // Modifying it to 'pending' would unassign another driver if they already accepted it!
+    const ride = await Ride.findById(req.params.rideId);
 
     if (!ride) {
       return res.status(404).json({

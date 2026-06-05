@@ -1610,6 +1610,9 @@ async function acceptRide(rideId) {
   } catch (error) {
     console.error("Accept ride error:", error);
     showPopup('ত্রুটি', 'রাইডটি ইতিমধ্যে অন্য কেউ নিয়ে নিয়েছে অথবা বাতিল হয়েছে।', '⚠️');
+    
+    // Refresh the pending queue so the taken ride disappears
+    listenToPendingQueue();
   }
 }
 
