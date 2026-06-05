@@ -64,6 +64,24 @@
       </div>
     </aside>
 
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="popup-overlay hidden" aria-hidden="true" style="z-index: 10000;">
+      <div class="popup-card" role="dialog" aria-modal="true">
+        <h3 style="margin-top: 0; text-align: center;">সেটিংস (Settings)</h3>
+        <div style="margin: 20px 0;">
+          <label class="field-label">ভাষা (Language)</label>
+          <select id="languageSelect" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+            <option value="bn">বাংলা (Bengali)</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button id="saveSettingsBtn" class="button primary" style="flex: 1;">সেভ করুন</button>
+          <button id="closeSettingsBtn" class="button secondary" style="flex: 1; background: #e0e0e0; color: #333;">বাতিল</button>
+        </div>
+      </div>
+    </div>
+
     <header class="topbar hidden" id="mainHeader">
       <div class="header-left">
         <button id="menuBtn" class="icon-button">

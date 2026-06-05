@@ -28,8 +28,242 @@ function notifyCustomerRideAccepted(driverName, driverPhone) {
 // ===== API Configuration =====
 const API_BASE_URL ='https://totoapp.onrender.com/api';
 
+// ===== Localization =====
+const uiTranslations = {
+  'আপনার পথচলার সাথী': 'Your Travel Companion',
+  'সহজ বুকিং': 'Easy Booking',
+  'মাত্র দুটি ক্লিকে আপনার গন্তব্য নির্বাচন করুন': 'Choose destination in two clicks',
+  'নিরাপদ যাত্রা': 'Safe Journey',
+  'সকল চালক যাচাইকৃত এবং রেটিং প্রাপ্ত': 'Verified and rated drivers',
+  'স্বচ্ছ মূল্য': 'Transparent Pricing',
+  'কোনো লুকানো খরচ নেই, সবকিছু স্পষ্ট': 'No hidden costs, very clear',
+  'বিশ্বস্ত সেবা': 'Trusted Service',
+  'সর্বোত্তম গ্রাহক সেবা এবং সহায়তা': 'Best support and service',
+  'লোড হচ্ছে...': 'Loading...',
+  '🏠 হোম': '🏠 Home',
+  '📅 আমার রাইড ইতিহাস': '📅 My Ride History',
+  '❤️ প্রিয় স্থান (Favorites)': '❤️ Favorite Places',
+  '❓ সাহায্য ও সাপোর্ট': '❓ Help & Support',
+  '⚙️ সেটিংস': '⚙️ Settings',
+  'লগআউট করুন': 'Logout',
+  'লগইন করুন': 'Login',
+  'সাইন আপ করুন': 'Sign Up',
+  'ফোন নম্বর লিখুন': 'Enter phone number',
+  'পাসওয়ার্ড দিন': 'Enter password',
+  'আপনি কী?': 'What are you?',
+  'যাত্রী': 'Passenger',
+  'চালক': 'Driver',
+  'মোবাইল নম্বর': 'Mobile Number',
+  'নামের প্রথমাংশ': 'First Name',
+  'পদবী': 'Last Name',
+  'নতুন পাসওয়ার্ড': 'New Password',
+  'গাড়ির নম্বর (যেমন: WB54T1234)': 'Vehicle No (e.g. WB54)',
+  'অ্যাকাউন্ট তৈরি করুন': 'Create Account',
+  'সহজ টোটো বুক করুন': 'Book Toto Easily',
+  'সুলভ, নিরাপদ ও বিশ্বস্ত পরিষেবা': 'Affordable, Safe, Reliable',
+  'শুরুর স্থান নির্বাচন করুন': 'Select Pickup',
+  'গ্রাম': 'Village',
+  'গ্রাম নির্বাচন করুন': 'Select Village',
+  'স্টপেজ': 'Stoppage',
+  'স্টপেজ নির্বাচন করুন': 'Select Stoppage',
+  'গন্তব্য নির্বাচন করুন': 'Select Destination',
+  'মোট দূরত্ব:': 'Total Distance:',
+  'ভাড়া উক্তি:': 'Fare Quote:',
+  'স্থলচিহ্ন (ঐচ্ছিক)': 'Landmark (Optional)',
+  'যেমন: বড় বটগাছের পাশে': 'e.g. near banyan tree',
+  'রাইড খুঁজুন': 'Find Ride',
+  'জনপ্রিয় স্থান (তাত্ক্ষণিক বুকিং)': 'Popular Places',
+  'প্রথমে শুরুর স্থান সেট করুন, তারপর গন্তব্যে ক্লিক করুন।': 'First select pickup, then drop.',
+  'নতুন স্টপেজ যোগ করুন': 'Add New Stoppage',
+  'স্টপেজের নাম': 'Stoppage Name',
+  'যেমন: করাটিয়া মন্দির': 'e.g. Karatia Temple',
+  'যোগ করুন': 'Add',
+  'ড্রাইভার প্যানেল': 'Driver Panel',
+  'স্বাগতম': 'Welcome',
+  'অফলাইন': 'Offline',
+  'অনলাইন': 'Online',
+  'আজকের রাইড': 'Today\'s Rides',
+  'আজকের আয়': 'Today\'s Income',
+  'রেটিং': 'Rating',
+  'নতুন রাইড অনুরোধ': 'New Ride Requests',
+  'অনলাইন যান এবং নতুন রাইড রিকোয়েস্টের জন্য অপেক্ষা করুন।': 'Go online for ride requests.',
+  'চলতি ট্রিপ প্রগতিশীল': 'Trip in Progress',
+  'গ্রাহকের নাম': 'Customer Name',
+  'আমার প্রোফাইল': 'My Profile',
+  '✉️ ইমেইল:': '✉️ Email:',
+  '📱 ফোন:': '📱 Phone:',
+  '🔢 গাড়ির নম্বর:': '🔢 Vehicle No:',
+  '📊 মোট রাইড:': '📊 Total Rides:',
+  '⭐ রেটিং:': '⭐ Rating:',
+  'প্রোফাইল এডিট করুন': 'Edit Profile',
+  'লগআউট': 'Logout',
+  'রাইড হিস্টরি': 'Ride History',
+  'কোনো রাইড নেই': 'No rides',
+  'প্রিয় স্থান': 'Favorite Places',
+  'কোনো প্রিয় স্থান নেই': 'No favorite places',
+  'হোম': 'Home',
+  'প্রিয়': 'Favorites',
+  'রাইড': 'Rides',
+  'প্রোফাইল': 'Profile',
+  'রিফ্রেশ': 'Refresh',
+  'বিজ্ঞপ্তি': 'Notification',
+  'ঠিক আছে': 'OK',
+  'রাইড চলছে...': 'Ride in Progress...',
+  'চালকের নাম': 'Driver Name',
+  '📞 কল করুন': '📞 Call',
+  'পিকআপ:': 'Pickup:',
+  'গন্তব্য:': 'Dropoff:',
+  'দূরত্ব:': 'Distance:',
+  'ভাড়া:': 'Fare:',
+  'ট্রিপ সমাপ্ত করুন': 'End Trip',
+  'টোটো খোঁজা হচ্ছে...': 'Looking for Toto...',
+  'চালকের জন্য অপেক্ষা করুন': 'Wait for Driver',
+  'অপেক্ষা করুন...': 'Please wait...',
+  'সেভ করুন': 'Save',
+  'বাতিল': 'Cancel',
+  'আপনার ট্রিপটি সফলভাবে সম্পন্ন হয়েছে। ধন্যবাদ!': 'Trip completed successfully!',
+  'আপনার একটি রাইড ইতিমধ্যে খোঁজা হচ্ছে।': 'A ride is already searching.',
+  'দয়া করে প্রথমে আপনার শুরুর স্থান (পিকআপ) নির্বাচন করুন।': 'Please select pickup location.',
+  'শুরুর স্থান এবং গন্তব্য একই হতে পারে না।': 'Pickup and dropoff must differ.',
+  'আপনার টোটো বুকিং অনুরোধটি চালকদের পাঠানো হয়েছে।': 'Booking request sent to drivers.',
+  'বুকিং করতে সমস্যা হচ্ছে, আবার চেষ্টা করুন।': 'Booking failed, please try again.',
+  'রাইড শেষ করা হয়েছে।': 'Ride ended.',
+  'রাইড শেষ করতে সমস্যা হয়েছে।': 'Error ending ride.',
+  'নতুন স্টপেজ যোগ করা হয়েছে।': 'Stoppage added.',
+  'স্টপেজ যোগ করতে সমস্যা হয়েছে।': 'Error adding stoppage.',
+  'গ্রাম এবং নতুন স্টপেজের নাম লিখুন।': 'Enter village and stoppage.',
+  'আপনার একটি ট্রিপ চলমান রয়েছে।': 'You have an active trip.',
+  'উপলব্ধ রাইড খুঁজছি...': 'Searching for rides...',
+  'এই মুহূর্তে কোনো বুকিং অনুরোধ নেই।': 'No requests currently.',
+  'গ্রহণ করুন': 'Accept',
+  'প্রত্যাখ্যান করুন': 'Reject',
+  'রাইডটি ইতিমধ্যে অন্য কেউ নিয়ে নিয়েছে অথবা বাতিল হয়েছে।': 'Ride taken or cancelled.',
+  'রাইড প্রত্যাখ্যান করা হয়েছে।': 'Ride rejected.',
+  'যাত্রী ট্রিপটি সমাপ্ত করেছেন।': 'Passenger ended trip.',
+  'ট্রিপ শেষ': 'Trip Ended',
+  'ত্রুটি': 'Error',
+  'সফলতা': 'Success',
+  'সফল': 'Success',
+  'অনুরোধ পাঠানো হয়েছে': 'Request Sent',
+  'অপেক্ষা করুন': 'Please Wait',
+  'শুরুর স্থান প্রয়োজন': 'Pickup Needed',
+  'গন্তব্য সেট হয়েছে': 'Destination Set',
+  'আপনার ট্রিপটি বাতিল হয়েছে।': 'Trip was cancelled.',
+  'আমরা আপনার জন্য খুঁজছি': 'We are looking for you',
+  'কাছাকাছি একটি টোটো খুঁজে বের করা হচ্ছে...': 'Finding a nearby Toto...',
+  'নিযুক্ত হচ্ছে...': 'Assigning...',
+  'যাত্রী (Passenger)': 'Passenger',
+  'টোটো চালক (Driver)': 'Driver',
+  'প্রোফাইল এডিট': 'Edit Profile',
+  'নাম (First Name)': 'First Name',
+  'পদবি (Last Name)': 'Last Name',
+  'ফোন নম্বর (পরিবর্তনযোগ্য নয়)': 'Phone (Fixed)',
+  'গাড়ির নম্বর (পরিবর্তনযোগ্য নয়)': 'Vehicle No (Fixed)',
+  'প্রোফাইল সফলভাবে আপডেট করা হয়েছে।': 'Profile updated.',
+  'আপনার চালক': 'Your Driver',
+  'কে রেটিং দিন': 'Rate driver',
+  'সাবমিট': 'Submit',
+  'স্কিপ করুন': 'Skip',
+  'আপনার মতামতের জন্য ধন্যবাদ!': 'Thanks for feedback!',
+  'ধন্যবাদ': 'Thank you',
+  'ট্রিপ সম্পন্ন হয়েছে! 🎉': 'Trip Completed! 🎉',
+  'অ্যাকাউন্ট তৈরি হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...': 'Creating account...',
+  'ফোন নম্বর ১০ অঙ্কের হতে হবে।': 'Phone must be 10 digits.',
+  'গাড়ির নম্বর প্রয়োজনীয়।': 'Vehicle number required.',
+  'লগইন করা হচ্ছে...': 'Logging in...',
+  'লগইন ব্যর্থ হয়েছে।': 'Login failed.',
+  'সাইন আপ ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।': 'Signup failed.',
+  'আপনি অফলাইনে আছেন। রাইড পেতে অনলাইন মোড চালু করুন।': 'You are offline. Go online to receive rides.',
+  'সেটিংস (Settings)': 'Settings',
+  'ভাষা (Language)': 'Language',
+  '⏳ চলমান': '⏳ Ongoing',
+  '✅ সম্পন্ন': '✅ Completed',
+  '❌ বাতিল': '❌ Cancelled',
+  'অজানা': 'Unknown',
+  'খোঁজা হচ্ছে...': 'Searching...',
+  'গাড়ি:': 'Vehicle:',
+  'বুক করুন': 'Book',
+  'আপনার কোনো রাইড হিস্টরি নেই': 'You have no ride history',
+  'হিস্টরি লোড করতে সমস্যা হয়েছে।': 'Error loading history.',
+  'নতুন রাইড অনুরোধ': 'New Ride Request',
+  'চালক গ্রহণ করেছেন': 'Driver Accepted',
+  '📌 স্থলচিহ্ন:': '📌 Landmark:',
+  '🏪 করাটিয়া বাজার': '🏪 Karatia Bazar',
+  '🎓 গুসকরা কলেজ': '🎓 Guskara College',
+  '🛣️ গুসকরা মোড়': '🛣️ Guskara More',
+  '🚌 শিমুলগ্রাম বাস স্ট্যান্ড': '🚌 Shimulgram Bus Stand'
+};
+
+let currentLang = localStorage.getItem('toto_lang') || 'bn';
+
+const locationTranslations = {
+  'করাটিয়া বাজার': 'Karatia Bazar',
+  'করাটিয়া স্কুল মোড়': 'Karatia School More',
+  'করাটিয়া মোড়': 'Karatia More',
+  'গুসকরা কলেজ': 'Guskara College',
+  'গুসকরা মোড়': 'Guskara More',
+  'শিমুলগ্রাম বাস স্ট্যান্ড': 'Shimulgram Bus Stand',
+  'শিমুলগ্রাম পেট্রোল পাম্প': 'Shimulgram Petrol Pump',
+  'হাসপাতাল মোড়': 'Hospital More',
+  'স্টেশন রোড': 'Station Road',
+  'বাজার ঘাট': 'Bazar Ghat',
+  'স্কুল মোড়': 'School More',
+  'করাপাড়া মোড়': 'Korapara More',
+  'করাটিয়া': 'Karatia',
+  'গুসকরা': 'Guskara',
+  'শিমুলগ্রাম': 'Shimulgram'
+};
+
+function t(bengaliString) {
+  if (!bengaliString) return bengaliString;
+  const trimmed = bengaliString.trim();
+  if (currentLang === 'en' && uiTranslations[trimmed]) {
+    return bengaliString.replace(trimmed, uiTranslations[trimmed]);
+  }
+  if (currentLang === 'en') {
+    let translated = trimmed;
+    for (const [bn, en] of Object.entries(locationTranslations)) {
+      translated = translated.replace(new RegExp(bn, 'g'), en);
+    }
+    if (translated !== trimmed) {
+      return bengaliString.replace(trimmed, translated);
+    }
+  }
+  return bengaliString;
+}
+
+function translateNode(node) {
+  if (node.nodeType === 3) {
+    const original = node._origText || node.nodeValue;
+    const trimmed = original.trim();
+    if (trimmed) {
+      if (!node._origText) node._origText = original;
+      const translated = currentLang === 'en' ? (uiTranslations[trimmed] || trimmed) : trimmed;
+      if (node.nodeValue !== original.replace(trimmed, translated)) {
+        node.nodeValue = original.replace(trimmed, translated);
+      }
+    }
+  } else if (node.nodeType === 1) {
+    if (node.tagName === 'SCRIPT' || node.tagName === 'STYLE') return;
+    
+    if (node.hasAttribute('placeholder')) {
+      const original = node.getAttribute('data-orig-ph') || node.getAttribute('placeholder');
+      if (!node.getAttribute('data-orig-ph')) node.setAttribute('data-orig-ph', original);
+      const translated = currentLang === 'en' ? (uiTranslations[original] || original) : original;
+      node.setAttribute('placeholder', translated);
+    }
+    
+    node.childNodes.forEach(translateNode);
+  }
+}
+
+function applyTranslations() {
+  translateNode(document.body);
+}
+
 // Splash screen handler - show only if user not logged in
 window.addEventListener('load', () => {
+  applyTranslations();
   const currentUser = localStorage.getItem('toto_active_user');
   const splashScreen = document.getElementById('splashScreen');
   
@@ -176,18 +410,18 @@ function findStoppageInData(stoppageId) {
 
 function populateVillageSelect(selectEl, placeholder) {
   if (!selectEl) return;
-  selectEl.innerHTML = `<option value="">${placeholder}</option>`;
+  selectEl.innerHTML = `<option value="">${t(placeholder)}</option>`;
   locationData.forEach(village => {
     const option = document.createElement('option');
     option.value = village.id;
-    option.textContent = village.nameBn;
+    option.textContent = t(village.nameBn);
     selectEl.appendChild(option);
   });
 }
 
 function populateStoppageSelect(selectEl, villageId, placeholder) {
   if (!selectEl) return;
-  selectEl.innerHTML = `<option value="">${placeholder}</option>`;
+  selectEl.innerHTML = `<option value="">${t(placeholder)}</option>`;
 
   const village = locationData.find(v => v.id === villageId);
   if (!village) {
@@ -198,7 +432,7 @@ function populateStoppageSelect(selectEl, villageId, placeholder) {
   village.stoppages.forEach(stoppage => {
     const option = document.createElement('option');
     option.value = stoppage.id;
-    option.textContent = stoppage.nameBn;
+    option.textContent = t(stoppage.nameBn);
     selectEl.appendChild(option);
   });
   selectEl.disabled = false;
@@ -207,7 +441,7 @@ function populateStoppageSelect(selectEl, villageId, placeholder) {
 function setLocationSelection(villageSelect, stoppageSelect, villageId, stoppageId) {
   if (!villageSelect || !stoppageSelect) return;
   villageSelect.value = villageId;
-  populateStoppageSelect(stoppageSelect, villageId, 'স্টপেজ নির্বাচন করুন');
+  populateStoppageSelect(stoppageSelect, villageId, t('স্টপেজ নির্বাচন করুন'));
   stoppageSelect.value = stoppageId;
 }
 
@@ -256,9 +490,9 @@ async function loadLocations() {
     console.error('Failed to load locations from API:', error);
   }
       
-      populateVillageSelect(pickupVillageSelect, 'গ্রাম নির্বাচন করুন');
-      populateVillageSelect(dropoffVillageSelect, 'গ্রাম নির্বাচন করুন');
-      populateVillageSelect(newStoppageVillageSelect, 'গ্রাম নির্বাচন করুন');
+      populateVillageSelect(pickupVillageSelect, t('গ্রাম নির্বাচন করুন'));
+      populateVillageSelect(dropoffVillageSelect, t('গ্রাম নির্বাচন করুন'));
+      populateVillageSelect(newStoppageVillageSelect, t('গ্রাম নির্বাচন করুন'));
 }
 
 loadLocations();
@@ -266,8 +500,8 @@ loadLocations();
 // --- Global Notification Alert ---
 function showPopup(title, message, icon = '🔔') {
   if (!popupOverlay) return;
-  popupTitle.textContent = title;
-  popupMessage.textContent = message;
+  popupTitle.textContent = t(title);
+  popupMessage.textContent = t(message);
   popupIcon.textContent = icon;
   popupOverlay.classList.remove('hidden');
   popupOverlay.setAttribute('aria-hidden', 'false');
@@ -304,7 +538,7 @@ function renderApp() {
   mainHeader.classList.remove('hidden');
   appBottomNav.classList.remove('hidden');
   profileNameEl.textContent = `${currentUser.firstName} ${currentUser.lastName}`;
-  profileRoleEl.textContent = currentUser.userType === 'passenger' ? 'যাত্রী (Passenger)' : 'টোটো চালক (Driver)';
+  profileRoleEl.textContent = currentUser.userType === 'passenger' ? t('যাত্রী (Passenger)') : t('টোটো চালক (Driver)');
   profileAvatarEl.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.firstName}`;
 
   // Hide Favorites Menu for Drivers
@@ -386,15 +620,15 @@ function updateNavButtons(active) {
 
 function displayProfileInfo() {
   document.getElementById('profilePageName').textContent = `${currentUser.firstName} ${currentUser.lastName}`;
-  document.getElementById('profilePageUserType').textContent = currentUser.userType === 'driver' ? 'টোটো চালক' : 'যাত্রী';
+  document.getElementById('profilePageUserType').textContent = currentUser.userType === 'driver' ? t('চালক') : t('যাত্রী');
   document.getElementById('profilePagePhone').textContent = `***${currentUser.phone.slice(-4)}`;
-  document.getElementById('profilePageEmail').textContent = currentUser.email || 'লেখা নেই';
+  document.getElementById('profilePageEmail').textContent = currentUser.email || t('লেখা নেই');
   document.getElementById('profilePagePhoneFull').textContent = currentUser.phone;
   document.getElementById('profilePageAvatar').src = `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.firstName}`;
   
   if (currentUser.userType === 'driver') {
     document.getElementById('vehicleNumberDetail').classList.remove('hidden');
-    document.getElementById('profilePageVehicle').textContent = currentUser.vehicleNumber || 'না আছে';
+    document.getElementById('profilePageVehicle').textContent = currentUser.vehicleNumber || t('না আছে');
   } else {
     document.getElementById('vehicleNumberDetail').classList.add('hidden');
   }
@@ -410,33 +644,33 @@ async function displayRideHistory() {
   const historyList = document.getElementById('rideHistoryList');
   if (!historyList) return;
   
-  historyList.innerHTML = '<p class="muted-text center-block">লোড হচ্ছে...</p>';
+  historyList.innerHTML = `<p class="muted-text center-block">${t('লোড হচ্ছে...')}</p>`;
   
   try {
     const response = await apiCall('/rides/user/rides');
     
     if (!response.success || !response.rides || response.rides.length === 0) {
-      historyList.innerHTML = '<p class="muted-text center-block">আপনার কোনো রাইড হিস্টরি নেই</p>';
+      historyList.innerHTML = `<p class="muted-text center-block">${t('আপনার কোনো রাইড হিস্টরি নেই')}</p>`;
       return;
     }
 
     historyList.innerHTML = response.rides.map(ride => {
       const isPassenger = currentUser.userType === 'passenger';
       const otherUser = isPassenger ? ride.driverId : ride.passengerId;
-      const otherUserName = otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : (isPassenger ? 'খোঁজা হচ্ছে...' : 'অজানা');
+      const otherUserName = otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : (isPassenger ? t('খোঁজা হচ্ছে...') : t('অজানা'));
       const rideDate = new Date(ride.createdAt).toLocaleString('bn-BD', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
       
-      let statusText = '⏳ চলমান';
-      if (ride.rideStatus === 'completed') statusText = '✅ সম্পন্ন';
-      else if (ride.rideStatus === 'cancelled') statusText = '❌ বাতিল';
+      let statusText = t('⏳ চলমান');
+      if (ride.rideStatus === 'completed') statusText = t('✅ সম্পন্ন');
+      else if (ride.rideStatus === 'cancelled') statusText = t('❌ বাতিল');
 
       return `
         <div class="request-item" style="margin-bottom: 15px;">
-          <p>👤 <strong>${isPassenger ? 'চালক' : 'যাত্রী'}: ${otherUserName}</strong> <span class="badge" style="float: right;">${rideDate}</span></p>
-          ${ride.driverId && ride.driverId.vehicleNumber ? `<p>🔢 গাড়ি: <strong>${ride.driverId.vehicleNumber}</strong></p>` : ''}
-          <p>📍 পিকআপ: ${ride.pickupLocation.address}</p>
-          <p>🏁 গন্তব্য: ${ride.dropoffLocation.address}</p>
-          <p>💰 ভাড়া: <span class="text-green">₹${ride.fare}</span></p>
+          <p>👤 <strong>${isPassenger ? t('চালক') : t('যাত্রী')}: ${otherUserName}</strong> <span class="badge" style="float: right;">${rideDate}</span></p>
+          ${ride.driverId && ride.driverId.vehicleNumber ? `<p>🔢 ${t('গাড়ি:')} <strong>${ride.driverId.vehicleNumber}</strong></p>` : ''}
+          <p>📍 ${t('পিকআপ:')} ${t(ride.pickupLocation.address)}</p>
+          <p>🏁 ${t('গন্তব্য:')} ${t(ride.dropoffLocation.address)}</p>
+          <p>💰 ${t('ভাড়া:')} <span class="text-green">₹${ride.fare}</span></p>
           <div class="request-actions" style="margin-top: 10px;">
             <div class="status-badge ${ride.rideStatus}" style="width: 100%; text-align: center; display: block; padding: 10px; background: var(--surface-dim); border-radius: 8px; font-weight: bold;">
               ${statusText}
@@ -447,7 +681,7 @@ async function displayRideHistory() {
     }).join('');
   } catch (error) {
     console.error("Error loading ride history:", error);
-    historyList.innerHTML = '<p class="muted-text center-block">হিস্টরি লোড করতে সমস্যা হয়েছে।</p>';
+    historyList.innerHTML = `<p class="muted-text center-block">${t('হিস্টরি লোড করতে সমস্যা হয়েছে।')}</p>`;
   }
 }
 
@@ -461,15 +695,15 @@ function displayFavorites() {
   ];
   
   if (popularPlaces.length === 0) {
-    favoritesList.innerHTML = '<p class="muted-text center-block">কোনো প্রিয় স্থান নেই</p>';
+    favoritesList.innerHTML = `<p class="muted-text center-block">${t('কোনো প্রিয় স্থান নেই')}</p>`;
   } else {
     favoritesList.innerHTML = popularPlaces.map(place => `
       <div class="favorite-item">
         <div class="favorite-info">
-          <p class="favorite-address" style="font-size: 1.05rem;">${place.name}</p>
+          <p class="favorite-address" style="font-size: 1.05rem;">${t(place.name)}</p>
         </div>
         <div class="favorite-action">
-          <button class="button primary" style="padding: 8px 16px; font-size: 0.85rem;" onclick="bookFavorite('${place.villageId}', '${place.stoppageId}', '${place.name}')">বুক করুন</button>
+          <button class="button primary" style="padding: 8px 16px; font-size: 0.85rem;" onclick="bookFavorite('${place.villageId}', '${place.stoppageId}', '${place.name}')">${t('বুক করুন')}</button>
         </div>
       </div>
     `).join('');
@@ -517,6 +751,35 @@ sidebarLogoutBtn.addEventListener('click', () => {
   activeRideId = null;
   clearAllListeners();
   renderApp();
+});
+
+// Settings Modal Logic
+document.getElementById('menuSettings')?.addEventListener('click', () => {
+  closeSidebar();
+  document.getElementById('languageSelect').value = currentLang;
+  document.getElementById('settingsModal').classList.remove('hidden');
+});
+
+document.getElementById('closeSettingsBtn')?.addEventListener('click', () => {
+  document.getElementById('settingsModal').classList.add('hidden');
+});
+
+document.getElementById('saveSettingsBtn')?.addEventListener('click', () => {
+  currentLang = document.getElementById('languageSelect').value;
+  localStorage.setItem('toto_lang', currentLang);
+  applyTranslations();
+  if(pickupVillageSelect) populateVillageSelect(pickupVillageSelect, 'গ্রাম নির্বাচন করুন');
+  if(dropoffVillageSelect) populateVillageSelect(dropoffVillageSelect, 'গ্রাম নির্বাচন করুন');
+  if(newStoppageVillageSelect) populateVillageSelect(newStoppageVillageSelect, 'গ্রাম নির্বাচন করুন');
+  document.getElementById('settingsModal').classList.add('hidden');
+  
+  // Keeps user on their current page instead of returning to Home!
+  if (currentUser) {
+    if (!rideHistoryPage.classList.contains('hidden')) displayRideHistory();
+    else if (!favoriteRidesPage.classList.contains('hidden')) displayFavorites();
+    else if (!profilePage.classList.contains('hidden')) displayProfileInfo();
+    else renderApp();
+  }
 });
 
 // Refresh button handler - moved to bottom nav
@@ -676,7 +939,7 @@ signupForm.addEventListener('submit', async event => {
     return;
   }
   
-  authMessage.textContent = 'অ্যাকাউন্ট তৈরি হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...';
+  authMessage.textContent = t('অ্যাকাউন্ট তৈরি হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...');
   authMessage.style.color = '#09663e';
   
   try {
@@ -699,7 +962,7 @@ signupForm.addEventListener('submit', async event => {
   } catch (error) {
     console.error("Signup error:", error);
     authMessage.style.color = 'var(--danger-color)';
-    authMessage.textContent = error.message || 'সাইন আপ ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।';
+    authMessage.textContent = error.message || t('সাইন আপ ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।');
   }
 });
 
@@ -715,7 +978,7 @@ loginForm.addEventListener('submit', async event => {
     return;
   }
   
-  authMessage.textContent = 'লগইন করা হচ্ছে...';
+  authMessage.textContent = t('লগইন করা হচ্ছে...');
   authMessage.style.color = '#09663e';
   
   try {
@@ -734,7 +997,7 @@ loginForm.addEventListener('submit', async event => {
   } catch (error) {
     console.error("Login error:", error);
     authMessage.style.color = 'var(--danger-color)';
-    authMessage.textContent = error.message || 'লগইন ব্যর্থ হয়েছে।';
+    authMessage.textContent = error.message || t('লগইন ব্যর্থ হয়েছে।');
   }
 });
 
@@ -839,9 +1102,9 @@ async function pollCustomerRide() {
       if (findingCard) findingCard.classList.add('hidden');
       
       acceptedRideCard.classList.remove('hidden');
-      document.getElementById('acceptedDriverName').textContent = ride.driverId ? `${ride.driverId.firstName} ${ride.driverId.lastName}` : 'নিযুক্ত হচ্ছে...';
-      document.getElementById('acceptedStart').textContent = ride.pickupLocation.address || 'পিকআপ';
-      document.getElementById('acceptedEnd').textContent = ride.dropoffLocation.address || 'গন্তব্য';
+      document.getElementById('acceptedDriverName').textContent = ride.driverId ? `${ride.driverId.firstName} ${ride.driverId.lastName}` : t('নিযুক্ত হচ্ছে...');
+      document.getElementById('acceptedStart').textContent = ride.pickupLocation.address ? t(ride.pickupLocation.address) : t('পিকআপ:');
+      document.getElementById('acceptedEnd').textContent = ride.dropoffLocation.address ? t(ride.dropoffLocation.address) : t('গন্তব্য:');
       document.getElementById('acceptedDistance').textContent = `${ride.distance} km`;
       document.getElementById('acceptedFare').textContent = `₹${ride.fare}`;
       // Display driver phone number - only last 4 digits
@@ -872,7 +1135,7 @@ function createFindingCard() {
       <h3>আমরা আপনার জন্য খুঁজছি</h3>
     </div>
     <div class="center-block">
-      <p class="muted-text">কাছাকাছি একটি টোটো খুঁজে বের করা হচ্ছে...</p>
+      <p class="muted-text">${t('কাছাকাছি একটি টোটো খুঁজে বের করা হচ্ছে...')}</p>
       <p style="font-size: 2rem; margin: 20px 0;">🔍</p>
     </div>
   `;
@@ -887,17 +1150,17 @@ function createFindingCard() {
 }
 
 // Call functions
-function callDriver() {
+window.callDriver = function() {
   const btn = document.getElementById('driverCallBtn');
   const phone = btn.href.replace('tel:', '');
   window.location.href = `tel:${phone}`;
-}
+};
 
-function callCustomer() {
+window.callCustomer = function() {
   const btn = document.getElementById('customerCallBtn');
   const phone = btn.href.replace('tel:', '');
   window.location.href = `tel:${phone}`;
-}
+};
 
 // Daily stats tracking
 function getOrInitializeDailyStats() {
@@ -943,16 +1206,16 @@ function resetCustomerUI() {
   
   // Reset form
   rideSubmitBtn.disabled = false;
-  rideSubmitBtn.textContent = 'রাইড খুঁজুন';
+  rideSubmitBtn.textContent = t('রাইড খুঁজুন');
   rideSubmitBtn.style.opacity = "1";
   if (pickupVillageSelect) pickupVillageSelect.value = '';
   if (pickupStoppageSelect) {
-    pickupStoppageSelect.innerHTML = '<option value="">স্টপেজ নির্বাচন করুন</option>';
+    pickupStoppageSelect.innerHTML = `<option value="">${t('স্টপেজ নির্বাচন করুন')}</option>`;
     pickupStoppageSelect.disabled = true;
   }
   if (dropoffVillageSelect) dropoffVillageSelect.value = '';
   if (dropoffStoppageSelect) {
-    dropoffStoppageSelect.innerHTML = '<option value="">স্টপেজ নির্বাচন করুন</option>';
+    dropoffStoppageSelect.innerHTML = `<option value="">${t('স্টপেজ নির্বাচন করুন')}</option>`;
     dropoffStoppageSelect.disabled = true;
   }
   if (landmarkInput) landmarkInput.value = '';
@@ -982,7 +1245,7 @@ rideRequestForm.addEventListener('submit', async event => {
   const distance = calculatePreviewDistance();
   
   rideSubmitBtn.disabled = true;
-  rideSubmitBtn.textContent = 'অপেক্ষা করুন...';
+  rideSubmitBtn.textContent = t('অপেক্ষা করুন...');
 
   try {
     const response = await apiCall('/rides/request', 'POST', {
@@ -1098,7 +1361,7 @@ addStoppageBtn?.addEventListener('click', async () => {
   }
 
   addStoppageBtn.disabled = true;
-  addStoppageBtn.textContent = '...';
+  addStoppageBtn.textContent = t('অপেক্ষা করুন...');
 
   try {
     const response = await apiCall('/locations/stoppage', 'POST', { villageId, nameBn: stoppageName });
@@ -1114,7 +1377,7 @@ addStoppageBtn?.addEventListener('click', async () => {
     showPopup('ত্রুটি', 'স্টপেজ যোগ করতে সমস্যা হয়েছে।', '❌');
   } finally {
     addStoppageBtn.disabled = false;
-    addStoppageBtn.textContent = 'যোগ করুন';
+    addStoppageBtn.textContent = t('যোগ করুন');
     
     // Keep existing selected values and refresh stoppages
     const pV = pickupVillageSelect.value;
@@ -1145,7 +1408,7 @@ availabilityToggleCheckbox.addEventListener('change', () => {
 });
 
 function toggleDriverStatus(isAvailable) {
-  toggleStatusLabel.textContent = isAvailable ? 'অনলাইন' : 'অফলাইন';
+  toggleStatusLabel.textContent = isAvailable ? t('অনলাইন') : t('অফলাইন');
   toggleStatusLabel.style.color = isAvailable ? 'var(--primary-brand)' : 'var(--text-muted)';
 
   if (isAvailable) {
@@ -1155,7 +1418,7 @@ function toggleDriverStatus(isAvailable) {
     pollInterval = setInterval(listenToPendingQueue, 1500);
   } else {
     if (pollInterval) clearInterval(pollInterval);
-    rideRequestsContainer.innerHTML = '<p class="muted-text center-block">আপনি অফলাইনে আছেন। রাইড পেতে অনলাইন মোড চালু করুন।</p>';
+    rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('আপনি অফলাইনে আছেন। রাইড পেতে অনলাইন মোড চালু করুন।')}</p>`;
     requestCountBadge.textContent = '0';
   }
 }
@@ -1183,7 +1446,7 @@ async function listenToPendingQueue() {
     requestCountBadge.textContent = rides.length.toString();
     
     if (rides.length === 0) {
-      rideRequestsContainer.innerHTML = '<p class="muted-text center-block">এই মুহূর্তে কোনো বুকিং অনুরোধ নেই।</p>';
+      rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('এই মুহূর্তে কোনো বুকিং অনুরোধ নেই।')}</p>`;
       return;
     }
 
@@ -1193,13 +1456,13 @@ async function listenToPendingQueue() {
       item.className = 'request-item';
       item.innerHTML = `
         <p>👤 <strong>${ride.passengerId.firstName} ${ride.passengerId.lastName}</strong></p>
-        <p>📍 পিকআপ: ${ride.pickupLocation.stoppageName || ride.pickupLocation.address}, ${ride.pickupLocation.villageName || ''}</p>
-        ${ride.pickupLocation.landmark ? `<p>📌 স্থলচিহ্ন: ${ride.pickupLocation.landmark}</p>` : ''}
-        <p>🏁 গন্তব্য: ${ride.dropoffLocation.stoppageName || ride.dropoffLocation.address}, ${ride.dropoffLocation.villageName || ''}</p>
-        <p>💰 ভাড়া: <span class="text-green">₹${ride.fare}</span> (${ride.distance} km)</p>
+        <p>📍 ${t('পিকআপ:')} ${t(ride.pickupLocation.stoppageName || ride.pickupLocation.address)}, ${t(ride.pickupLocation.villageName || '')}</p>
+        ${ride.pickupLocation.landmark ? `<p>${t('📌 স্থলচিহ্ন:')} ${ride.pickupLocation.landmark}</p>` : ''}
+        <p>🏁 ${t('গন্তব্য:')} ${t(ride.dropoffLocation.stoppageName || ride.dropoffLocation.address)}, ${t(ride.dropoffLocation.villageName || '')}</p>
+        <p>� ${t('ভাড়া:')} <span class="text-green">₹${ride.fare}</span> (${ride.distance} km)</p>
         <div class="request-actions">
-          <button class="button primary accept-btn" data-id="${ride._id}">গ্রহণ করুন</button>
-          <button class="button secondary reject-btn" data-id="${ride._id}">প্রত্যাখ্যান করুন</button>
+          <button class="button primary accept-btn" data-id="${ride._id}">${t('গ্রহণ করুন')}</button>
+          <button class="button secondary reject-btn" data-id="${ride._id}">${t('প্রত্যাখ্যান করুন')}</button>
         </div>
       `;
       rideRequestsContainer.appendChild(item);
@@ -1232,10 +1495,10 @@ async function acceptRide(rideId) {
       // Notify customer that ride was accepted
       if (response.ride && response.ride.passengerId) {
         const passengerName = response.ride.passengerId.firstName || 'যাত্রী';
-        notifyCustomerRideAccepted('চালক', ''); // Notify customer
+        notifyCustomerRideAccepted(t('চালক'), ''); // Notify customer
       }
       
-      rideRequestsContainer.innerHTML = '<p class="muted-text center-block">আপনার একটি ট্রিপ চলমান রয়েছে।</p>';
+      rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('আপনার একটি ট্রিপ চলমান রয়েছে।')}</p>`;
       requestCountBadge.textContent = '0';
       
       // Start fast polling for active ride - every 1.5 seconds for customer updates
@@ -1288,7 +1551,7 @@ async function listenToDriverActiveRide() {
       
       // Reset to show available rides again with fast polling
       if (availabilityToggleCheckbox.checked) {
-        rideRequestsContainer.innerHTML = '<p class="muted-text center-block">উপলব্ধ রাইড খুঁজছি...</p>';
+        rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('উপলব্ধ রাইড খুঁজছি...')}</p>`;
         requestCountBadge.textContent = '0';
         
         // Immediately restart polling for new rides - fast updates every 1.5 seconds
@@ -1299,7 +1562,7 @@ async function listenToDriverActiveRide() {
       return;
     }
 
-    rideRequestsContainer.innerHTML = '<p class="muted-text center-block">আপনার একটি ট্রিপ চলমান রয়েছে।</p>';
+    rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('আপনার একটি ট্রিপ চলমান রয়েছে।')}</p>`;
     requestCountBadge.textContent = '0';
     driverAcceptedRideCard.classList.remove('hidden');
     
@@ -1311,8 +1574,8 @@ async function listenToDriverActiveRide() {
     // Update call button with full phone
     document.getElementById('customerCallBtn').href = `tel:${customerPhone}`;
     
-    document.getElementById('driverAcceptedStart').textContent = ride.pickupLocation.address;
-    document.getElementById('driverAcceptedEnd').textContent = ride.dropoffLocation.address;
+    document.getElementById('driverAcceptedStart').textContent = t(ride.pickupLocation.address);
+    document.getElementById('driverAcceptedEnd').textContent = t(ride.dropoffLocation.address);
     document.getElementById('driverAcceptedDistance').textContent = `${ride.distance} km`;
     document.getElementById('driverAcceptedFare').textContent = `₹${ride.fare}`;
   } catch (error) {
