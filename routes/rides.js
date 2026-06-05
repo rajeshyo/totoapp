@@ -11,7 +11,7 @@ const {
 const router = express.Router();
 
 const FARE_PER_KM = 10; // per km rate
-const BASE_FARE = 20; // minimum fare
+const BASE_FARE = 10; // minimum fare
 
 function buildLocationFromStoppage(stoppageId, landmark) {
   const found = findStoppage(stoppageId);

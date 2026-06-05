@@ -131,6 +131,11 @@ const acceptedRideCard = document.getElementById('acceptedRideCard');
 const endRideBtn = document.getElementById('endRideBtn');
 const stopChips = document.querySelectorAll('.stop-chip');
 
+// Add Stoppage UI
+const newStoppageVillageSelect = document.getElementById('newStoppageVillage');
+const newStoppageNameInput = document.getElementById('newStoppageName');
+const addStoppageBtn = document.getElementById('addStoppageBtn');
+
 // Drivers workflow targets
 const availabilityToggleCheckbox = document.getElementById('availabilityToggleCheckbox');
 const toggleStatusLabel = document.getElementById('toggleStatusLabel');
@@ -151,7 +156,7 @@ const userTypeSelect = document.getElementById('userType');
 const vehicleNumberWrapper = document.getElementById('vehicleNumberWrapper');
 
 const FARE_PER_KM = 10;
-const BASE_FARE = 20;
+const BASE_FARE = 10;
 let locationData = [];
 
 // --- Global State & Listeners ---
@@ -225,7 +230,17 @@ function calculatePreviewDistance() {
   const pickup = findStoppageInData(pickupStoppageSelect?.value);
   const dropoff = findStoppageInData(dropoffStoppageSelect?.value);
   if (!pickup || !dropoff) return 0;
-  const indexDiff = Math.abs(pickup.stoppage.distanceIndex - dropoff.stoppage.distanceIndex);
+  
+  // If pickup and dropoff are in the exact same village, fix distance to 1 km
+  if (pickup.village.id === dropoff.village.id) {
+    return 1;
+  }
+  
+  const villageIds = locationData.map(v => v.id);
+  const pickupVillageIdx = villageIds.indexOf(pickup.village.id);
+  const dropoffVillageIdx = villageIds.indexOf(dropoff.village.id);
+  
+  const indexDiff = Math.abs(pickupVillageIdx - dropoffVillageIdx);
   return Number(Math.max(1, indexDiff).toFixed(1));
 }
 
@@ -267,6 +282,7 @@ async function loadLocations() {
       
       populateVillageSelect(pickupVillageSelect, 'গ্রাম নির্বাচন করুন');
       populateVillageSelect(dropoffVillageSelect, 'গ্রাম নির্বাচন করুন');
+      populateVillageSelect(newStoppageVillageSelect, 'গ্রাম নির্বাচন করুন');
 }
 
 loadLocations();
@@ -1093,6 +1109,55 @@ stopChips.forEach(chip => {
     setLocationSelection(dropoffVillageSelect, dropoffStoppageSelect, villageId, stoppageId);
     updateRidePreview();
   });
+});
+
+// Add New Stoppage Logic
+addStoppageBtn?.addEventListener('click', async () => {
+  const villageId = newStoppageVillageSelect?.value;
+  const stoppageName = newStoppageNameInput?.value?.trim();
+
+  if (!villageId || !stoppageName) {
+    showPopup('ত্রুটি', 'গ্রাম এবং নতুন স্টপেজের নাম লিখুন।', '❌');
+    return;
+  }
+
+  addStoppageBtn.disabled = true;
+  addStoppageBtn.textContent = '...';
+
+  try {
+    const response = await apiCall('/locations/stoppage', 'POST', { villageId, nameBn: stoppageName });
+    if (response.success) {
+      showPopup('সফল', 'নতুন স্টপেজ যোগ করা হয়েছে।', '✅');
+      newStoppageNameInput.value = '';
+      await loadLocations();
+    }
+  } catch (error) {
+    console.warn("API add stoppage failed, falling back to local state:", error);
+    // Local fallback so it works instantly even if backend isn't deployed yet
+    const village = locationData.find(v => v.id === villageId);
+    if (village) {
+      village.stoppages.push({
+        id: villageId + '-' + Date.now(),
+        nameBn: stoppageName,
+        distanceIndex: village.stoppages.length + 1
+      });
+      showPopup('সফল', 'নতুন স্টপেজ যোগ করা হয়েছে।', '✅');
+      newStoppageNameInput.value = '';
+    } else {
+      showPopup('ত্রুটি', 'স্টপেজ যোগ করতে সমস্যা হয়েছে।', '❌');
+    }
+  } finally {
+    addStoppageBtn.disabled = false;
+    addStoppageBtn.textContent = 'যোগ করুন';
+    
+    // Keep existing selected values and refresh stoppages
+    const pV = pickupVillageSelect.value;
+    const dV = dropoffVillageSelect.value;
+    const pS = pickupStoppageSelect.value;
+    const dS = dropoffStoppageSelect.value;
+    if (pV) { populateStoppageSelect(pickupStoppageSelect, pV, 'স্টপেজ নির্বাচন করুন'); pickupStoppageSelect.value = pS; }
+    if (dV) { populateStoppageSelect(dropoffStoppageSelect, dV, 'স্টপেজ নির্বাচন করুন'); dropoffStoppageSelect.value = dS; }
+  }
 });
 
 // --- Driver Logic ---

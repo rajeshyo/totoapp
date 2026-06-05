@@ -77,6 +77,22 @@ function getAllVillages() {
   }));
 }
 
+function addStoppageToVillage(villageId, nameBn) {
+  const village = VILLAGES.find(v => v.id === villageId);
+  if (!village) throw new Error('Village not found');
+
+  const newId = villageId + '-' + Date.now();
+  const newStoppage = {
+    id: newId,
+    nameBn: nameBn,
+    distanceIndex: village.stoppages.length > 0 ? village.stoppages[village.stoppages.length - 1].distanceIndex + 1 : 1,
+    latitude: 0,
+    longitude: 0
+  };
+  village.stoppages.push(newStoppage);
+  return newStoppage;
+}
+
 function findStoppage(stoppageId) {
   for (const village of VILLAGES) {
     const stoppage = village.stoppages.find(s => s.id === stoppageId);
@@ -100,14 +116,24 @@ function calculateDistanceKm(pickupStoppageId, dropoffStoppageId) {
   const dropoff = findStoppage(dropoffStoppageId);
 
   if (!pickup || !dropoff) return 0;
+  
+  // If pickup and dropoff are in the exact same village, fix distance to 1 km
+  if (pickup.village.id === dropoff.village.id) {
+    return 1;
+  }
 
-  const indexDiff = Math.abs(pickup.stoppage.distanceIndex - dropoff.stoppage.distanceIndex);
+  const villageIds = VILLAGES.map(v => v.id);
+  const pickupVillageIdx = villageIds.indexOf(pickup.village.id);
+  const dropoffVillageIdx = villageIds.indexOf(dropoff.village.id);
+
+  const indexDiff = Math.abs(pickupVillageIdx - dropoffVillageIdx);
   return Number(Math.max(1, indexDiff).toFixed(1));
 }
 
 module.exports = {
   VILLAGES,
   getAllVillages,
+  addStoppageToVillage,
   findStoppage,
   formatLocationAddress,
   calculateDistanceKm

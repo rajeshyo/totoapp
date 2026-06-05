@@ -245,6 +245,23 @@
             <div class="stop-chip" data-village-id="shimulgram" data-stoppage-id="shimulgram-bus-stand">🚌 শিমুলগ্রাম বাস স্ট্যান্ড</div>
           </div>
         </div>
+        
+        <div class="card add-stoppage-section" style="margin-top: 20px;">
+          <h3 style="margin-top: 0; margin-bottom: 10px;">নতুন স্টপেজ যোগ করুন</h3>
+          <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+            <div class="select-container" style="flex: 1; margin-bottom: 0; min-width: 120px;">
+              <label class="field-label" for="newStoppageVillage">গ্রাম</label>
+              <select id="newStoppageVillage" required style="width: 100%;">
+                <option value="">গ্রাম নির্বাচন করুন</option>
+              </select>
+            </div>
+            <div style="flex: 1.5; min-width: 150px;">
+              <label class="field-label" for="newStoppageName">স্টপেজের নাম</label>
+              <input type="text" id="newStoppageName" placeholder="যেমন: করাটিয়া মন্দির" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box;" />
+            </div>
+            <button type="button" id="addStoppageBtn" class="button primary" style="padding: 12px 20px; min-width: 100px;">যোগ করুন</button>
+          </div>
+        </div>
         <!-- <img src="image/footer.png" alt="Footer Image" class="footer-image" /> -->
 
         <div class="card info-card state-card hidden" id="acceptedRideCard">
