@@ -166,33 +166,46 @@
 
         <div class="card ride-booking-card">
           <form id="rideRequestForm" class="booking-flow">
-            <div class="location-picker-group">
-              <div class="location-line"></div>
-              <div class="picker-row">
-                <span class="dot-icon green"></span>
-                <div class="select-container">
-                  <select id="currentLocation" required>
-                    <option value="">শুরুর স্থান নির্বাচন করুন</option>
-                    <option value="1">করাপাড়া মোড়</option>
-                    <option value="2">হাসপাতাল মোড়</option>
-                    <option value="3">স্টেশন রোড</option>
-                    <option value="4">বাজার ঘাট</option>
-                    <option value="5">স্কুল মোড়</option>
-                  </select>
+            <div class="location-columns">
+              <div class="location-column" style="margin-bottom: 15px;">
+                <div class="column-header" style="margin-bottom: 8px;">
+                  <span class="dot-icon green"></span>
+                  <span class="column-label" style="font-weight: 600;">শুরুর স্থান নির্বাচন করুন</span>
+                </div>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                  <div class="select-container" style="flex: 1; margin-bottom: 0;">
+                    <label class="field-label" for="pickupVillage">গ্রাম</label>
+                    <select id="pickupVillage" required style="width: 100%;">
+                      <option value="">গ্রাম নির্বাচন করুন</option>
+                    </select>
+                  </div>
+                  <div class="select-container" style="flex: 1; margin-bottom: 0;">
+                    <label class="field-label" for="pickupStoppage">স্টপেজ</label>
+                    <select id="pickupStoppage" required disabled style="width: 100%;">
+                      <option value="">স্টপেজ নির্বাচন করুন</option>
+                    </select>
+                  </div>
                 </div>
               </div>
-              
-              <div class="picker-row">
-                <span class="dot-icon red"></span>
-                <div class="select-container">
-                  <select id="destination" required>
-                    <option value="">গন্তব্য নির্বাচন করুন</option>
-                    <option value="1">করাপাড়া মোড়</option>
-                    <option value="2">হাসপাতাল মোড়</option>
-                    <option value="3">স্টেশন রোড</option>
-                    <option value="4">বাজার ঘাট</option>
-                    <option value="5">স্কুল মোড়</option>
-                  </select>
+
+              <div class="location-column" style="margin-bottom: 15px;">
+                <div class="column-header" style="margin-bottom: 8px;">
+                  <span class="dot-icon red"></span>
+                  <span class="column-label" style="font-weight: 600;">গন্তব্য নির্বাচন করুন</span>
+                </div>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                  <div class="select-container" style="flex: 1; margin-bottom: 0;">
+                    <label class="field-label" for="dropoffVillage">গ্রাম</label>
+                    <select id="dropoffVillage" required style="width: 100%;">
+                      <option value="">গ্রাম নির্বাচন করুন</option>
+                    </select>
+                  </div>
+                  <div class="select-container" style="flex: 1; margin-bottom: 0;">
+                    <label class="field-label" for="dropoffStoppage">স্টপেজ</label>
+                    <select id="dropoffStoppage" required disabled style="width: 100%;">
+                      <option value="">স্টপেজ নির্বাচন করুন</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
@@ -208,18 +221,28 @@
               </div>
             </div>
 
+            <div class="landmark-field">
+              <label class="field-label" for="landmarkInput">স্থলচিহ্ন (ঐচ্ছিক)</label>
+              <input
+                type="text"
+                id="landmarkInput"
+                placeholder="যেমন: পুরানো মসজিদের সামনে, বড় বটগাছের পাশে"
+                maxlength="120"
+              />
+            </div>
+
             <button id="rideSubmitBtn" type="submit" class="button primary full-width btn-xl action-glow">রাইড খুঁজুন</button>
           </form>
         </div>
 
         <div class="popular-section">
           <h3>জনপ্রিয় স্থান (তাত্ক্ষণিক বুকিং)</h3>
-          <p class="muted-text text-sm mb-10">ক্লিক করলেই ফেভারিটে সেভ হবে এবং অটোমেটিক বুকিং হবে।</p>
-          <div class="grid-quick-stops">
-            <div class="stop-chip" data-stop-id="2">🏥 হাসপাতাল মোড়</div>
-            <div class="stop-chip" data-stop-id="4">🛍️ বাজার ঘাট</div>
-            <div class="stop-chip" data-stop-id="1">🏫 করাপাড়া মোড়</div>
-            <div class="stop-chip" data-stop-id="5">🏡 স্কুল মোড়</div>
+          <p class="muted-text text-sm mb-10">প্রথমে শুরুর স্থান সেট করুন, তারপর গন্তব্যে ক্লিক করুন।</p>
+          <div class="grid-quick-stops" id="quickStopsGrid">
+            <div class="stop-chip" data-village-id="karatia" data-stoppage-id="karatia-bazar">🏪 করাটিয়া বাজার</div>
+            <div class="stop-chip" data-village-id="guskara" data-stoppage-id="guskara-clg">🎓 গুসকরা কলেজ</div>
+            <div class="stop-chip" data-village-id="guskara" data-stoppage-id="guskara-more">🛣️ গুসকরা মোড়</div>
+            <div class="stop-chip" data-village-id="shimulgram" data-stoppage-id="shimulgram-bus-stand">🚌 শিমুলগ্রাম বাস স্ট্যান্ড</div>
           </div>
         </div>
         <!-- <img src="image/footer.png" alt="Footer Image" class="footer-image" /> -->

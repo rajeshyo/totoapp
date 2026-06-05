@@ -26,7 +26,7 @@ function notifyCustomerRideAccepted(driverName, driverPhone) {
 }
 
 // ===== API Configuration =====
-const API_BASE_URL = 'https://totoapp.onrender.com/api';
+const API_BASE_URL ='https://totoapp.onrender.com/api';
 
 // Splash screen handler - show only if user not logged in
 window.addEventListener('load', () => {
@@ -118,8 +118,11 @@ const profileRoleEl = document.getElementById('profileRole');
 const profileAvatarEl = document.getElementById('profileAvatar');
 
 // Customers workflow targets
-const currentLocationInput = document.getElementById('currentLocation');
-const destinationInput = document.getElementById('destination');
+const pickupVillageSelect = document.getElementById('pickupVillage');
+const pickupStoppageSelect = document.getElementById('pickupStoppage');
+const dropoffVillageSelect = document.getElementById('dropoffVillage');
+const dropoffStoppageSelect = document.getElementById('dropoffStoppage');
+const landmarkInput = document.getElementById('landmarkInput');
 const distanceInfoInput = document.getElementById('distanceInfo');
 const fareInfoInput = document.getElementById('fareInfo');
 const pricePreviewCard = document.getElementById('pricePreviewCard');
@@ -147,14 +150,126 @@ const popupCloseBtn = document.getElementById('popupCloseBtn');
 const userTypeSelect = document.getElementById('userType');
 const vehicleNumberWrapper = document.getElementById('vehicleNumberWrapper');
 
-const STOP_DISTANCE_KM = 1; 
-const FARE_PER_TRIP_BASE = 10;
+const FARE_PER_KM = 10;
+const BASE_FARE = 20;
+let locationData = [];
 
 // --- Global State & Listeners ---
 let currentUser = JSON.parse(localStorage.getItem('toto_active_user')) || null;
 let activeRideId = localStorage.getItem('toto_active_ride_id') || null;
 let pollInterval = null;
 let rejectedRides = {}; // Track rejected rides with timestamp: { rideId: timestamp }
+
+// --- Location Helpers ---
+function findStoppageInData(stoppageId) {
+  for (const village of locationData) {
+    const stoppage = village.stoppages.find(s => s.id === stoppageId);
+    if (stoppage) return { village, stoppage };
+  }
+  return null;
+}
+
+function populateVillageSelect(selectEl, placeholder) {
+  if (!selectEl) return;
+  selectEl.innerHTML = `<option value="">${placeholder}</option>`;
+  locationData.forEach(village => {
+    const option = document.createElement('option');
+    option.value = village.id;
+    option.textContent = village.nameBn;
+    selectEl.appendChild(option);
+  });
+}
+
+function populateStoppageSelect(selectEl, villageId, placeholder) {
+  if (!selectEl) return;
+  selectEl.innerHTML = `<option value="">${placeholder}</option>`;
+
+  const village = locationData.find(v => v.id === villageId);
+  if (!village) {
+    selectEl.disabled = true;
+    return;
+  }
+
+  village.stoppages.forEach(stoppage => {
+    const option = document.createElement('option');
+    option.value = stoppage.id;
+    option.textContent = stoppage.nameBn;
+    selectEl.appendChild(option);
+  });
+  selectEl.disabled = false;
+}
+
+function setLocationSelection(villageSelect, stoppageSelect, villageId, stoppageId) {
+  if (!villageSelect || !stoppageSelect) return;
+  villageSelect.value = villageId;
+  populateStoppageSelect(stoppageSelect, villageId, 'স্টপেজ নির্বাচন করুন');
+  stoppageSelect.value = stoppageId;
+}
+
+function getSelectedPickupAddress() {
+  const found = findStoppageInData(pickupStoppageSelect?.value);
+  if (!found) return '';
+  const landmark = landmarkInput?.value?.trim();
+  let address = `${found.stoppage.nameBn}, ${found.village.nameBn}`;
+  if (landmark) address += ` (${landmark})`;
+  return address;
+}
+
+function getSelectedDropoffAddress() {
+  const found = findStoppageInData(dropoffStoppageSelect?.value);
+  if (!found) return '';
+  return `${found.stoppage.nameBn}, ${found.village.nameBn}`;
+}
+
+function calculatePreviewDistance() {
+  const pickup = findStoppageInData(pickupStoppageSelect?.value);
+  const dropoff = findStoppageInData(dropoffStoppageSelect?.value);
+  if (!pickup || !dropoff) return 0;
+  const indexDiff = Math.abs(pickup.stoppage.distanceIndex - dropoff.stoppage.distanceIndex);
+  return Number(Math.max(1, indexDiff).toFixed(1));
+}
+
+async function loadLocations() {
+  try {
+    const response = await apiCall('/locations');
+    if (response.success && response.villages) {
+      locationData = response.villages;
+    }
+  } catch (error) {
+        console.warn('Failed to load locations from API, using fallback data:', error);
+        // Fallback data if backend API is not responding or not set up
+        locationData = [
+          {
+            id: 'karatia',
+            nameBn: 'করাটিয়া',
+            stoppages: [
+              { id: 'karatia-bazar', nameBn: 'করাটিয়া বাজার', distanceIndex: 1 },
+              { id: 'karatia-more', nameBn: 'করাটিয়া মোড়', distanceIndex: 2 }
+            ]
+          },
+          {
+            id: 'guskara',
+            nameBn: 'গুসকরা',
+            stoppages: [
+              { id: 'guskara-clg', nameBn: 'গুসকরা কলেজ', distanceIndex: 5 },
+              { id: 'guskara-more', nameBn: 'গুসকরা মোড়', distanceIndex: 6 }
+            ]
+          },
+          {
+            id: 'shimulgram',
+            nameBn: 'শিমুলগ্রাম',
+            stoppages: [
+              { id: 'shimulgram-bus-stand', nameBn: 'শিমুলগ্রাম বাস স্ট্যান্ড', distanceIndex: 8 }
+            ]
+          }
+        ];
+  }
+      
+      populateVillageSelect(pickupVillageSelect, 'গ্রাম নির্বাচন করুন');
+      populateVillageSelect(dropoffVillageSelect, 'গ্রাম নির্বাচন করুন');
+}
+
+loadLocations();
 
 // --- Global Notification Alert ---
 function showPopup(title, message, icon = '🔔') {
@@ -347,11 +462,10 @@ async function displayRideHistory() {
 function displayFavorites() {
   const favoritesList = document.getElementById('favoritesList');
   const popularPlaces = [
-    { name: '🏫 স্কুল মোড়', stopId: '1' },
-    { name: '🎓 কলেজ মোড়', stopId: '2' },
-    { name: '🛍️ বাজার হাট', stopId: '3' },
-    { name: '🏥 হাসপাতাল মোড়', stopId: '4' },
-    { name: '🚉 রেল স্টেশন', stopId: '5' },
+    { name: '🏪 করাটিয়া বাজার', villageId: 'karatia', stoppageId: 'karatia-bazar' },
+    { name: '🎓 গুসকরা কলেজ', villageId: 'guskara', stoppageId: 'guskara-clg' },
+    { name: '🛣️ গুসকরা মোড়', villageId: 'guskara', stoppageId: 'guskara-more' },
+    { name: '🚌 শিমুলগ্রাম বাস স্ট্যান্ড', villageId: 'shimulgram', stoppageId: 'shimulgram-bus-stand' },
   ];
   
   if (popularPlaces.length === 0) {
@@ -363,34 +477,33 @@ function displayFavorites() {
           <p class="favorite-address" style="font-size: 1.05rem;">${place.name}</p>
         </div>
         <div class="favorite-action">
-          <button class="button primary" style="padding: 8px 16px; font-size: 0.85rem;" onclick="bookFavorite('${place.stopId}', '${place.name}')">বুক করুন</button>
+          <button class="button primary" style="padding: 8px 16px; font-size: 0.85rem;" onclick="bookFavorite('${place.villageId}', '${place.stoppageId}', '${place.name}')">বুক করুন</button>
         </div>
       </div>
     `).join('');
   }
 }
 
-window.bookFavorite = function(stopId, stopName) {
+window.bookFavorite = function(villageId, stoppageId, stopName) {
   if (activeRideId) {
     showPopup('অপেক্ষা করুন', 'আপনার একটি রাইড ইতিমধ্যে খোঁজা হচ্ছে।', '⏳');
     return;
   }
   
-  if (!currentLocationInput.value) {
+  if (!pickupStoppageSelect?.value) {
     showHomePage();
     showPopup('শুরুর স্থান প্রয়োজন', 'দয়া করে প্রথমে আপনার শুরুর স্থান (পিকআপ) নির্বাচন করুন।', '📍');
     return;
   }
 
-  if (currentLocationInput.value === stopId) {
+  if (pickupStoppageSelect.value === stoppageId) {
     showHomePage();
     showPopup('ত্রুটি', 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না।', '❌');
     return;
   }
 
   showHomePage();
-  destinationInput.value = stopId;
-  destinationInput.dispatchEvent(new Event('change')); // Sync searchable dropdown
+  setLocationSelection(dropoffVillageSelect, dropoffStoppageSelect, villageId, stoppageId);
   updateRidePreview();
   
   showPopup('গন্তব্য সেট হয়েছে', `${stopName} গন্তব্য হিসেবে সেট করা হয়েছে। ভাড়া চেক করে রাইড খুঁজুন।`, '✅');
@@ -840,8 +953,17 @@ function resetCustomerUI() {
   rideSubmitBtn.disabled = false;
   rideSubmitBtn.textContent = 'রাইড খুঁজুন';
   rideSubmitBtn.style.opacity = "1";
-  currentLocationInput.value = '';
-  destinationInput.value = '';
+  if (pickupVillageSelect) pickupVillageSelect.value = '';
+  if (pickupStoppageSelect) {
+    pickupStoppageSelect.innerHTML = '<option value="">স্টপেজ নির্বাচন করুন</option>';
+    pickupStoppageSelect.disabled = true;
+  }
+  if (dropoffVillageSelect) dropoffVillageSelect.value = '';
+  if (dropoffStoppageSelect) {
+    dropoffStoppageSelect.innerHTML = '<option value="">স্টপেজ নির্বাচন করুন</option>';
+    dropoffStoppageSelect.disabled = true;
+  }
+  if (landmarkInput) landmarkInput.value = '';
   pricePreviewCard.classList.add('hidden');
 }
 
@@ -849,21 +971,34 @@ rideRequestForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (activeRideId) return;
 
-  const pickupAddress = currentLocationInput.options[currentLocationInput.selectedIndex].text;
-  const dropoffAddress = destinationInput.options[destinationInput.selectedIndex].text;
+  const pickupStoppageId = pickupStoppageSelect?.value;
+  const dropoffStoppageId = dropoffStoppageSelect?.value;
+  const landmark = landmarkInput?.value?.trim() || '';
 
-  if (currentLocationInput.value === destinationInput.value) { 
+  if (!pickupStoppageId || !dropoffStoppageId) {
+    showPopup('ত্রুটি', 'গ্রাম ও স্টপেজ নির্বাচন করুন।', '❌');
+    return;
+  }
+
+  if (pickupStoppageId === dropoffStoppageId) { 
     showPopup('ত্রুটি', 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না।', '❌'); 
     return; 
   }
 
-  const distance = Math.abs(Number(currentLocationInput.value) - Number(destinationInput.value)) * STOP_DISTANCE_KM;
+  const pickupAddress = getSelectedPickupAddress();
+  const dropoffAddress = getSelectedDropoffAddress();
+  const distance = calculatePreviewDistance();
   
   rideSubmitBtn.disabled = true;
   rideSubmitBtn.textContent = 'অপেক্ষা করুন...';
 
   try {
     const response = await apiCall('/rides/request', 'POST', {
+      pickupStoppageId,   // For your new backend
+      dropoffStoppageId,  // For your new backend
+      landmark,           // For your new backend
+      
+      // Fallback for your current live Render backend:
       pickupLocation: {
         address: pickupAddress,
         latitude: 0,
@@ -911,18 +1046,28 @@ endRideBtn?.addEventListener('click', async () => {
 
 // --- Preview & Calculation ---
 function updateRidePreview() {
-  const pickup = currentLocationInput.value;
-  const drop = destinationInput.value;
+  const pickup = pickupStoppageSelect?.value;
+  const drop = dropoffStoppageSelect?.value;
   if (!pickup || !drop || pickup === drop) { pricePreviewCard.classList.add('hidden'); return; }
-  const distance = Number((Math.abs(Number(pickup) - Number(drop)) * STOP_DISTANCE_KM).toFixed(1));
-  const fare = FARE_PER_TRIP_BASE * Math.max(1, distance);
+  const distance = calculatePreviewDistance();
+  const fare = Math.max(BASE_FARE, distance * FARE_PER_KM);
   distanceInfoInput.value = `${distance} km`;
   fareInfoInput.value = `₹${fare}`;
   pricePreviewCard.classList.remove('hidden');
 }
 
-currentLocationInput.addEventListener('change', updateRidePreview);
-destinationInput.addEventListener('change', updateRidePreview);
+pickupVillageSelect?.addEventListener('change', () => {
+  populateStoppageSelect(pickupStoppageSelect, pickupVillageSelect.value, 'স্টপেজ নির্বাচন করুন');
+  updateRidePreview();
+});
+
+dropoffVillageSelect?.addEventListener('change', () => {
+  populateStoppageSelect(dropoffStoppageSelect, dropoffVillageSelect.value, 'স্টপেজ নির্বাচন করুন');
+  updateRidePreview();
+});
+
+pickupStoppageSelect?.addEventListener('change', updateRidePreview);
+dropoffStoppageSelect?.addEventListener('change', updateRidePreview);
 
 // Instant Booking (Popular Places)
 stopChips.forEach(chip => {
@@ -932,21 +1077,20 @@ stopChips.forEach(chip => {
       return;
     }
     
-    // IMPROVEMENT: Explicitly require pickup location to avoid confusion
-    if (!currentLocationInput.value) {
+    if (!pickupStoppageSelect?.value) {
       showPopup('শুরুর স্থান প্রয়োজন', 'দয়া করে প্রথমে উপরের তালিকা থেকে আপনার শুরুর স্থান (পিকআপ) নির্বাচন করুন।', '📍');
       return;
     }
 
-    const destId = e.target.dataset.stopId;
+    const villageId = e.target.dataset.villageId;
+    const stoppageId = e.target.dataset.stoppageId;
     
-    if (currentLocationInput.value === destId) {
+    if (pickupStoppageSelect.value === stoppageId) {
       showPopup('ত্রুটি', 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না।', '❌');
       return;
     }
 
-    destinationInput.value = destId;
-    destinationInput.dispatchEvent(new Event('change')); // Sync searchable dropdown
+    setLocationSelection(dropoffVillageSelect, dropoffStoppageSelect, villageId, stoppageId);
     updateRidePreview();
   });
 });
@@ -1018,8 +1162,9 @@ async function listenToPendingQueue() {
       item.className = 'request-item';
       item.innerHTML = `
         <p>👤 <strong>${ride.passengerId.firstName} ${ride.passengerId.lastName}</strong></p>
-        <p>📍 পিকআপ: ${ride.pickupLocation.address}</p>
-        <p>🏁 গন্তব্য: ${ride.dropoffLocation.address}</p>
+        <p>📍 পিকআপ: ${ride.pickupLocation.stoppageName || ride.pickupLocation.address}, ${ride.pickupLocation.villageName || ''}</p>
+        ${ride.pickupLocation.landmark ? `<p>📌 স্থলচিহ্ন: ${ride.pickupLocation.landmark}</p>` : ''}
+        <p>🏁 গন্তব্য: ${ride.dropoffLocation.stoppageName || ride.dropoffLocation.address}, ${ride.dropoffLocation.villageName || ''}</p>
         <p>💰 ভাড়া: <span class="text-green">₹${ride.fare}</span> (${ride.distance} km)</p>
         <div class="request-actions">
           <button class="button primary accept-btn" data-id="${ride._id}">গ্রহণ করুন</button>

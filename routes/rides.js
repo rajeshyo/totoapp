@@ -2,25 +2,69 @@ const express = require('express');
 const Ride = require('../models/Ride');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
+const {
+  findStoppage,
+  formatLocationAddress,
+  calculateDistanceKm
+} = require('../data/locations');
 
 const router = express.Router();
 
 const FARE_PER_KM = 10; // per km rate
 const BASE_FARE = 20; // minimum fare
 
+function buildLocationFromStoppage(stoppageId, landmark) {
+  const found = findStoppage(stoppageId);
+  if (!found) return null;
+
+  const { village, stoppage } = found;
+  const location = {
+    address: formatLocationAddress(village.nameBn, stoppage.nameBn, landmark),
+    villageId: village.id,
+    villageName: village.nameBn,
+    stoppageId: stoppage.id,
+    stoppageName: stoppage.nameBn,
+    latitude: stoppage.latitude,
+    longitude: stoppage.longitude
+  };
+
+  if (landmark && landmark.trim()) {
+    location.landmark = landmark.trim();
+  }
+
+  return location;
+}
+
 // REQUEST RIDE (Passenger)
 router.post('/request', authMiddleware, async (req, res) => {
   try {
-    const { pickupLocation, dropoffLocation, distance } = req.body;
+    const { pickupStoppageId, dropoffStoppageId, landmark } = req.body;
+
+    if (!pickupStoppageId || !dropoffStoppageId) {
+      return res.status(400).json({
+        success: false,
+        message: 'শুরুর স্থান ও গন্তব্য স্টপেজ নির্বাচন করুন'
+      });
+    }
+
+    if (pickupStoppageId === dropoffStoppageId) {
+      return res.status(400).json({
+        success: false,
+        message: 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না'
+      });
+    }
+
+    const pickupLocation = buildLocationFromStoppage(pickupStoppageId, landmark);
+    const dropoffLocation = buildLocationFromStoppage(dropoffStoppageId);
 
     if (!pickupLocation || !dropoffLocation) {
       return res.status(400).json({
         success: false,
-        message: 'Pickup and dropoff locations are required'
+        message: 'অবৈধ স্থান নির্বাচন করা হয়েছে'
       });
     }
 
-    // Calculate fare
+    const distance = calculateDistanceKm(pickupStoppageId, dropoffStoppageId);
     const fare = Math.max(BASE_FARE, distance * FARE_PER_KM);
 
     const ride = new Ride({

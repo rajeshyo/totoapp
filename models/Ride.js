@@ -13,11 +13,20 @@ const rideSchema = new mongoose.Schema({
   },
   pickupLocation: {
     address: String,
+    villageId: String,
+    villageName: String,
+    stoppageId: String,
+    stoppageName: String,
+    landmark: String,
     latitude: Number,
     longitude: Number
   },
   dropoffLocation: {
     address: String,
+    villageId: String,
+    villageName: String,
+    stoppageId: String,
+    stoppageName: String,
     latitude: Number,
     longitude: Number
   },
