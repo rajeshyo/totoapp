@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema({
   },
   userType: {
     type: String,
-    enum: ['passenger', 'driver'],
+    enum: ['passenger', 'driver','admin'],
     default: 'passenger'
   },
   vehicleNumber: {

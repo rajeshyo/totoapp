@@ -188,6 +188,14 @@ const uiTranslations = {
   'নতুন রাইড অনুরোধ': 'New Ride Request',
   'চালক গ্রহণ করেছেন': 'Driver Accepted',
   '📌 স্থলচিহ্ন:': '📌 Landmark:',
+  'অ্যাডমিন': 'Admin',
+  'অ্যাডমিন (Admin)': 'Admin',
+  'অ্যাডমিন প্যানেল (Admin Panel)': 'Admin Panel',
+  'ব্যবহারকারী (Users)': 'Users',
+  'সকল রাইড (Rides)': 'All Rides',
+  'লোকেশন (Locations)': 'Locations',
+  'কোনো ব্যবহারকারী পাওয়া যায়নি': 'No users found',
+  'কোনো রাইড পাওয়া যায়নি': 'No rides found',
   '🏪 করাটিয়া বাজার': '🏪 Karatia Bazar',
   '🎓 গুসকরা কলেজ': '🎓 Guskara College',
   '🛣️ গুসকরা মোড়': '🛣️ Guskara More',
@@ -333,6 +341,7 @@ const showSignupBtn = document.getElementById('showSignupBtn');
 const showLoginBtn = document.getElementById('showLoginBtn');
 const customerDashboard = document.getElementById('customerDashboard');
 const driverDashboard = document.getElementById('driverDashboard');
+const adminDashboard = document.getElementById('adminDashboard');
 const profilePage = document.getElementById('profilePage');
 const rideHistoryPage = document.getElementById('rideHistoryPage');
 const favoriteRidesPage = document.getElementById('favoriteRidesPage');
@@ -376,6 +385,14 @@ const toggleStatusLabel = document.getElementById('toggleStatusLabel');
 const rideRequestsContainer = document.getElementById('rideRequests');
 const requestCountBadge = document.getElementById('requestCountBadge');
 const driverAcceptedRideCard = document.getElementById('driverAcceptedRideCard');
+
+// Admin workflow targets
+const adminUsersTabBtn = document.getElementById('adminUsersTabBtn');
+const adminRidesTabBtn = document.getElementById('adminRidesTabBtn');
+const adminLocationsTabBtn = document.getElementById('adminLocationsTabBtn');
+const adminUsersPanel = document.getElementById('adminUsersPanel');
+const adminRidesPanel = document.getElementById('adminRidesPanel');
+const adminLocationsPanel = document.getElementById('adminLocationsPanel');
 
 // Modals global references
 const signupForm = document.getElementById('signupForm');
@@ -518,6 +535,7 @@ function showSection(section) {
   authView.classList.add('hidden');
   customerDashboard.classList.add('hidden');
   driverDashboard.classList.add('hidden');
+  if (adminDashboard) adminDashboard.classList.add('hidden');
   profilePage.classList.add('hidden');
   rideHistoryPage.classList.add('hidden');
   favoriteRidesPage.classList.add('hidden');
@@ -538,12 +556,12 @@ function renderApp() {
   mainHeader.classList.remove('hidden');
   appBottomNav.classList.remove('hidden');
   profileNameEl.textContent = `${currentUser.firstName} ${currentUser.lastName}`;
-  profileRoleEl.textContent = currentUser.userType === 'passenger' ? t('যাত্রী (Passenger)') : t('টোটো চালক (Driver)');
+  profileRoleEl.textContent = currentUser.userType === 'passenger' ? t('যাত্রী (Passenger)') : (currentUser.userType === 'admin' ? t('অ্যাডমিন (Admin)') : t('টোটো চালক (Driver)'));
   profileAvatarEl.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.firstName}`;
 
-  // Hide Favorites Menu for Drivers
+  // Hide Favorites Menu for Drivers and Admins
   const navFavBtn = document.getElementById('navFavBtn');
-  if (currentUser.userType === 'driver') {
+  if (currentUser.userType === 'driver' || currentUser.userType === 'admin') {
     if (navFavBtn) navFavBtn.classList.add('hidden');
     document.querySelectorAll('.menu-item').forEach(item => {
       if (item.textContent.includes('প্রিয়') || item.textContent.includes('Favorite')) {
@@ -575,9 +593,12 @@ function showHomePage() {
   if (currentUser.userType === 'passenger') {
     showSection(customerDashboard);
     setupCustomerDashboard();
-  } else {
+  } else if (currentUser.userType === 'driver') {
     showSection(driverDashboard);
     setupDriverDashboard();
+  } else if (currentUser.userType === 'admin') {
+    showSection(adminDashboard);
+    setupAdminDashboard();
   }
   updateNavButtons('home');
 }
@@ -620,7 +641,7 @@ function updateNavButtons(active) {
 
 function displayProfileInfo() {
   document.getElementById('profilePageName').textContent = `${currentUser.firstName} ${currentUser.lastName}`;
-  document.getElementById('profilePageUserType').textContent = currentUser.userType === 'driver' ? t('চালক') : t('যাত্রী');
+  document.getElementById('profilePageUserType').textContent = currentUser.userType === 'driver' ? t('চালক') : (currentUser.userType === 'admin' ? t('অ্যাডমিন') : t('যাত্রী'));
   document.getElementById('profilePagePhone').textContent = `***${currentUser.phone.slice(-4)}`;
   document.getElementById('profilePageEmail').textContent = currentUser.email || t('লেখা নেই');
   document.getElementById('profilePagePhoneFull').textContent = currentUser.phone;
@@ -733,6 +754,86 @@ window.bookFavorite = function(villageId, stoppageId, stopName) {
   updateRidePreview();
   
   showPopup('গন্তব্য সেট হয়েছে', `${stopName} গন্তব্য হিসেবে সেট করা হয়েছে। ভাড়া চেক করে রাইড খুঁজুন।`, '✅');
+}
+
+// --- Admin Logic ---
+function setupAdminDashboard() {
+  loadAdminUsers();
+}
+
+adminUsersTabBtn?.addEventListener('click', () => {
+  adminUsersPanel.classList.remove('hidden');
+  adminRidesPanel.classList.add('hidden');
+  adminLocationsPanel.classList.add('hidden');
+  adminUsersTabBtn.classList.add('active');
+  adminRidesTabBtn.classList.remove('active');
+  adminLocationsTabBtn.classList.remove('active');
+  loadAdminUsers();
+});
+
+adminRidesTabBtn?.addEventListener('click', () => {
+  adminRidesPanel.classList.remove('hidden');
+  adminUsersPanel.classList.add('hidden');
+  adminLocationsPanel.classList.add('hidden');
+  adminRidesTabBtn.classList.add('active');
+  adminUsersTabBtn.classList.remove('active');
+  adminLocationsTabBtn.classList.remove('active');
+  loadAdminRides();
+});
+
+adminLocationsTabBtn?.addEventListener('click', () => {
+  adminLocationsPanel.classList.remove('hidden');
+  adminUsersPanel.classList.add('hidden');
+  adminRidesPanel.classList.add('hidden');
+  adminLocationsTabBtn.classList.add('active');
+  adminUsersTabBtn.classList.remove('active');
+  adminRidesTabBtn.classList.remove('active');
+});
+
+async function loadAdminUsers() {
+  const list = document.getElementById('adminUsersList');
+  if (!list) return;
+  list.innerHTML = `<p class="muted-text center-block">${t('লোড হচ্ছে...')}</p>`;
+  try {
+    const res = await apiCall('/admin/users');
+    if (res.success && res.users.length > 0) {
+      list.innerHTML = res.users.map(u => `
+        <div class="request-item" style="margin-bottom: 10px;">
+          <p>👤 <strong>${u.firstName} ${u.lastName}</strong> <span class="badge" style="float:right;">${t(u.userType === 'driver' ? 'চালক' : u.userType === 'admin' ? 'অ্যাডমিন' : 'যাত্রী')}</span></p>
+          <p>📱 ${u.phone}</p>
+          ${u.vehicleNumber ? `<p>🔢 ${u.vehicleNumber}</p>` : ''}
+        </div>
+      `).join('');
+    } else {
+      list.innerHTML = `<p class="muted-text center-block">${t('কোনো ব্যবহারকারী পাওয়া যায়নি')}</p>`;
+    }
+  } catch (error) {
+    list.innerHTML = `<p class="muted-text center-block">${t('লোড করতে সমস্যা হয়েছে')}</p>`;
+  }
+}
+
+async function loadAdminRides() {
+  const list = document.getElementById('adminRidesList');
+  if (!list) return;
+  list.innerHTML = `<p class="muted-text center-block">${t('লোড হচ্ছে...')}</p>`;
+  try {
+    const res = await apiCall('/admin/rides');
+    if (res.success && res.rides.length > 0) {
+      list.innerHTML = res.rides.map(r => `
+        <div class="request-item" style="margin-bottom: 10px;">
+          <p>🕒 ${new Date(r.createdAt).toLocaleString('bn-BD')} <span class="badge" style="float:right;">${t(r.rideStatus)}</span></p>
+          <p>👤 ${t('যাত্রী')}: ${r.passengerId ? r.passengerId.firstName + ' ' + r.passengerId.lastName : t('অজানা')}</p>
+          <p>🚗 ${t('চালক')}: ${r.driverId ? r.driverId.firstName + ' ' + r.driverId.lastName : t('অজানা')}</p>
+          <p>📍 ${t(r.pickupLocation?.address || '')} ➡️ ${t(r.dropoffLocation?.address || '')}</p>
+          <p>💰 ₹${r.fare}</p>
+        </div>
+      `).join('');
+    } else {
+      list.innerHTML = `<p class="muted-text center-block">${t('কোনো রাইড পাওয়া যায়নি')}</p>`;
+    }
+  } catch (error) {
+    list.innerHTML = `<p class="muted-text center-block">${t('লোড করতে সমস্যা হয়েছে')}</p>`;
+  }
 }
 
 // --- Menu Functions ---

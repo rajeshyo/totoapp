@@ -142,6 +142,10 @@
                   <span class="type-icon">🚗</span>
                   <span class="type-label">চালক</span>
                 </button>
+                <button type="button" class="type-option admin-type" data-type="admin">
+                  <span class="type-icon">🛡️</span>
+                  <span class="type-label">অ্যাডমিন</span>
+                </button>
               </div>
             </div>
             
@@ -288,24 +292,51 @@
             <div class="stop-chip" data-village-id="shimulgram" data-stoppage-id="shimulgram-bus-stand">🚌 শিমুলগ্রাম বাস স্ট্যান্ড</div>
           </div>
         </div>
+        <!-- <img src="image/footer.png" alt="Footer Image" class="footer-image" /> -->
+      </section>
+
+      <!-- Admin Dashboard -->
+      <section id="adminDashboard" class="dashboard hidden">
+        <div class="page-header">
+          <h2>অ্যাডমিন প্যানেল (Admin Panel)</h2>
+        </div>
         
-        <div class="card add-stoppage-section" style="margin-top: 20px;">
-          <h3 style="margin-top: 0; margin-bottom: 10px;">নতুন স্টপেজ যোগ করুন</h3>
-          <div style="display: flex; flex-direction: column; gap: 15px;">
-            <div class="select-container" style="width: 100%; margin-bottom: 0;">
-              <label class="field-label" for="newStoppageVillage">গ্রাম</label>
-              <select id="newStoppageVillage" required style="width: 100%;">
-                <option value="">গ্রাম নির্বাচন করুন</option>
-              </select>
-            </div>
-            <div style="width: 100%;">
-              <label class="field-label" for="newStoppageName">স্টপেজের নাম</label>
-              <input type="text" id="newStoppageName" placeholder="যেমন: করাটিয়া মন্দির" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box;" />
-            </div>
-            <button type="button" id="addStoppageBtn" class="button primary full-width" style="padding: 12px 20px;">যোগ করুন</button>
+        <div class="auth-tabs" style="margin-bottom: 20px;">
+          <button type="button" id="adminUsersTabBtn" class="tab active">ব্যবহারকারী (Users)</button>
+          <button type="button" id="adminRidesTabBtn" class="tab">সকল রাইড (Rides)</button>
+          <button type="button" id="adminLocationsTabBtn" class="tab">লোকেশন (Locations)</button>
+        </div>
+
+        <div id="adminUsersPanel">
+          <div id="adminUsersList" class="ride-list">
+            <p class="muted-text center-block">লোড হচ্ছে...</p>
           </div>
         </div>
-        <!-- <img src="image/footer.png" alt="Footer Image" class="footer-image" /> -->
+
+        <div id="adminRidesPanel" class="hidden">
+          <div id="adminRidesList" class="ride-list">
+            <p class="muted-text center-block">লোড হচ্ছে...</p>
+          </div>
+        </div>
+
+        <div id="adminLocationsPanel" class="hidden">
+          <div class="card add-stoppage-section">
+            <h3 style="margin-top: 0; margin-bottom: 10px;">নতুন স্টপেজ যোগ করুন</h3>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+              <div class="select-container" style="width: 100%; margin-bottom: 0;">
+                <label class="field-label" for="newStoppageVillage">গ্রাম</label>
+                <select id="newStoppageVillage" required style="width: 100%;">
+                  <option value="">গ্রাম নির্বাচন করুন</option>
+                </select>
+              </div>
+              <div style="width: 100%;">
+                <label class="field-label" for="newStoppageName">স্টপেজের নাম</label>
+                <input type="text" id="newStoppageName" placeholder="যেমন: করাটিয়া মন্দির" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box;" />
+              </div>
+              <button type="button" id="addStoppageBtn" class="button primary full-width" style="padding: 12px 20px;">যোগ করুন</button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="driverDashboard" class="dashboard hidden">

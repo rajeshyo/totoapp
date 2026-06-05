@@ -9,6 +9,7 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const ridesRoutes = require('./routes/rides');
 const locationsRoutes = require('./routes/locations');
+const adminRoutes = require('./routes/admin');
 const { seedLocations } = require('./data/locations');
 
 const app = express();
@@ -75,6 +76,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/rides', ridesRoutes);
 app.use('/api/locations', locationsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler
 app.use((req, res) => {
