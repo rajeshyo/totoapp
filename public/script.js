@@ -1290,9 +1290,14 @@ function updateStatsDisplay() {
   const stats = getOrInitializeDailyStats();
   const ridesEl = document.getElementById('todayRidesCount');
   const incomeEl = document.getElementById('todayIncomeAmount');
+  const ratingEl = document.getElementById('driverRatingVal');
   
   if (ridesEl) ridesEl.textContent = stats.totalRides || '0';
   if (incomeEl) incomeEl.textContent = `₹${stats.totalIncome || 0}`;
+  if (ratingEl && currentUser) {
+    const rating = currentUser.averageRating || 0;
+    ratingEl.textContent = `${rating} ★`;
+  }
 }
 
 function resetCustomerUI() {
@@ -1491,7 +1496,16 @@ addStoppageBtn?.addEventListener('click', async () => {
 });
 
 // --- Driver Logic ---
-function setupDriverDashboard() {
+async function setupDriverDashboard() {
+  // Fetch fresh profile data to get latest ratings
+  try {
+    const response = await apiCall('/auth/profile');
+    if (response.success) {
+      currentUser = response.user;
+      localStorage.setItem('toto_active_user', JSON.stringify(currentUser));
+    }
+  } catch (err) {}
+
   const isAvailable = localStorage.getItem('toto_driver_online') === 'true';
   availabilityToggleCheckbox.checked = isAvailable;
   toggleDriverStatus(isAvailable);
