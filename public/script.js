@@ -1266,7 +1266,10 @@ window.callCustomer = function() {
 // Daily stats tracking
 function getOrInitializeDailyStats() {
   const today = new Date().toDateString();
-  const stats = JSON.parse(localStorage.getItem('toto_daily_stats')) || {};
+  // Scope stats to the current user so different drivers don't share stats
+  const userId = currentUser ? currentUser._id : 'guest';
+  const statsKey = `toto_daily_stats_${userId}`;
+  const stats = JSON.parse(localStorage.getItem(statsKey)) || {};
   
   if (stats.date !== today) {
     // New day, reset stats
@@ -1280,9 +1283,12 @@ function getOrInitializeDailyStats() {
 
 function updateDailyStats(fareAmount) {
   const stats = getOrInitializeDailyStats();
+  const userId = currentUser ? currentUser._id : 'guest';
+  const statsKey = `toto_daily_stats_${userId}`;
+  
   stats.totalRides = (stats.totalRides || 0) + 1;
   stats.totalIncome = (stats.totalIncome || 0) + fareAmount;
-  localStorage.setItem('toto_daily_stats', JSON.stringify(stats));
+  localStorage.setItem(statsKey, JSON.stringify(stats));
   updateStatsDisplay();
 }
 
