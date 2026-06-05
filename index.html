@@ -167,6 +167,29 @@
           </form>
         </div>
 
+    <div class="card info-card state-card hidden" id="acceptedRideCard">
+      <div class="state-header">
+        <span class="live-pulse"></span>
+        <h3>রাইড চলছে...</h3>
+      </div>
+      <div class="driver-profile-snapshot">
+        <div class="snap-avatar">🛺</div>
+        <div class="snap-details">
+          <h4 id="acceptedDriverName">চালকের নাম</h4>
+          <p class="car-no">🔢 WB 54 T 1234</p>
+        </div>
+      </div>
+      <div class="trip-route-summary">
+        <p><strong>পিকআপ:</strong> <span id="acceptedStart"></span></p>
+        <p><strong>গন্তব্য:</strong> <span id="acceptedEnd"></span></p>
+        <div class="metrics-row">
+          <div>দূরত্ব: <strong id="acceptedDistance">0 km</strong></div>
+          <div>ভাড়া: <strong id="acceptedFare" class="text-green">₹0</strong></div>
+        </div>
+      </div>
+      <button id="endRideBtn" class="button danger full-width">ট্রিপ সমাপ্ত করুন</button>
+    </div>
+
         <div class="popular-section">
           <h3>জনপ্রিয় স্থান (তাত্ক্ষণিক বুকিং)</h3>
           <p class="muted-text text-sm mb-10">ক্লিক করলেই ফেভারিটে সেভ হবে এবং অটোমেটিক বুকিং হবে।</p>

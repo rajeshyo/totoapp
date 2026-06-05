@@ -235,6 +235,31 @@
           </form>
         </div>
 
+    <div class="card info-card state-card hidden" id="acceptedRideCard">
+      <div class="state-header">
+        <span class="live-pulse"></span>
+        <h3>রাইড চলছে...</h3>
+      </div>
+      <div class="driver-profile-snapshot">
+        <div class="snap-avatar">🛺</div>
+        <div class="snap-details">
+          <h4 id="acceptedDriverName">চালকের নাম</h4>
+          <p id="acceptedDriverPhone" class="car-no">📞 ****</p>
+          <p id="acceptedVehicleNumber" class="car-no">🔢 -</p>
+        </div>
+        <a href="tel:0" id="driverCallBtn" class="call-action-btn" onclick="callDriver()">📞 কল করুন</a>
+      </div>
+      <div class="trip-route-summary">
+        <p><strong>পিকআপ:</strong> <span id="acceptedStart"></span></p>
+        <p><strong>গন্তব্য:</strong> <span id="acceptedEnd"></span></p>
+        <div class="metrics-row">
+          <div>দূরত্ব: <strong id="acceptedDistance">0 km</strong></div>
+          <div>ভাড়া: <strong id="acceptedFare" class="text-green">₹0</strong></div>
+        </div>
+      </div>
+      <button id="endRideBtn" class="button danger full-width">ট্রিপ সমাপ্ত করুন</button>
+    </div>
+
         <div class="popular-section">
           <h3>জনপ্রিয় স্থান (তাত্ক্ষণিক বুকিং)</h3>
           <p class="muted-text text-sm mb-10">প্রথমে শুরুর স্থান সেট করুন, তারপর গন্তব্যে ক্লিক করুন।</p>
@@ -248,46 +273,21 @@
         
         <div class="card add-stoppage-section" style="margin-top: 20px;">
           <h3 style="margin-top: 0; margin-bottom: 10px;">নতুন স্টপেজ যোগ করুন</h3>
-          <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
-            <div class="select-container" style="flex: 1; margin-bottom: 0; min-width: 120px;">
+          <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div class="select-container" style="width: 100%; margin-bottom: 0;">
               <label class="field-label" for="newStoppageVillage">গ্রাম</label>
               <select id="newStoppageVillage" required style="width: 100%;">
                 <option value="">গ্রাম নির্বাচন করুন</option>
               </select>
             </div>
-            <div style="flex: 1.5; min-width: 150px;">
+            <div style="width: 100%;">
               <label class="field-label" for="newStoppageName">স্টপেজের নাম</label>
               <input type="text" id="newStoppageName" placeholder="যেমন: করাটিয়া মন্দির" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box;" />
             </div>
-            <button type="button" id="addStoppageBtn" class="button primary" style="padding: 12px 20px; min-width: 100px;">যোগ করুন</button>
+            <button type="button" id="addStoppageBtn" class="button primary full-width" style="padding: 12px 20px;">যোগ করুন</button>
           </div>
         </div>
         <!-- <img src="image/footer.png" alt="Footer Image" class="footer-image" /> -->
-
-        <div class="card info-card state-card hidden" id="acceptedRideCard">
-          <div class="state-header">
-            <span class="live-pulse"></span>
-            <h3>রাইড চলছে...</h3>
-          </div>
-          <div class="driver-profile-snapshot">
-            <div class="snap-avatar">🛺</div>
-            <div class="snap-details">
-              <h4 id="acceptedDriverName">চালকের নাম</h4>
-              <p id="acceptedDriverPhone" class="car-no">📞 ****</p>
-              <p id="acceptedVehicleNumber" class="car-no">🔢 -</p>
-            </div>
-            <a href="tel:0" id="driverCallBtn" class="call-action-btn" onclick="callDriver()">📞 কল করুন</a>
-          </div>
-          <div class="trip-route-summary">
-            <p><strong>পিকআপ:</strong> <span id="acceptedStart"></span></p>
-            <p><strong>গন্তব্য:</strong> <span id="acceptedEnd"></span></p>
-            <div class="metrics-row">
-              <div>দূরত্ব: <strong id="acceptedDistance">0 km</strong></div>
-              <div>ভাড়া: <strong id="acceptedFare" class="text-green">₹0</strong></div>
-            </div>
-          </div>
-          <button id="endRideBtn" class="button danger full-width">ট্রিপ সমাপ্ত করুন</button>
-        </div>
       </section>
 
       <section id="driverDashboard" class="dashboard hidden">
