@@ -9,6 +9,7 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const ridesRoutes = require('./routes/rides');
 const locationsRoutes = require('./routes/locations');
+const { seedLocations } = require('./data/locations');
 
 const app = express();
 
@@ -60,6 +61,7 @@ app.use(
 
 // Connect to MongoDB
 connectDB();
+seedLocations();
 
 // Health check endpoint
 app.get('/health', (req, res) => {

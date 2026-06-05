@@ -13,8 +13,8 @@ const router = express.Router();
 const FARE_PER_KM = 10; // per km rate
 const BASE_FARE = 10; // minimum fare
 
-function buildLocationFromStoppage(stoppageId, landmark) {
-  const found = findStoppage(stoppageId);
+async function buildLocationFromStoppage(stoppageId, landmark) {
+  const found = await findStoppage(stoppageId);
   if (!found) return null;
 
   const { village, stoppage } = found;
@@ -54,8 +54,8 @@ router.post('/request', authMiddleware, async (req, res) => {
       });
     }
 
-    const pickupLocation = buildLocationFromStoppage(pickupStoppageId, landmark);
-    const dropoffLocation = buildLocationFromStoppage(dropoffStoppageId);
+    const pickupLocation = await buildLocationFromStoppage(pickupStoppageId, landmark);
+    const dropoffLocation = await buildLocationFromStoppage(dropoffStoppageId);
 
     if (!pickupLocation || !dropoffLocation) {
       return res.status(400).json({
@@ -64,7 +64,7 @@ router.post('/request', authMiddleware, async (req, res) => {
       });
     }
 
-    const distance = calculateDistanceKm(pickupStoppageId, dropoffStoppageId);
+    const distance = await calculateDistanceKm(pickupStoppageId, dropoffStoppageId);
     const fare = Math.max(BASE_FARE, distance * FARE_PER_KM);
 
     const ride = new Ride({

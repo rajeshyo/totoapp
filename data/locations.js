@@ -1,8 +1,10 @@
+const Location = require('../models/Location');
+
 /**
  * Dummy village & stoppage data for testing (Bengali labels).
  * distanceIndex is used to estimate fare between stoppages.
  */
-const VILLAGES = [
+const INITIAL_VILLAGES = [
   {
     id: 'karatia',
     nameBn: 'করাটিয়া',
@@ -65,8 +67,21 @@ const VILLAGES = [
   }
 ];
 
-function getAllVillages() {
-  return VILLAGES.map(({ id, nameBn, stoppages }) => ({
+async function seedLocations() {
+  try {
+    const count = await Location.countDocuments();
+    if (count === 0) {
+      await Location.insertMany(INITIAL_VILLAGES);
+      console.log('Seeded initial locations to MongoDB');
+    }
+  } catch (error) {
+    console.error('Error seeding locations:', error);
+  }
+}
+
+async function getAllVillages() {
+  const villages = await Location.find().sort({ _id: 1 }).lean();
+  return villages.map(({ id, nameBn, stoppages }) => ({
     id,
     nameBn,
     stoppages: stoppages.map(({ id, nameBn, distanceIndex }) => ({
@@ -77,8 +92,8 @@ function getAllVillages() {
   }));
 }
 
-function addStoppageToVillage(villageId, nameBn) {
-  const village = VILLAGES.find(v => v.id === villageId);
+async function addStoppageToVillage(villageId, nameBn) {
+  const village = await Location.findOne({ id: villageId });
   if (!village) throw new Error('Village not found');
 
   const newId = villageId + '-' + Date.now();
@@ -90,15 +105,15 @@ function addStoppageToVillage(villageId, nameBn) {
     longitude: 0
   };
   village.stoppages.push(newStoppage);
+  await village.save();
   return newStoppage;
 }
 
-function findStoppage(stoppageId) {
-  for (const village of VILLAGES) {
+async function findStoppage(stoppageId) {
+  const village = await Location.findOne({ 'stoppages.id': stoppageId }).lean();
+  if (village) {
     const stoppage = village.stoppages.find(s => s.id === stoppageId);
-    if (stoppage) {
-      return { village, stoppage };
-    }
+    if (stoppage) return { village, stoppage };
   }
   return null;
 }
@@ -111,9 +126,9 @@ function formatLocationAddress(villageBn, stoppageBn, landmark) {
   return address;
 }
 
-function calculateDistanceKm(pickupStoppageId, dropoffStoppageId) {
-  const pickup = findStoppage(pickupStoppageId);
-  const dropoff = findStoppage(dropoffStoppageId);
+async function calculateDistanceKm(pickupStoppageId, dropoffStoppageId) {
+  const pickup = await findStoppage(pickupStoppageId);
+  const dropoff = await findStoppage(dropoffStoppageId);
 
   if (!pickup || !dropoff) return 0;
   
@@ -122,7 +137,8 @@ function calculateDistanceKm(pickupStoppageId, dropoffStoppageId) {
     return 1;
   }
 
-  const villageIds = VILLAGES.map(v => v.id);
+  const allVillages = await Location.find({}, { id: 1 }).sort({ _id: 1 }).lean();
+  const villageIds = allVillages.map(v => v.id);
   const pickupVillageIdx = villageIds.indexOf(pickup.village.id);
   const dropoffVillageIdx = villageIds.indexOf(dropoff.village.id);
 
@@ -131,7 +147,7 @@ function calculateDistanceKm(pickupStoppageId, dropoffStoppageId) {
 }
 
 module.exports = {
-  VILLAGES,
+  seedLocations,
   getAllVillages,
   addStoppageToVillage,
   findStoppage,

@@ -249,35 +249,11 @@ async function loadLocations() {
     const response = await apiCall('/locations');
     if (response.success && response.villages) {
       locationData = response.villages;
+    } else {
+      console.warn('Failed to load locations from API:', response.message);
     }
   } catch (error) {
-        console.warn('Failed to load locations from API, using fallback data:', error);
-        // Fallback data if backend API is not responding or not set up
-        locationData = [
-          {
-            id: 'karatia',
-            nameBn: 'করাটিয়া',
-            stoppages: [
-              { id: 'karatia-bazar', nameBn: 'করাটিয়া বাজার', distanceIndex: 1 },
-              { id: 'karatia-more', nameBn: 'করাটিয়া মোড়', distanceIndex: 2 }
-            ]
-          },
-          {
-            id: 'guskara',
-            nameBn: 'গুসকরা',
-            stoppages: [
-              { id: 'guskara-clg', nameBn: 'গুসকরা কলেজ', distanceIndex: 5 },
-              { id: 'guskara-more', nameBn: 'গুসকরা মোড়', distanceIndex: 6 }
-            ]
-          },
-          {
-            id: 'shimulgram',
-            nameBn: 'শিমুলগ্রাম',
-            stoppages: [
-              { id: 'shimulgram-bus-stand', nameBn: 'শিমুলগ্রাম বাস স্ট্যান্ড', distanceIndex: 8 }
-            ]
-          }
-        ];
+    console.error('Failed to load locations from API:', error);
   }
       
       populateVillageSelect(pickupVillageSelect, 'গ্রাম নির্বাচন করুন');
@@ -1130,22 +1106,12 @@ addStoppageBtn?.addEventListener('click', async () => {
       showPopup('সফল', 'নতুন স্টপেজ যোগ করা হয়েছে।', '✅');
       newStoppageNameInput.value = '';
       await loadLocations();
+    } else {
+      showPopup('ত্রুটি', response.message || 'স্টপেজ যোগ করতে সমস্যা হয়েছে।', '❌');
     }
   } catch (error) {
-    console.warn("API add stoppage failed, falling back to local state:", error);
-    // Local fallback so it works instantly even if backend isn't deployed yet
-    const village = locationData.find(v => v.id === villageId);
-    if (village) {
-      village.stoppages.push({
-        id: villageId + '-' + Date.now(),
-        nameBn: stoppageName,
-        distanceIndex: village.stoppages.length + 1
-      });
-      showPopup('সফল', 'নতুন স্টপেজ যোগ করা হয়েছে।', '✅');
-      newStoppageNameInput.value = '';
-    } else {
-      showPopup('ত্রুটি', 'স্টপেজ যোগ করতে সমস্যা হয়েছে।', '❌');
-    }
+    console.error("API add stoppage failed:", error);
+    showPopup('ত্রুটি', 'স্টপেজ যোগ করতে সমস্যা হয়েছে।', '❌');
   } finally {
     addStoppageBtn.disabled = false;
     addStoppageBtn.textContent = 'যোগ করুন';
