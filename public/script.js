@@ -170,7 +170,7 @@ const uiTranslations = {
   'সেটিংস (Settings)': 'Settings',
   'ভাষা (Language)': 'Language',
   '⏳ চলমান': '⏳ Ongoing',
-  '✅ সম্পন্ন': '✅ Completed',
+  '✅ সম্পূর্ণ': '✅ Completed',
   '❌ বাতিল': '❌ Cancelled',
   'অজানা': 'Unknown',
   'খোঁজা হচ্ছে...': 'Searching...',
@@ -663,7 +663,7 @@ async function displayRideHistory() {
       const rideDate = new Date(ride.createdAt).toLocaleString('bn-BD', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
       
       let statusText = t('⏳ চলমান');
-      if (ride.rideStatus === 'completed') statusText = t('✅ সম্পন্ন');
+      if (ride.rideStatus === 'completed') statusText = t('✅ সম্পূর্ণ');
       else if (ride.rideStatus === 'cancelled') statusText = t('❌ বাতিল');
 
       return `
