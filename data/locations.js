@@ -92,6 +92,17 @@ async function getAllVillages() {
   }));
 }
 
+async function addVillage(nameBn) {
+  const newId = 'village-' + Date.now();
+  const newVillage = {
+    id: newId,
+    nameBn: nameBn,
+    stoppages: []
+  };
+  await Location.create(newVillage);
+  return newVillage;
+}
+
 async function addStoppageToVillage(villageId, nameBn) {
   const village = await Location.findOne({ id: villageId });
   if (!village) throw new Error('Village not found');
@@ -149,6 +160,7 @@ async function calculateDistanceKm(pickupStoppageId, dropoffStoppageId) {
 module.exports = {
   seedLocations,
   getAllVillages,
+  addVillage,
   addStoppageToVillage,
   findStoppage,
   formatLocationAddress,
