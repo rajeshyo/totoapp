@@ -36,4 +36,23 @@ router.get('/rides', authMiddleware, async (req, res) => {
   }
 });
 
+// Delete a user
+router.delete('/users/:id', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || user.userType !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Unauthorized access' });
+    }
+    
+    const deletedUser = await User.findByIdAndDelete(req.params.id);
+    if (!deletedUser) {
+      return res.status(404).json({ success: false, message: 'ব্যবহারকারী পাওয়া যায়নি' });
+    }
+    
+    res.status(200).json({ success: true, message: 'ব্যবহারকারী মুছে ফেলা হয়েছে' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message || 'মুছে ফেলতে সমস্যা হয়েছে' });
+  }
+});
+
 module.exports = router;

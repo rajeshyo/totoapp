@@ -189,6 +189,10 @@ const uiTranslations = {
   'লোকেশন (Locations)': 'Locations',
   'কোনো ব্যবহারকারী পাওয়া যায়নি': 'No users found',
   'কোনো রাইড পাওয়া যায়নি': 'No rides found',
+  'ডিলিট': 'Delete',
+  'আপনি কি নিশ্চিত যে আপনি এই ব্যবহারকারীকে মুছে ফেলতে চান?': 'Are you sure you want to delete this user?',
+  'ব্যবহারকারী মুছে ফেলা হয়েছে।': 'User deleted.',
+  'মুছে ফেলতে সমস্যা হয়েছে।': 'Error deleting user.',
   '🏪 করাটিয়া বাজার': '🏪 Karatia Bazar',
   '🎓 গুসকরা কলেজ': '🎓 Guskara College',
   '🛣️ গুসকরা মোড়': '🛣️ Guskara More',
@@ -797,6 +801,9 @@ async function loadAdminUsers() {
           <p>👤 <strong>${u.firstName} ${u.lastName}</strong> <span class="badge" style="float:right;">${t(u.userType === 'driver' ? 'চালক' : u.userType === 'admin' ? 'অ্যাডমিন' : 'যাত্রী')}</span></p>
           <p>📱 ${u.phone}</p>
           ${u.vehicleNumber ? `<p>🔢 ${u.vehicleNumber}</p>` : ''}
+          <div style="text-align: right; margin-top: 8px;">
+            <button class="button danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="deleteAdminUser('${u._id}')">🗑️ ${t('ডিলিট')}</button>
+          </div>
         </div>
       `).join('');
     } else {
@@ -806,6 +813,23 @@ async function loadAdminUsers() {
     list.innerHTML = `<p class="muted-text center-block">${t('লোড করতে সমস্যা হয়েছে')}</p>`;
   }
 }
+
+window.deleteAdminUser = async function(userId) {
+  if (!confirm(t('আপনি কি নিশ্চিত যে আপনি এই ব্যবহারকারীকে মুছে ফেলতে চান?'))) return;
+  
+  try {
+    const res = await apiCall(`/admin/users/${userId}`, 'DELETE');
+    if (res.success) {
+      showPopup('সফল', 'ব্যবহারকারী মুছে ফেলা হয়েছে।', '✅');
+      loadAdminUsers();
+    } else {
+      showPopup('ত্রুটি', res.message || 'মুছে ফেলতে সমস্যা হয়েছে।', '❌');
+    }
+  } catch (error) {
+    console.error("Delete user error:", error);
+    showPopup('ত্রুটি', 'মুছে ফেলতে সমস্যা হয়েছে।', '❌');
+  }
+};
 
 // --- Menu Functions ---
 function openSidebar() { sideMenu.classList.add('open'); sideMenuOverlay.classList.remove('hidden'); }
