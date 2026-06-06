@@ -369,10 +369,8 @@ const driverAcceptedRideCard = document.getElementById('driverAcceptedRideCard')
 
 // Admin workflow targets
 const adminUsersTabBtn = document.getElementById('adminUsersTabBtn');
-const adminRidesTabBtn = document.getElementById('adminRidesTabBtn');
 const adminLocationsTabBtn = document.getElementById('adminLocationsTabBtn');
 const adminUsersPanel = document.getElementById('adminUsersPanel');
-const adminRidesPanel = document.getElementById('adminRidesPanel');
 const adminLocationsPanel = document.getElementById('adminLocationsPanel');
 
 // Modals global references
@@ -603,6 +601,10 @@ async function showProfilePage() {
 function showRideHistoryPage() {
   showSection(rideHistoryPage);
   updateNavButtons('history');
+  const header = document.querySelector('#rideHistoryPage .page-header h2');
+  if (header) {
+    header.textContent = currentUser.userType === 'admin' ? t('সকল রাইড (Rides)') : t('রাইড হিস্টরি');
+  }
   displayRideHistory();
 }
 
@@ -656,6 +658,25 @@ async function displayRideHistory() {
   historyList.innerHTML = `<p class="muted-text center-block">${t('লোড হচ্ছে...')}</p>`;
   
   try {
+    if (currentUser.userType === 'admin') {
+      const res = await apiCall('/admin/rides');
+      if (res.success && res.rides.length > 0) {
+        historyList.innerHTML = res.rides.map(r => `
+          <div class="request-item" style="margin-bottom: 10px;">
+            <p>🕒 ${new Date(r.createdAt).toLocaleString('bn-BD')} <span class="badge" style="float:right;">${t(r.rideStatus)}</span></p>
+            <p>👤 ${t('যাত্রী')}: ${r.passengerId ? r.passengerId.firstName + ' ' + r.passengerId.lastName : t('অজানা')}</p>
+            <p>🚗 ${t('চালক')}: ${r.driverId ? r.driverId.firstName + ' ' + r.driverId.lastName : t('অজানা')}</p>
+            <p>📍 ${t(r.pickupLocation?.address || '')} ➡️ ${t(r.dropoffLocation?.address || '')}</p>
+            <p>💰 ₹${r.fare}</p>
+            ${r.rating ? `<p>⭐ ${r.rating} ${r.feedback ? '<br>💬 ' + r.feedback : ''}</p>` : ''}
+          </div>
+        `).join('');
+      } else {
+        historyList.innerHTML = `<p class="muted-text center-block">${t('কোনো রাইড পাওয়া যায়নি')}</p>`;
+      }
+      return;
+    }
+
     const response = await apiCall('/rides/user/rides');
     
     if (!response.success || !response.rides || response.rides.length === 0) {
@@ -751,31 +772,17 @@ function setupAdminDashboard() {
 
 adminUsersTabBtn?.addEventListener('click', () => {
   adminUsersPanel.classList.remove('hidden');
-  adminRidesPanel.classList.add('hidden');
   adminLocationsPanel.classList.add('hidden');
   adminUsersTabBtn.classList.add('active');
-  adminRidesTabBtn.classList.remove('active');
   adminLocationsTabBtn.classList.remove('active');
   loadAdminUsers();
-});
-
-adminRidesTabBtn?.addEventListener('click', () => {
-  adminRidesPanel.classList.remove('hidden');
-  adminUsersPanel.classList.add('hidden');
-  adminLocationsPanel.classList.add('hidden');
-  adminRidesTabBtn.classList.add('active');
-  adminUsersTabBtn.classList.remove('active');
-  adminLocationsTabBtn.classList.remove('active');
-  loadAdminRides();
 });
 
 adminLocationsTabBtn?.addEventListener('click', () => {
   adminLocationsPanel.classList.remove('hidden');
   adminUsersPanel.classList.add('hidden');
-  adminRidesPanel.classList.add('hidden');
   adminLocationsTabBtn.classList.add('active');
   adminUsersTabBtn.classList.remove('active');
-  adminRidesTabBtn.classList.remove('active');
 });
 
 async function loadAdminUsers() {
@@ -794,31 +801,6 @@ async function loadAdminUsers() {
       `).join('');
     } else {
       list.innerHTML = `<p class="muted-text center-block">${t('কোনো ব্যবহারকারী পাওয়া যায়নি')}</p>`;
-    }
-  } catch (error) {
-    list.innerHTML = `<p class="muted-text center-block">${t('লোড করতে সমস্যা হয়েছে')}</p>`;
-  }
-}
-
-async function loadAdminRides() {
-  const list = document.getElementById('adminRidesList');
-  if (!list) return;
-  list.innerHTML = `<p class="muted-text center-block">${t('লোড হচ্ছে...')}</p>`;
-  try {
-    const res = await apiCall('/admin/rides');
-    if (res.success && res.rides.length > 0) {
-      list.innerHTML = res.rides.map(r => `
-        <div class="request-item" style="margin-bottom: 10px;">
-          <p>🕒 ${new Date(r.createdAt).toLocaleString('bn-BD')} <span class="badge" style="float:right;">${t(r.rideStatus)}</span></p>
-          <p>👤 ${t('যাত্রী')}: ${r.passengerId ? r.passengerId.firstName + ' ' + r.passengerId.lastName : t('অজানা')}</p>
-          <p>🚗 ${t('চালক')}: ${r.driverId ? r.driverId.firstName + ' ' + r.driverId.lastName : t('অজানা')}</p>
-          <p>📍 ${t(r.pickupLocation?.address || '')} ➡️ ${t(r.dropoffLocation?.address || '')}</p>
-          <p>💰 ₹${r.fare}</p>
-          ${r.rating ? `<p>⭐ ${r.rating} ${r.feedback ? `<br>💬 ${r.feedback}` : ''}</p>` : ''}
-        </div>
-      `).join('');
-    } else {
-      list.innerHTML = `<p class="muted-text center-block">${t('কোনো রাইড পাওয়া যায়নি')}</p>`;
     }
   } catch (error) {
     list.innerHTML = `<p class="muted-text center-block">${t('লোড করতে সমস্যা হয়েছে')}</p>`;
