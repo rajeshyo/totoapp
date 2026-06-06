@@ -1,12 +1,5 @@
 // ===== Notification Helpers =====
 function sendNotification(title, options = {}) {
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(title, {
-      icon: '🛺',
-      badge: '🛺',
-      ...options
-    });
-  }
 }
 
 function notifyDriversOfRide(rideId, pickupLocation, fare) {
@@ -283,18 +276,6 @@ window.addEventListener('load', () => {
   } else if (splashScreen && currentUser) {
     // Hide splash screen immediately if user is logged in
     splashScreen.style.display = 'none';
-  }
-
-  // Request notification permission
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
-
-  // Register service worker for push notifications
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(err => {
-      console.log('Service worker registration failed:', err);
-    });
   }
 });
 
