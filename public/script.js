@@ -199,6 +199,13 @@ const uiTranslations = {
   'আপনি কি নিশ্চিত যে আপনি এই ব্যবহারকারীকে মুছে ফেলতে চান?': 'Are you sure you want to delete this user?',
   'ব্যবহারকারী মুছে ফেলা হয়েছে।': 'User deleted.',
   'মুছে ফেলতে সমস্যা হয়েছে।': 'Error deleting user.',
+  'আমরা কীভাবে সাহায্য করতে পারি?': 'How can we help?',
+  'যে কোনো সমস্যা বা প্রশ্নের জন্য আমাদের সাথে যোগাযোগ করুন।': 'Contact us for any issues or queries.',
+  'কল করুন': 'Call',
+  'সময়: 10Am - 10Pm': 'Time: 10Am - 10Pm',
+  'ইমেইল করুন': 'Email',
+  'ইমেইল পাঠান': 'Send Email',
+  'সাহায্য ও সাপোর্ট': 'Help & Support',
   '🏪 করাটিয়া বাজার': '🏪 Karatia Bazar',
   '🎓 গুসকরা কলেজ': '🎓 Guskara College',
   '🛣️ গুসকরা মোড়': '🛣️ Guskara More',
@@ -336,6 +343,7 @@ const adminDashboard = document.getElementById('adminDashboard');
 const profilePage = document.getElementById('profilePage');
 const rideHistoryPage = document.getElementById('rideHistoryPage');
 const favoriteRidesPage = document.getElementById('favoriteRidesPage');
+const helpSupportPage = document.getElementById('helpSupportPage');
 const mainHeader = document.getElementById('mainHeader');
 const appBottomNav = document.getElementById('appBottomNav');
 
@@ -537,6 +545,7 @@ function showSection(section) {
   profilePage.classList.add('hidden');
   rideHistoryPage.classList.add('hidden');
   favoriteRidesPage.classList.add('hidden');
+  if (helpSupportPage) helpSupportPage.classList.add('hidden');
   section.classList.remove('hidden');
 }
 
@@ -639,6 +648,11 @@ function showFavoritesPage() {
   showSection(favoriteRidesPage);
   updateNavButtons('favorites');
   displayFavorites();
+}
+
+function showHelpPage() {
+  showSection(helpSupportPage);
+  document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
 }
 
 function updateNavButtons(active) {
@@ -873,6 +887,12 @@ sidebarLogoutBtn.addEventListener('click', () => {
   clearAllListeners();
   renderApp();
 });
+
+// Sidebar menu links
+document.getElementById('menuHome')?.addEventListener('click', () => { closeSidebar(); showHomePage(); });
+document.getElementById('menuHistory')?.addEventListener('click', () => { closeSidebar(); showRideHistoryPage(); });
+document.getElementById('menuFav')?.addEventListener('click', () => { closeSidebar(); showFavoritesPage(); });
+document.getElementById('menuHelp')?.addEventListener('click', () => { closeSidebar(); showHelpPage(); });
 
 // Settings Modal Logic
 document.getElementById('menuSettings')?.addEventListener('click', () => {
