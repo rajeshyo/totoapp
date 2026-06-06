@@ -635,6 +635,13 @@ function displayProfileInfo() {
     document.getElementById('vehicleNumberDetail').classList.add('hidden');
   }
   
+  const ratingDetail = document.getElementById('ratingDetail');
+  if (currentUser.userType === 'driver') {
+    if (ratingDetail) ratingDetail.classList.remove('hidden');
+  } else {
+    if (ratingDetail) ratingDetail.classList.add('hidden');
+  }
+  
   const stats = getOrInitializeDailyStats();
   document.getElementById('profilePageTotalRides').textContent = stats.totalRides;
   const rating = currentUser.averageRating || 0;
