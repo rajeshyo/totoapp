@@ -68,6 +68,12 @@ const uiTranslations = {
   'জনপ্রিয় স্থান (তাত্ক্ষণিক বুকিং)': 'Popular Places',
   'প্রথমে শুরুর স্থান সেট করুন, তারপর গন্তব্যে ক্লিক করুন।': 'First select pickup, then drop.',
   'নতুন স্টপেজ যোগ করুন': 'Add New Stoppage',
+  'নতুন গ্রাম যোগ করুন': 'Add New Village',
+  'গ্রামের নাম': 'Village Name',
+  'যেমন: নতুন গ্রাম': 'e.g. New Village',
+  'নতুন গ্রাম যোগ করা হয়েছে।': 'New village added.',
+  'গ্রাম যোগ করতে সমস্যা হয়েছে।': 'Error adding village.',
+  'গ্রামের নাম লিখুন।': 'Enter village name.',
   'স্টপেজের নাম': 'Stoppage Name',
   'যেমন: করাটিয়া মন্দির': 'e.g. Karatia Temple',
   'যোগ করুন': 'Add',
@@ -363,6 +369,10 @@ const stopChips = document.querySelectorAll('.stop-chip');
 const newStoppageVillageSelect = document.getElementById('newStoppageVillage');
 const newStoppageNameInput = document.getElementById('newStoppageName');
 const addStoppageBtn = document.getElementById('addStoppageBtn');
+
+// Add Village UI
+const newVillageNameInput = document.getElementById('newVillageName');
+const addVillageBtn = document.getElementById('addVillageBtn');
 
 // Drivers workflow targets
 const availabilityToggleCheckbox = document.getElementById('availabilityToggleCheckbox');
@@ -1470,6 +1480,38 @@ stopChips.forEach(chip => {
     setLocationSelection(dropoffVillageSelect, dropoffStoppageSelect, villageId, stoppageId);
     updateRidePreview();
   });
+});
+
+// Add New Village Logic
+addVillageBtn?.addEventListener('click', async () => {
+  const villageName = newVillageNameInput?.value?.trim();
+
+  if (!villageName) {
+    showPopup('ত্রুটি', 'গ্রামের নাম লিখুন।', '❌');
+    return;
+  }
+
+  addVillageBtn.disabled = true;
+  addVillageBtn.textContent = t('অপেক্ষা করুন...');
+
+  try {
+    const response = await apiCall('/locations/village', 'POST', { nameBn: villageName });
+    if (response.success) {
+      showPopup('সফল', 'নতুন গ্রাম যোগ করা হয়েছে।', '✅');
+      newVillageNameInput.value = '';
+      
+      // This automatically updates all dropdowns in both Admin and Customer Dashboards!
+      await loadLocations(); 
+    } else {
+      showPopup('ত্রুটি', response.message || 'গ্রাম যোগ করতে সমস্যা হয়েছে।', '❌');
+    }
+  } catch (error) {
+    console.error("API add village failed:", error);
+    showPopup('ত্রুটি', 'গ্রাম যোগ করতে সমস্যা হয়েছে।', '❌');
+  } finally {
+    addVillageBtn.disabled = false;
+    addVillageBtn.textContent = t('যোগ করুন');
+  }
 });
 
 // Add New Stoppage Logic
