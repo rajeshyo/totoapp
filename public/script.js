@@ -397,6 +397,7 @@ let locationData = [];
 let currentUser = JSON.parse(localStorage.getItem('toto_active_user')) || null;
 let activeRideId = localStorage.getItem('toto_active_ride_id') || null;
 let pollInterval = null;
+let adminPollInterval = null;
 let rejectedRides = {}; // Track rejected rides with timestamp: { rideId: timestamp }
 
 // --- Location Helpers ---
@@ -515,6 +516,10 @@ popupCloseBtn?.addEventListener('click', hidePopup);
 
 // --- Section Routing ---
 function showSection(section) {
+  if (adminPollInterval) {
+    clearInterval(adminPollInterval);
+    adminPollInterval = null;
+  }
   authView.classList.add('hidden');
   customerDashboard.classList.add('hidden');
   driverDashboard.classList.add('hidden');
@@ -569,6 +574,10 @@ function clearAllListeners() {
     clearInterval(pollInterval);
     pollInterval = null;
   }
+  if (adminPollInterval) {
+    clearInterval(adminPollInterval);
+    adminPollInterval = null;
+  }
 }
 
 // --- Navigation Functions ---
@@ -610,6 +619,10 @@ function showRideHistoryPage() {
     header.textContent = currentUser.userType === 'admin' ? t('সকল রাইড (Rides)') : t('রাইড হিস্টরি');
   }
   displayRideHistory();
+  
+  if (currentUser.userType === 'admin') {
+    adminPollInterval = setInterval(() => displayRideHistory(true), 16000);
+  }
 }
 
 function showFavoritesPage() {
@@ -655,11 +668,13 @@ function displayProfileInfo() {
   document.getElementById('profilePageRating').textContent = `⭐ ${rating} (${reviews} রিভিউ)`;
 }
 
-async function displayRideHistory() {
+async function displayRideHistory(isPolling = false) {
   const historyList = document.getElementById('rideHistoryList');
   if (!historyList) return;
   
-  historyList.innerHTML = `<p class="muted-text center-block">${t('লোড হচ্ছে...')}</p>`;
+  if (!isPolling) {
+    historyList.innerHTML = `<p class="muted-text center-block">${t('লোড হচ্ছে...')}</p>`;
+  }
   
   try {
     if (currentUser.userType === 'admin') {
