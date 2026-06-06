@@ -826,6 +826,7 @@ async function loadAdminRides() {
           <p>🚗 ${t('চালক')}: ${r.driverId ? r.driverId.firstName + ' ' + r.driverId.lastName : t('অজানা')}</p>
           <p>📍 ${t(r.pickupLocation?.address || '')} ➡️ ${t(r.dropoffLocation?.address || '')}</p>
           <p>💰 ₹${r.fare}</p>
+          ${r.rating ? `<p>⭐ ${r.rating} ${r.feedback ? `<br>💬 ${r.feedback}` : ''}</p>` : ''}
         </div>
       `).join('');
     } else {
@@ -1740,6 +1741,7 @@ function showRatingPopup(rideId, driverName) {
           <span class="star" data-val="4">☆</span>
           <span class="star" data-val="5">☆</span>
         </div>
+        <textarea id="ratingFeedback" placeholder="আপনার মতামত লিখুন (ঐচ্ছিক)" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:15px;font-size:1rem;resize:vertical;min-height:80px;"></textarea>
         <button id="submitRatingBtn" class="button primary" style="width:100%;margin-bottom:10px;">সাবমিট</button>
         <button id="skipRatingBtn" class="button secondary" style="width:100%;background:none;color:#888;border:none;">স্কিপ করুন</button>
       </div>
@@ -1761,8 +1763,9 @@ function showRatingPopup(rideId, driverName) {
     document.getElementById('submitRatingBtn').addEventListener('click', async () => {
       if (selectedRating > 0) {
         const btn = document.getElementById('submitRatingBtn');
+        const feedback = document.getElementById('ratingFeedback').value.trim();
         btn.textContent = 'অপেক্ষা করুন...';
-        try { await apiCall(`/rides/rate/${modal.dataset.rideId}`, 'POST', { rating: selectedRating }); } catch(e) {}
+        try { await apiCall(`/rides/rate/${modal.dataset.rideId}`, 'POST', { rating: selectedRating, feedback }); } catch(e) {}
         btn.textContent = 'সাবমিট';
       }
       modal.style.display = 'none';
@@ -1778,7 +1781,9 @@ function showRatingPopup(rideId, driverName) {
   document.getElementById('ratingDriverName').textContent = driverName;
   modal.dataset.rideId = rideId;
 
-  // Reset stars
+  // Reset stars and feedback
   modal.querySelectorAll('.star').forEach(s => { s.textContent = '☆'; s.style.color = '#ccc'; });
+  const feedbackInput = document.getElementById('ratingFeedback');
+  if (feedbackInput) feedbackInput.value = '';
   modal.style.display = 'flex';
 }

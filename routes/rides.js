@@ -326,10 +326,9 @@ router.post('/reject/:rideId', authMiddleware, async (req, res) => {
 // RATE RIDE (Customer)
 router.post('/rate/:rideId', authMiddleware, async (req, res) => {
   try {
-    const { rating } = req.body;
     const ride = await Ride.findByIdAndUpdate(
       req.params.rideId,
-      { rating },
+      { rating, feedback },
       { new: true }
     );
 
