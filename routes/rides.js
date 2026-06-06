@@ -326,9 +326,17 @@ router.post('/reject/:rideId', authMiddleware, async (req, res) => {
 // RATE RIDE (Customer)
 router.post('/rate/:rideId', authMiddleware, async (req, res) => {
   try {
+    const { rating, feedback } = req.body;
+
+    if (!rating) {
+      return res.status(400).json({ success: false, message: 'Rating is required' });
+    }
+
+    const numericRating = Number(rating);
+
     const ride = await Ride.findByIdAndUpdate(
       req.params.rideId,
-      { rating, feedback },
+      { rating: numericRating, feedback },
       { new: true }
     );
 
@@ -339,9 +347,14 @@ router.post('/rate/:rideId', authMiddleware, async (req, res) => {
     // Update driver's overall rating
     if (ride.driverId) {
       const allDriverRides = await Ride.find({ driverId: ride.driverId, rating: { $ne: null } });
-      const totalReviews = allDriverRides.length;
-      const sumRating = allDriverRides.reduce((sum, r) => sum + r.rating, 0);
-      const averageRating = totalReviews > 0 ? (sumRating / totalReviews).toFixed(1) : 0;
+      
+      // Filter out invalid ratings and ensure they are numbers to prevent NaN crash
+      const validRides = allDriverRides.filter(r => r.rating !== null && r.rating !== undefined && !isNaN(Number(r.rating)));
+      const totalReviews = validRides.length;
+      const sumRating = validRides.reduce((sum, r) => sum + Number(r.rating), 0);
+      
+      // Convert .toFixed(1) result back to Number so Mongoose doesn't complain about strings
+      const averageRating = totalReviews > 0 ? Number((sumRating / totalReviews).toFixed(1)) : 0;
       
       await User.findByIdAndUpdate(ride.driverId, { averageRating, totalReviews });
     }
@@ -349,7 +362,7 @@ router.post('/rate/:rideId', authMiddleware, async (req, res) => {
     res.status(200).json({ success: true, message: 'Rating submitted successfully' });
   } catch (error) {
     console.error('Rating error:', error);
-    res.status(500).json({ success: false, message: 'Failed to submit rating' });
+    res.status(500).json({ success: false, message: error.message || 'Failed to submit rating' });
   }
 });
 
