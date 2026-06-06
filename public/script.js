@@ -1140,10 +1140,10 @@ showLoginBtn.addEventListener('click', () => {
 // --- Customer Logic ---
 function setupCustomerDashboard() {
   if (activeRideId) {
-    // Start continuous polling - fast update every 1.5 seconds
+    // Start continuous polling - every 16 seconds
     if (pollInterval) clearInterval(pollInterval);
     pollCustomerRide(); // Initial call
-    pollInterval = setInterval(pollCustomerRide, 1500);
+    pollInterval = setInterval(pollCustomerRide, 16000);
   } else {
     resetCustomerUI();
   }
@@ -1393,10 +1393,10 @@ rideRequestForm.addEventListener('submit', async event => {
       activeRideId = response.ride._id;
       localStorage.setItem('toto_active_ride_id', activeRideId);
       
-      // Start fast polling - every 1.5 seconds for real-time updates
+      // Start polling - every 16 seconds for real-time updates
       if (pollInterval) clearInterval(pollInterval);
       pollCustomerRide(); // Initial call
-      pollInterval = setInterval(pollCustomerRide, 1500);
+      pollInterval = setInterval(pollCustomerRide, 16000);
       
       // Notify all drivers of new ride request
       notifyDriversOfRide(activeRideId, pickupAddress, response.ride.fare);
@@ -1543,10 +1543,10 @@ function toggleDriverStatus(isAvailable) {
   toggleStatusLabel.style.color = isAvailable ? 'var(--primary-brand)' : 'var(--text-muted)';
 
   if (isAvailable) {
-    // Start fast polling when going online - every 1.5 seconds
+    // Start polling when going online - every 16 seconds
     if (pollInterval) clearInterval(pollInterval);
     listenToPendingQueue(); // Initial call
-    pollInterval = setInterval(listenToPendingQueue, 1500);
+    pollInterval = setInterval(listenToPendingQueue, 16000);
   } else {
     if (pollInterval) clearInterval(pollInterval);
     rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('আপনি অফলাইনে আছেন। রাইড পেতে অনলাইন মোড চালু করুন।')}</p>`;
@@ -1607,9 +1607,9 @@ async function listenToPendingQueue() {
       btn.addEventListener('click', (e) => rejectRide(e.target.dataset.id));
     });
 
-    // Poll for updates every 1.5 seconds for real-time updates
+    // Poll for updates every 16 seconds for real-time updates
     if (pollInterval) clearInterval(pollInterval);
-    pollInterval = setInterval(listenToPendingQueue, 1500);
+    pollInterval = setInterval(listenToPendingQueue, 16000);
   } catch (error) {
     console.error("Error fetching pending rides:", error);
   }
@@ -1632,10 +1632,10 @@ async function acceptRide(rideId) {
       rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('আপনার একটি ট্রিপ চলমান রয়েছে।')}</p>`;
       requestCountBadge.textContent = '0';
       
-      // Start fast polling for active ride - every 1.5 seconds for customer updates
+      // Start polling for active ride - every 16 seconds
       if (pollInterval) clearInterval(pollInterval);
       listenToDriverActiveRide(); // Initial call
-      pollInterval = setInterval(listenToDriverActiveRide, 1500);
+      pollInterval = setInterval(listenToDriverActiveRide, 16000);
     }
   } catch (error) {
     console.error("Accept ride error:", error);
@@ -1688,10 +1688,10 @@ async function listenToDriverActiveRide() {
         rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('উপলব্ধ রাইড খুঁজছি...')}</p>`;
         requestCountBadge.textContent = '0';
         
-        // Immediately restart polling for new rides - fast updates every 1.5 seconds
+        // Immediately restart polling for new rides - updates every 16 seconds
         if (pollInterval) clearInterval(pollInterval);
         listenToPendingQueue(); // Initial call
-        pollInterval = setInterval(listenToPendingQueue, 1500);
+        pollInterval = setInterval(listenToPendingQueue, 16000);
       }
       return;
     }
@@ -1720,7 +1720,7 @@ async function listenToDriverActiveRide() {
 // Poll for driver active ride
 function startDriverPoll() {
   if (pollInterval) clearInterval(pollInterval);
-  pollInterval = setInterval(listenToDriverActiveRide, 3000);
+  pollInterval = setInterval(listenToDriverActiveRide, 16000);
 }
 
 // Initial boot
