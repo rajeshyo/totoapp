@@ -704,9 +704,10 @@ async function displayRideHistory(isPolling = false) {
     if (currentUser.userType === 'admin') {
       const res = await apiCall('/admin/rides');
       if (res.success && res.rides.length > 0) {
+        const dateLocale = currentLang === 'en' ? 'en-US' : 'bn-BD';
         historyList.innerHTML = res.rides.map(r => `
           <div class="request-item" style="margin-bottom: 10px;">
-            <p>🕒 ${new Date(r.createdAt).toLocaleString('bn-BD')} <span class="badge" style="float:right;">${t(r.rideStatus)}</span></p>
+            <p>🕒 ${new Date(r.createdAt).toLocaleString(dateLocale)} <span class="badge" style="float:right;">${t(r.rideStatus)}</span></p>
             <p>👤 ${t('যাত্রী')}: ${r.passengerId ? r.passengerId.firstName + ' ' + r.passengerId.lastName : t('অজানা')}</p>
             <p>🚗 ${t('চালক')}: ${r.driverId ? r.driverId.firstName + ' ' + r.driverId.lastName : t('অজানা')}</p>
             <p>📍 ${t(r.pickupLocation?.address || '')} ➡️ ${t(r.dropoffLocation?.address || '')}</p>
@@ -731,7 +732,8 @@ async function displayRideHistory(isPolling = false) {
       const isPassenger = currentUser.userType === 'passenger';
       const otherUser = isPassenger ? ride.driverId : ride.passengerId;
       const otherUserName = otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : (isPassenger ? t('খোঁজা হচ্ছে...') : t('অজানা'));
-      const rideDate = new Date(ride.createdAt).toLocaleString('bn-BD', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      const dateLocale = currentLang === 'en' ? 'en-US' : 'bn-BD';
+      const rideDate = new Date(ride.createdAt).toLocaleString(dateLocale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
       
       let statusText = t('⏳ চলমান');
       if (ride.rideStatus === 'completed') statusText = t('✅ সম্পূর্ণ');
