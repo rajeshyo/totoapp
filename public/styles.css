@@ -5,7 +5,8 @@
   --text-main: #0f291e;
   --text-muted: #61736b;
   --primary-brand: #09663e;
-  --primary-gradient: linear-gradient(135deg, #09663e 0%, #05492b 100%);
+ /* --primary-gradient: linear-gradient(135deg, #09663e 0%, #05492b 100%);  */
+--primary-gradient: linear-gradient(135deg, #031fe9 0%, #141834 100%);
   --accent-gold: #ffc107;
   --accent-soft: #eef9f3;
   --success-color: #10b981;
