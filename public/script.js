@@ -52,7 +52,7 @@ const uiTranslations = {
   'নতুন পাসওয়ার্ড': 'New Password',
   'গাড়ির নম্বর (যেমন: WB54T1234)': 'Vehicle No (e.g. WB54)',
   'অ্যাকাউন্ট তৈরি করুন': 'Create Account',
-  'সহজ টোটো বুক করুন': 'Book Toto Easily',
+  'সহজে টোটো বুক করুন': 'Book Toto Easily',
   'সুলভ, নিরাপদ ও বিশ্বস্ত পরিষেবা': 'Affordable, Safe, Reliable',
   'শুরুর স্থান নির্বাচন করুন': 'Select Pickup',
   'গ্রাম': 'Village',
