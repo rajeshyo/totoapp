@@ -10,40 +10,39 @@
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Splash Screen -->
-  <div id="splashScreen" class="splash-screen">
-    <div class="splash-container">
-      <div class="splash-logo">🛺</div>
-      <h1 class="splash-title">Toto<span>Bondhu</span></h1>
-      <p class="splash-subtitle">আপনার পথচলার সাথী</p>
-      
-      <div class="splash-tips">
-        <div class="tip-item">
-          <span class="tip-icon">📍</span>
-          <p><strong>সহজ বুকিং</strong> - মাত্র দুটি ক্লিকে আপনার গন্তব্য নির্বাচন করুন</p>
+  <div class="app-shell">
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="splash-screen">
+      <div class="splash-container">
+        <div class="splash-logo">🛺</div>
+        <h1 class="splash-title">Toto<span>Bondhu</span></h1>
+        <p class="splash-subtitle">আপনার পথচলার সাথী</p>
+        
+        <div class="splash-tips">
+          <div class="tip-item">
+            <span class="tip-icon">📍</span>
+            <p><strong>সহজ বুকিং</strong><br>মাত্র দুটি ক্লিকে আপনার গন্তব্য নির্বাচন করুন</p>
+          </div>
+          <div class="tip-item">
+            <span class="tip-icon">🚗</span>
+            <p><strong>নিরাপদ যাত্রা</strong><br>সকল চালক যাচাইকৃত এবং রেটিং প্রাপ্ত</p>
+          </div>
+          <div class="tip-item">
+            <span class="tip-icon">💰</span>
+            <p><strong>স্বচ্ছ মূল্য</strong><br>কোনো লুকানো খরচ নেই, সবকিছু স্পষ্ট</p>
+          </div>
+          <div class="tip-item">
+            <span class="tip-icon">⭐</span>
+            <p><strong>বিশ্বস্ত সেবা</strong><br>সর্বোত্তম গ্রাহক সেবা এবং সহায়তা</p>
+          </div>
         </div>
-        <div class="tip-item">
-          <span class="tip-icon">🚗</span>
-          <p><strong>নিরাপদ যাত্রা</strong> - সকল চালক যাচাইকৃত এবং রেটিং প্রাপ্ত</p>
+        
+        <div class="splash-loading">
+          <div class="loader"></div>
+          <p>লোড হচ্ছে...</p>
         </div>
-        <div class="tip-item">
-          <span class="tip-icon">💰</span>
-          <p><strong>স্বচ্ছ মূল্য</strong> - কোনো লুকানো খরচ নেই, সবকিছু স্পষ্ট</p>
-        </div>
-        <div class="tip-item">
-          <span class="tip-icon">⭐</span>
-          <p><strong>বিশ্বস্ত সেবা</strong> - সর্বোত্তম গ্রাহক সেবা এবং সহায়তা</p>
-        </div>
-      </div>
-      
-      <div class="splash-loading">
-        <div class="loader"></div>
-        <p>লোড হচ্ছে...</p>
       </div>
     </div>
-  </div>
-
-  <div class="app-shell">
     
     <div id="sideMenuOverlay" class="menu-overlay hidden"></div>
     <aside id="sideMenu" class="side-menu">
@@ -199,13 +198,13 @@
 
         <div class="card ride-booking-card">
           <form id="rideRequestForm" class="booking-flow">
-            <div class="location-columns">
-              <div class="location-column" style="margin-bottom: 15px;">
-                <div class="column-header" style="margin-bottom: 8px;">
+            <div class="location-columns" style="display: flex; flex-direction: column;">
+              <div class="location-column" id="pickupColumn">
+                <div class="column-header">
                   <span class="dot-icon green"></span>
                   <span class="column-label" style="font-weight: 600;">শুরুর স্থান নির্বাচন করুন</span>
                 </div>
-                <div style="display: flex; gap: 10px; width: 100%;">
+                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
                   <div class="select-container" style="flex: 1; margin-bottom: 0;">
                     <label class="field-label" for="pickupVillage">গ্রাম</label>
                     <select id="pickupVillage" required style="width: 100%;">
@@ -221,12 +220,25 @@
                 </div>
               </div>
 
-              <div class="location-column" style="margin-bottom: 15px;">
-                <div class="column-header" style="margin-bottom: 8px;">
+              <div id="pickupSummary" class="location-column hidden" style="background: var(--surface-dim); border: 1px solid var(--success-color); cursor: pointer; padding: 12px; transition: all 0.3s ease;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="dot-icon green"></span>
+                    <div>
+                      <div style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted);">শুরুর স্থান</div>
+                      <strong id="pickupSummaryText" style="font-size: 0.95rem; color: var(--text-main);"></strong>
+                    </div>
+                  </div>
+                  <span style="font-size: 1.1rem; color: var(--primary-brand);">✎</span>
+                </div>
+              </div>
+
+              <div class="location-column hidden" id="dropoffColumn">
+                <div class="column-header">
                   <span class="dot-icon red"></span>
                   <span class="column-label" style="font-weight: 600;">গন্তব্য নির্বাচন করুন</span>
                 </div>
-                <div style="display: flex; gap: 10px; width: 100%;">
+                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
                   <div class="select-container" style="flex: 1; margin-bottom: 0;">
                     <label class="field-label" for="dropoffVillage">গ্রাম</label>
                     <select id="dropoffVillage" required style="width: 100%;">
@@ -551,14 +563,14 @@
         <span class="nav-label">রিফ্রেশ</span>
       </button>
     </footer>
-  </div>
 
-  <div id="popupOverlay" class="popup-overlay hidden" aria-hidden="true">
-    <div class="popup-card" role="dialog" aria-modal="true">
-      <div class="popup-icon-decor" id="popupIcon">🔔</div>
-      <h3 id="popupTitle">বিজ্ঞপ্তি</h3>
-      <p id="popupMessage"></p>
-      <button id="popupCloseBtn" class="button primary full-width">ঠিক আছে</button>
+    <div id="popupOverlay" class="popup-overlay hidden" aria-hidden="true">
+      <div class="popup-card" role="dialog" aria-modal="true">
+        <div class="popup-icon-decor" id="popupIcon">🔔</div>
+        <h3 id="popupTitle">বিজ্ঞপ্তি</h3>
+        <p id="popupMessage"></p>
+        <button id="popupCloseBtn" class="button primary full-width">ঠিক আছে</button>
+      </div>
     </div>
   </div>
 

@@ -371,6 +371,10 @@ const pickupVillageSelect = document.getElementById('pickupVillage');
 const pickupStoppageSelect = document.getElementById('pickupStoppage');
 const dropoffVillageSelect = document.getElementById('dropoffVillage');
 const dropoffStoppageSelect = document.getElementById('dropoffStoppage');
+const pickupColumn = document.getElementById('pickupColumn');
+const dropoffColumn = document.getElementById('dropoffColumn');
+const pickupSummary = document.getElementById('pickupSummary');
+const pickupSummaryText = document.getElementById('pickupSummaryText');
 const landmarkInput = document.getElementById('landmarkInput');
 const distanceInfoInput = document.getElementById('distanceInfo');
 const fareInfoInput = document.getElementById('fareInfo');
@@ -1440,6 +1444,11 @@ function resetCustomerUI() {
     pickupStoppageSelect.innerHTML = `<option value="">${t('স্টপেজ নির্বাচন করুন')}</option>`;
     pickupStoppageSelect.disabled = true;
   }
+  if (pickupColumn && dropoffColumn && pickupSummary) {
+    pickupColumn.classList.remove('hidden');
+    pickupSummary.classList.add('hidden');
+    dropoffColumn.classList.add('hidden');
+  }
   if (dropoffVillageSelect) dropoffVillageSelect.value = '';
   if (dropoffStoppageSelect) {
     dropoffStoppageSelect.innerHTML = `<option value="">${t('স্টপেজ নির্বাচন করুন')}</option>`;
@@ -1548,7 +1557,24 @@ dropoffVillageSelect?.addEventListener('change', () => {
   updateRidePreview();
 });
 
-pickupStoppageSelect?.addEventListener('change', updateRidePreview);
+pickupStoppageSelect?.addEventListener('change', () => {
+  updateRidePreview();
+  if (pickupStoppageSelect.value && pickupColumn && dropoffColumn && pickupSummary) {
+    pickupColumn.classList.add('hidden');
+    pickupSummary.classList.remove('hidden');
+    dropoffColumn.classList.remove('hidden');
+    if (pickupSummaryText && pickupStoppageSelect.selectedIndex >= 0) {
+      pickupSummaryText.textContent = pickupStoppageSelect.options[pickupStoppageSelect.selectedIndex].text;
+    }
+  }
+});
+pickupSummary?.addEventListener('click', () => {
+  if (pickupColumn && pickupSummary && dropoffColumn) {
+    pickupColumn.classList.remove('hidden');
+    pickupSummary.classList.add('hidden');
+    dropoffColumn.classList.add('hidden');
+  }
+});
 dropoffStoppageSelect?.addEventListener('change', updateRidePreview);
 
 // Instant Booking (Popular Places)
