@@ -315,10 +315,17 @@
         <div class="auth-tabs" style="margin-bottom: 20px;">
           <button type="button" id="adminUsersTabBtn" class="tab active">ব্যবহারকারী (Users)</button>
           <button type="button" id="adminLocationsTabBtn" class="tab">লোকেশন (Locations)</button>
+          <button type="button" id="adminFeedbackTabBtn" class="tab">মতামত (Feedback)</button>
         </div>
 
         <div id="adminUsersPanel">
           <div id="adminUsersList" class="ride-list">
+            <p class="muted-text center-block">লোড হচ্ছে...</p>
+          </div>
+        </div>
+        
+        <div id="adminFeedbackPanel" class="hidden">
+          <div id="adminFeedbackList" class="ride-list">
             <p class="muted-text center-block">লোড হচ্ছে...</p>
           </div>
         </div>
@@ -508,6 +515,15 @@
               <p style="margin: 8px 0; font-size: 1.1rem; font-weight: bold; color: var(--primary-brand);">nhcerajesh@gmail.com</p>
               <a href="mailto:nhcerajesh@gmail.com" class="button secondary full-width" style="margin-top: 10px;">ইমেইল পাঠান</a>
             </div>
+          </div>
+          
+          <div class="feedback-section" style="margin-top: 30px; text-align: left; background: var(--surface-dim); padding: 20px 15px; border-radius: 12px; border: 1px solid var(--border-light);">
+            <h4 style="margin-top: 0; margin-bottom: 10px;">মতামত দিন (Feedback)</h4>
+            <p class="muted-text" style="font-size: 0.9rem; margin-bottom: 15px;">অ্যাপটি উন্নত করতে আপনার মূল্যবান মতামত বা পরামর্শ দিন।</p>
+            <form id="feedbackForm">
+              <textarea id="feedbackText" required placeholder="এখানে লিখুন..." style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px; min-height: 100px; resize: vertical; box-sizing: border-box; font-family: inherit; font-size: 1rem;"></textarea>
+              <button type="submit" id="feedbackSubmitBtn" class="button primary full-width">জমা দিন</button>
+            </form>
           </div>
         </div>
       </section>

@@ -206,6 +206,13 @@ const uiTranslations = {
   'ইমেইল করুন': 'Email',
   'ইমেইল পাঠান': 'Send Email',
   'সাহায্য ও সাপোর্ট': 'Help & Support',
+  'মতামত (Feedback)': 'Feedback',
+  'মতামত দিন (Feedback)': 'Give Feedback',
+  'অ্যাপটি উন্নত করতে আপনার মূল্যবান মতামত বা পরামর্শ দিন।': 'Give your valuable feedback or suggestions to improve the app.',
+  'এখানে লিখুন...': 'Write here...',
+  'আপনার মতামত সফলভাবে জমা হয়েছে। ধন্যবাদ!': 'Your feedback has been submitted successfully. Thank you!',
+  'মতামত জমা দিতে সমস্যা হয়েছে।': 'Failed to submit feedback.',
+  'কোনো মতামত পাওয়া যায়নি': 'No feedback found',
   '🏪 করাটিয়া বাজার': '🏪 Karatia Bazar',
   '🎓 গুসকরা কলেজ': '🎓 Guskara College',
   '🛣️ গুসকরা মোড়': '🛣️ Guskara More',
@@ -392,8 +399,10 @@ const driverAcceptedRideCard = document.getElementById('driverAcceptedRideCard')
 // Admin workflow targets
 const adminUsersTabBtn = document.getElementById('adminUsersTabBtn');
 const adminLocationsTabBtn = document.getElementById('adminLocationsTabBtn');
+const adminFeedbackTabBtn = document.getElementById('adminFeedbackTabBtn');
 const adminUsersPanel = document.getElementById('adminUsersPanel');
 const adminLocationsPanel = document.getElementById('adminLocationsPanel');
+const adminFeedbackPanel = document.getElementById('adminFeedbackPanel');
 
 // Modals global references
 const signupForm = document.getElementById('signupForm');
@@ -406,6 +415,11 @@ const popupIcon = document.getElementById('popupIcon');
 const popupCloseBtn = document.getElementById('popupCloseBtn');
 const userTypeSelect = document.getElementById('userType');
 const vehicleNumberWrapper = document.getElementById('vehicleNumberWrapper');
+
+// Feedback targets
+const feedbackForm = document.getElementById('feedbackForm');
+const feedbackText = document.getElementById('feedbackText');
+const feedbackSubmitBtn = document.getElementById('feedbackSubmitBtn');
 
 const FARE_PER_KM = 10;
 const BASE_FARE = 10;
@@ -818,16 +832,30 @@ function setupAdminDashboard() {
 adminUsersTabBtn?.addEventListener('click', () => {
   adminUsersPanel.classList.remove('hidden');
   adminLocationsPanel.classList.add('hidden');
+  adminFeedbackPanel.classList.add('hidden');
   adminUsersTabBtn.classList.add('active');
   adminLocationsTabBtn.classList.remove('active');
+  adminFeedbackTabBtn.classList.remove('active');
   loadAdminUsers();
 });
 
 adminLocationsTabBtn?.addEventListener('click', () => {
   adminLocationsPanel.classList.remove('hidden');
   adminUsersPanel.classList.add('hidden');
+  adminFeedbackPanel.classList.add('hidden');
   adminLocationsTabBtn.classList.add('active');
   adminUsersTabBtn.classList.remove('active');
+  adminFeedbackTabBtn.classList.remove('active');
+});
+
+adminFeedbackTabBtn?.addEventListener('click', () => {
+  adminFeedbackPanel.classList.remove('hidden');
+  adminUsersPanel.classList.add('hidden');
+  adminLocationsPanel.classList.add('hidden');
+  adminFeedbackTabBtn.classList.add('active');
+  adminUsersTabBtn.classList.remove('active');
+  adminLocationsTabBtn.classList.remove('active');
+  loadAdminFeedback();
 });
 
 async function loadAdminUsers() {
@@ -871,6 +899,51 @@ window.deleteAdminUser = async function(userId) {
     showPopup('ত্রুটি', 'মুছে ফেলতে সমস্যা হয়েছে।', '❌');
   }
 };
+
+async function loadAdminFeedback() {
+  const list = document.getElementById('adminFeedbackList');
+  if (!list) return;
+  list.innerHTML = `<p class="muted-text center-block">${t('লোড হচ্ছে...')}</p>`;
+  try {
+    const res = await apiCall('/admin/feedback');
+    if (res.success && res.feedbacks.length > 0) {
+      list.innerHTML = res.feedbacks.map(f => `
+        <div class="request-item" style="margin-bottom: 10px;">
+          <p>👤 <strong>${f.userId ? f.userId.firstName + ' ' + f.userId.lastName : t('অজানা')}</strong> <span class="badge" style="float:right;">${new Date(f.createdAt).toLocaleString(currentLang === 'en' ? 'en-US' : 'bn-BD', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span></p>
+          ${f.userId && f.userId.userType ? `<p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">(${t(f.userId.userType === 'driver' ? 'চালক' : f.userId.userType === 'passenger' ? 'যাত্রী' : 'অ্যাডমিন')})</p>` : ''}
+          <p style="white-space:pre-wrap; background: var(--surface-color); padding: 10px; border-radius: 8px; border: 1px solid var(--border-light);">💬 ${f.message}</p>
+        </div>
+      `).join('');
+    } else {
+      list.innerHTML = `<p class="muted-text center-block">${t('কোনো মতামত পাওয়া যায়নি')}</p>`;
+    }
+  } catch (error) {
+    list.innerHTML = `<p class="muted-text center-block">${t('লোড করতে সমস্যা হয়েছে')}</p>`;
+  }
+}
+
+feedbackForm?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const message = feedbackText?.value?.trim();
+  if (!message) return;
+  
+  feedbackSubmitBtn.disabled = true;
+  feedbackSubmitBtn.textContent = t('অপেক্ষা করুন...');
+  try {
+    const response = await apiCall('/admin/feedback', 'POST', { message });
+    if (response.success) {
+      showPopup('সফল', 'আপনার মতামত সফলভাবে জমা হয়েছে। ধন্যবাদ!', '✅');
+      feedbackText.value = '';
+    } else {
+      showPopup('ত্রুটি', response.message || 'মতামত জমা দিতে সমস্যা হয়েছে।', '❌');
+    }
+  } catch (error) {
+    showPopup('ত্রুটি', 'মতামত জমা দিতে সমস্যা হয়েছে।', '❌');
+  } finally {
+    feedbackSubmitBtn.disabled = false;
+    feedbackSubmitBtn.textContent = t('জমা দিন');
+  }
+});
 
 // --- Menu Functions ---
 function openSidebar() { sideMenu.classList.add('open'); sideMenuOverlay.classList.remove('hidden'); }
