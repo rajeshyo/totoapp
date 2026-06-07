@@ -5,8 +5,8 @@
   --text-main: #0f291e;
   --text-muted: #61736b;
   --primary-brand: #09663e;
- /* --primary-gradient: linear-gradient(135deg, #09663e 0%, #05492b 100%);  */
---primary-gradient: linear-gradient(135deg, #031fe9 0%, #141834 100%);
+ --primary-gradient: linear-gradient(135deg, #09663e 0%, #05492b 100%); 
+--primary-gradient1: linear-gradient(135deg, #031fe9 0%, #141834 100%);
   --accent-gold: #ffc107;
   --accent-soft: #eef9f3;
   --success-color: #10b981;
@@ -44,7 +44,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--primary-gradient);
+  background: var(--primary-gradient1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -232,7 +232,7 @@ body {
 }
 .menu-header {
   padding: 30px 20px 20px;
-  background: var(--primary-gradient);
+  background: var(--primary-gradient1);
   color: white;
   display: flex;
   flex-direction: column;
@@ -290,7 +290,7 @@ body {
 /* Auth Views */
 .auth-container { padding: 24px 8px; text-align: center; }
 .brand-hero { margin-bottom: 32px; }
-.logo-circle { width: 84px; height: 84px; background: var(--primary-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 16px; box-shadow: 0 12px 24px rgba(9, 102, 62, 0.25); }
+.logo-circle { width: 84px; height: 84px; background: var(--primary-gradient1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 16px; box-shadow: 0 12px 24px rgba(9, 102, 62, 0.25); }
 .brand-hero h1 { font-size: 2.2rem; color: var(--primary-brand); margin: 0; }
 .brand-hero h1 span { color: var(--text-main); }
 .subtitle { margin: 12px 0 0; color: var(--text-muted); }
@@ -388,11 +388,11 @@ body {
 }
 
 /* Customer Dashboard */
-.hero-banner-card { background: var(--primary-gradient); border-radius: var(--radius-xl); padding: 24px; color: #ffffff; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; box-shadow: 0 12px 28px rgba(5, 73, 43, 0.15); }
+.hero-banner-card { background: var(--primary-gradient1); border-radius: var(--radius-xl); padding: 24px; color: #ffffff; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; box-shadow: 0 12px 28px rgba(5, 73, 43, 0.15); }
 .banner-text h2 { font-size: 1.3rem; margin: 0 0 6px; font-weight: 700; }
 .banner-text p { margin: 0; font-size: 0.85rem; opacity: 0.9; }
 .banner-graphic { font-size: 3rem; opacity: 0.9; }
-.hero-banner-card { background: var(--primary-gradient); border-radius: var(--radius-xl); padding: 16px 20px; color: #ffffff; display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; box-shadow: 0 12px 28px rgba(5, 73, 43, 0.15); }
+.hero-banner-card { background: var(--primary-gradient1); border-radius: var(--radius-xl); padding: 16px 20px; color: #ffffff; display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; box-shadow: 0 12px 28px rgba(5, 73, 43, 0.15); }
 .banner-text h2 { font-size: 1.2rem; margin: 0 0 4px; font-weight: 700; }
 .banner-text p { margin: 0; font-size: 0.8rem; opacity: 0.9; }
 .banner-graphic { font-size: 2.5rem; opacity: 0.9; }
