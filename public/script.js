@@ -434,6 +434,7 @@ let currentUser = JSON.parse(localStorage.getItem('toto_active_user')) || null;
 let activeRideId = localStorage.getItem('toto_active_ride_id') || null;
 let pollInterval = null;
 let adminPollInterval = null;
+let popupCloseCallback = null;
 let rejectedRides = {}; // Track rejected rides with timestamp: { rideId: timestamp }
 
 // --- Location Helpers ---
@@ -535,18 +536,24 @@ async function loadLocations() {
 loadLocations();
 
 // --- Global Notification Alert ---
-function showPopup(title, message, icon = '🔔') {
+function showPopup(title, message, icon = '🔔', onClose = null) {
   if (!popupOverlay) return;
   popupTitle.textContent = t(title);
   popupMessage.textContent = t(message);
   popupIcon.textContent = icon;
   popupOverlay.classList.remove('hidden');
   popupOverlay.setAttribute('aria-hidden', 'false');
+  popupCloseCallback = onClose;
 }
 
 function hidePopup() { 
   popupOverlay.classList.add('hidden'); 
   popupOverlay.setAttribute('aria-hidden', 'true'); 
+  if (typeof popupCloseCallback === 'function') {
+    const cb = popupCloseCallback;
+    popupCloseCallback = null;
+    cb();
+  }
 }
 popupCloseBtn?.addEventListener('click', hidePopup);
 
@@ -1526,11 +1533,35 @@ rideRequestForm.addEventListener('submit', async event => {
 
 endRideBtn?.addEventListener('click', async () => {
   if (activeRideId) {
+    const currentRideId = activeRideId;
+    const driverNameEl = document.getElementById('acceptedDriverName');
+    const driverName = driverNameEl ? driverNameEl.textContent : 'চালক';
+    
+    endRideBtn.disabled = true;
+    endRideBtn.textContent = t('অপেক্ষা করুন...');
+    
+    // Pause polling during the request so it doesn't interrupt the popup flow
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+
     try {
       await apiCall(`/rides/end/${activeRideId}`, 'POST');
-      showPopup('সফলতা', 'রাইড শেষ করা হয়েছে।', '✅');
+      
+      localStorage.removeItem('toto_active_ride_id');
+      activeRideId = null;
+      resetCustomerUI();
+      
+      showPopup('সফলতা', 'রাইড শেষ করা হয়েছে।', '✅', () => {
+        showRatingPopup(currentRideId, driverName);
+      });
     } catch (error) {
       showPopup('ত্রুটি', 'রাইড শেষ করতে সমস্যা হয়েছে।', '❌');
+      endRideBtn.disabled = false;
+      endRideBtn.textContent = t('ট্রিপ সমাপ্ত করুন');
+      // Restart polling if failed
+      pollInterval = setInterval(pollCustomerRide, 16000);
     }
   }
 });
