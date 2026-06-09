@@ -33,6 +33,9 @@ const API_BASE_URL ='https://totoapp.onrender.com/api';
 
 // ===== Localization =====
 const uiTranslations = {
+  'টোটোবন্ধু': 'TotoBondhu',
+  'টোটো': 'Toto',
+  'বন্ধু': 'Bondhu',
   'আপনার পথচলার সাথী': 'Your Travel Companion',
   'সহজ বুকিং': 'Easy Booking',
   'মাত্র দুটি ক্লিকে আপনার গন্তব্য নির্বাচন করুন': 'Choose destination in two clicks',
@@ -286,23 +289,78 @@ function t(bengaliString) {
 }
 
 function translateNode(node) {
-  if (node.nodeType === 3) {
+  if (node.nodeType === 3) { // Text node
     const original = node._origText || node.nodeValue;
     const trimmed = original.trim();
     if (trimmed) {
       if (!node._origText) node._origText = original;
-      const translated = currentLang === 'en' ? (uiTranslations[trimmed] || trimmed) : trimmed;
+      
+      let translated = trimmed;
+      if (currentLang === 'en') {
+        translated = uiTranslations[trimmed] || trimmed;
+        
+        // Force exact English spelling regardless of HTML typos!
+        const lower = trimmed.toLowerCase();
+        if (lower === 'totobondhu' || lower === 'totobhandhu' || lower === 'toto bondhu' || lower === 'toto bhandhu' || trimmed === 'টোটোবন্ধু') {
+          translated = 'TotoBondhu';
+        } else if (lower === 'toto' || trimmed === 'টোটো') {
+          translated = 'Toto';
+        } else if (lower === 'bondhu' || lower === 'bhandhu' || trimmed === 'বন্ধু') {
+          translated = 'Bondhu';
+        }
+      } else { // 'bn'
+        const bnKey = Object.keys(uiTranslations).find(key => uiTranslations[key] === trimmed);
+        translated = bnKey || trimmed;
+        
+        // Special catch for all spelling variations of TotoBondhu in English!
+        const lower = trimmed.toLowerCase();
+        if (lower === 'totobondhu' || lower === 'totobhandhu' || lower === 'toto bondhu' || lower === 'toto bhandhu' || trimmed === 'টোটোবন্ধু') {
+          translated = 'টোটোবন্ধু';
+        } else if (lower === 'toto' || trimmed === 'টোটো') {
+          translated = 'টোটো';
+        } else if (lower === 'bondhu' || lower === 'bhandhu' || trimmed === 'বন্ধু') {
+          translated = 'বন্ধু';
+        }
+      }
+
       if (node.nodeValue !== original.replace(trimmed, translated)) {
         node.nodeValue = original.replace(trimmed, translated);
       }
     }
-  } else if (node.nodeType === 1) {
+  } else if (node.nodeType === 1) { // Element node
     if (node.tagName === 'SCRIPT' || node.tagName === 'STYLE') return;
     
     if (node.hasAttribute('placeholder')) {
       const original = node.getAttribute('data-orig-ph') || node.getAttribute('placeholder');
       if (!node.getAttribute('data-orig-ph')) node.setAttribute('data-orig-ph', original);
-      const translated = currentLang === 'en' ? (uiTranslations[original] || original) : original;
+      
+      let translated = original;
+      if (currentLang === 'en') {
+        translated = uiTranslations[original] || original;
+        
+        // Force exact English spelling regardless of HTML typos!
+        const lower = original.toLowerCase();
+        if (lower === 'totobondhu' || lower === 'totobhandhu' || lower === 'toto bondhu' || lower === 'toto bhandhu' || original === 'টোটোবন্ধু') {
+          translated = 'TotoBondhu';
+        } else if (lower === 'toto' || original === 'টোটো') {
+          translated = 'Toto';
+        } else if (lower === 'bondhu' || lower === 'bhandhu' || original === 'বন্ধু') {
+          translated = 'Bondhu';
+        }
+      } else { // 'bn'
+        const bnKey = Object.keys(uiTranslations).find(key => uiTranslations[key] === original);
+        translated = bnKey || original;
+        
+        // Special catch for all spelling variations of TotoBondhu in placeholders!
+        const lower = original.toLowerCase();
+        if (lower === 'totobondhu' || lower === 'totobhandhu' || lower === 'toto bondhu' || lower === 'toto bhandhu' || original === 'টোটোবন্ধু') {
+          translated = 'টোটোবন্ধু';
+        } else if (lower === 'toto' || original === 'টোটো') {
+          translated = 'টোটো';
+        } else if (lower === 'bondhu' || lower === 'bhandhu' || original === 'বন্ধু') {
+          translated = 'বন্ধু';
+        }
+      }
       node.setAttribute('placeholder', translated);
     }
     
@@ -312,6 +370,14 @@ function translateNode(node) {
 
 function applyTranslations() {
   translateNode(document.body);
+  
+  // Also perfectly handle the Browser Tab Title!
+  const titleLower = document.title.toLowerCase();
+  if (currentLang === 'bn' && (titleLower.includes('totobondhu') || titleLower.includes('totobhandhu'))) {
+    document.title = 'টোটোবন্ধু';
+  } else if (currentLang === 'en' && (document.title.includes('টোটোবন্ধু') || titleLower.includes('totobhandhu'))) {
+    document.title = 'TotoBondhu';
+  }
 }
 
 // Splash screen handler - show only if user not logged in
