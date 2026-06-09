@@ -108,7 +108,7 @@ router.post('/request', authMiddleware, async (req, res) => {
 // GET PENDING RIDES (For Drivers)
 router.get('/pending', authMiddleware, async (req, res) => {
   try {
-    const rides = await Ride.find({ rideStatus: 'pending' })
+    const rides = await Ride.find({ rideStatus: { $in: ['pending', 'driver_offered'] } })
       .populate('passengerId', 'firstName lastName phone profilePhoto')
       .sort({ createdAt: -1 });
 
@@ -128,24 +128,33 @@ router.get('/pending', authMiddleware, async (req, res) => {
 router.post('/accept/:rideId', authMiddleware, async (req, res) => {
   try {
     const { fare } = req.body;
-    const ride = await Ride.findOneAndUpdate(
-      { _id: req.params.rideId, rideStatus: 'pending' },
-      { 
-        driverId: req.userId, 
-        rideStatus: 'driver_offered',
-        fare: fare || undefined
-      },
-      { new: true }
-    )
-    .populate('passengerId', 'firstName lastName phone profilePhoto')
-    .populate('driverId', 'firstName lastName phone profilePhoto vehicleNumber');
+    const currentRide = await Ride.findById(req.params.rideId);
 
-    if (!ride) {
+    if (!currentRide) {
+      return res.status(404).json({ success: false, message: 'Ride not found' });
+    }
+
+    if (currentRide.rideStatus !== 'pending' && currentRide.rideStatus !== 'driver_offered') {
       return res.status(400).json({
         success: false,
         message: 'রাইডটি ইতিমধ্যে অন্য কেউ নিয়ে নিয়েছে অথবা বাতিল হয়েছে।'
       });
     }
+
+    let offers = currentRide.get('offers') || [];
+    offers = offers.filter(o => o.driverId && o.driverId.toString() !== req.userId);
+    offers.push({ driverId: req.userId, fare: fare || currentRide.fare });
+
+    const ride = await Ride.findOneAndUpdate(
+      { _id: req.params.rideId, rideStatus: { $in: ['pending', 'driver_offered'] } },
+      { 
+        rideStatus: 'driver_offered',
+        $set: { offers: offers }
+      },
+      { new: true }
+    )
+    .populate('passengerId', 'firstName lastName phone profilePhoto')
+    .populate({ path: 'offers.driverId', model: 'User', select: 'firstName lastName phone profilePhoto vehicleNumber averageRating' });
 
     res.status(200).json({
       success: true,
@@ -163,10 +172,13 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
 // CUSTOMER ACCEPTS OFFER
 router.post('/accept-offer/:rideId', authMiddleware, async (req, res) => {
   try {
+    const { driverId, fare } = req.body;
     const ride = await Ride.findOneAndUpdate(
       { _id: req.params.rideId, passengerId: req.userId, rideStatus: 'driver_offered' },
       { 
         rideStatus: 'accepted',
+        driverId: driverId,
+        fare: fare,
         startTime: new Date()
       },
       { new: true }
@@ -185,16 +197,24 @@ router.post('/accept-offer/:rideId', authMiddleware, async (req, res) => {
 // CUSTOMER REJECTS OFFER
 router.post('/reject-offer/:rideId', authMiddleware, async (req, res) => {
   try {
+    const { driverId } = req.body;
     const currentRide = await Ride.findById(req.params.rideId);
     if (!currentRide) return res.status(404).json({ success: false, message: 'Ride not found' });
 
+    let offers = currentRide.get('offers') || [];
+    offers = offers.filter(o => o.driverId && o.driverId.toString() !== driverId);
+
+    const status = offers.length === 0 ? 'pending' : 'driver_offered';
     const originalFare = Math.max(BASE_FARE, currentRide.distance * FARE_PER_KM);
 
     const ride = await Ride.findOneAndUpdate(
       { _id: req.params.rideId, passengerId: req.userId, rideStatus: 'driver_offered' },
       { 
-        $unset: { driverId: 1 },
-        $set: { rideStatus: 'pending', fare: originalFare }
+        $set: { 
+          offers: offers, 
+          rideStatus: status,
+          fare: status === 'pending' ? originalFare : currentRide.fare 
+        }
       },
       { new: true }
     );
@@ -280,7 +300,8 @@ router.get('/:rideId', authMiddleware, async (req, res) => {
   try {
     const ride = await Ride.findById(req.params.rideId)
       .populate('passengerId', 'firstName lastName phone profilePhoto')
-      .populate('driverId', 'firstName lastName phone profilePhoto vehicleNumber');
+      .populate('driverId', 'firstName lastName phone profilePhoto vehicleNumber')
+      .populate({ path: 'offers.driverId', model: 'User', select: 'firstName lastName phone profilePhoto vehicleNumber averageRating' });
 
     if (!ride) {
       return res.status(404).json({

@@ -1344,12 +1344,37 @@ async function pollCustomerRide() {
       const offerCard = document.getElementById('customerOfferCard') || createCustomerOfferCard();
       offerCard.classList.remove('hidden');
       
-      document.getElementById('offerDriverName').textContent = `${ride.driverId.firstName} ${ride.driverId.lastName}`;
-      document.getElementById('offerVehicleNo').textContent = ride.driverId.vehicleNumber;
-      document.getElementById('offerFare').textContent = `₹${ride.fare}`;
-      
-      document.getElementById('acceptOfferBtn').onclick = () => acceptDriverOffer(ride._id);
-      document.getElementById('rejectOfferBtn').onclick = () => rejectDriverOffer(ride._id);
+      const offers = ride.offers || [];
+      if (offers.length > 0) {
+        offerCard.innerHTML = `<h3 style="margin-bottom: 15px;">${t('চালকদের প্রস্তাবসমূহ')}</h3>`;
+        
+        offers.forEach(offer => {
+          if (!offer.driverId) return;
+          const driver = offer.driverId;
+          const offerDiv = document.createElement('div');
+          offerDiv.style.cssText = "border: 1px solid var(--border-light); padding: 12px; border-radius: 8px; margin-bottom: 12px; background: var(--surface-dim);";
+          
+          offerDiv.innerHTML = `
+            <p style="margin: 0 0 5px 0;">👤 <strong>${driver.firstName} ${driver.lastName}</strong></p>
+            <p style="margin: 0 0 5px 0; color: var(--text-muted); font-size: 0.9rem;">🔢 ${driver.vehicleNumber || ''} &nbsp;|&nbsp; ⭐ ${driver.averageRating || '0'}</p>
+            <p style="margin: 0 0 10px 0;">💰 ${t('ভাড়া:')} <strong class="text-green" style="font-size: 1.2rem;">₹${offer.fare}</strong></p>
+            <div style="display: flex; gap: 10px;">
+              <button class="button primary accept-offer-btn" style="flex: 1;" data-driver="${driver._id}" data-fare="${offer.fare}">${t('গ্রহণ করুন')}</button>
+              <button class="button secondary reject-offer-btn" style="flex: 1;" data-driver="${driver._id}">${t('প্রত্যাখ্যান করুন')}</button>
+            </div>
+          `;
+          offerCard.appendChild(offerDiv);
+        });
+
+        document.querySelectorAll('.accept-offer-btn').forEach(btn => {
+          btn.onclick = () => acceptDriverOffer(ride._id, btn.dataset.driver, btn.dataset.fare);
+        });
+        document.querySelectorAll('.reject-offer-btn').forEach(btn => {
+          btn.onclick = () => rejectDriverOffer(ride._id, btn.dataset.driver);
+        });
+      } else {
+        offerCard.innerHTML = `<p class="muted-text center-block">${t('অপেক্ষা করুন...')}</p>`;
+      }
     } else if (ride.rideStatus === 'accepted' || ride.rideStatus === 'in_progress') {
       // Hide finding message and show accepted ride card
       const findingCard = document.getElementById('findingRideCard');
@@ -1402,30 +1427,20 @@ function createCustomerOfferCard() {
   const card = document.createElement('div');
   card.id = 'customerOfferCard';
   card.className = 'card info-card';
-  card.innerHTML = `
-    <h3>${t('চালক প্রস্তাব দিয়েছেন')}</h3>
-    <p>👤 <strong id="offerDriverName"></strong></p>
-    <p>🔢 <strong id="offerVehicleNo"></strong></p>
-    <p>💰 ${t('ভাড়া:')} <strong class="text-green" id="offerFare" style="font-size: 1.5rem;"></strong></p>
-    <div style="display: flex; gap: 10px; margin-top: 15px;">
-      <button id="acceptOfferBtn" class="button primary" style="flex: 1;">${t('গ্রহণ করুন')}</button>
-      <button id="rejectOfferBtn" class="button secondary" style="flex: 1;">${t('প্রত্যাখ্যান করুন')}</button>
-    </div>
-  `;
   document.getElementById('customerDashboard').insertBefore(card, document.getElementById('acceptedRideCard'));
   return card;
 }
 
-async function acceptDriverOffer(rideId) {
+async function acceptDriverOffer(rideId, driverId, fare) {
   try {
-    const res = await apiCall(`/rides/accept-offer/${rideId}`, 'POST');
+    const res = await apiCall(`/rides/accept-offer/${rideId}`, 'POST', { driverId, fare: Number(fare) });
     if (res.success) pollCustomerRide();
   } catch (e) { showPopup('ত্রুটি', 'গ্রহণ করতে সমস্যা হয়েছে।', '❌'); }
 }
 
-async function rejectDriverOffer(rideId) {
+async function rejectDriverOffer(rideId, driverId) {
   try {
-    const res = await apiCall(`/rides/reject-offer/${rideId}`, 'POST');
+    const res = await apiCall(`/rides/reject-offer/${rideId}`, 'POST', { driverId });
     if (res.success) pollCustomerRide();
   } catch (e) { showPopup('ত্রুটি', 'প্রত্যাখ্যান করতে সমস্যা হয়েছে।', '❌'); }
 }
@@ -1531,11 +1546,10 @@ function resetCustomerUI() {
   rideSubmitBtn.style.opacity = "1";
   if (pickupVillageSelect) pickupVillageSelect.value = '';
   
-  if (pickupColumn && dropoffColumn && pickupSummary) {
-    pickupColumn.classList.remove('hidden');
-    pickupSummary.classList.add('hidden');
-    dropoffColumn.classList.add('hidden');
-  }
+  if (pickupColumn) pickupColumn.classList.remove('hidden');
+  if (pickupSummary) pickupSummary.classList.add('hidden');
+  if (dropoffColumn) dropoffColumn.classList.add('hidden');
+  
   if (dropoffVillageSelect) dropoffVillageSelect.value = '';
   if (landmarkInput) landmarkInput.value = '';
   pricePreviewCard.classList.add('hidden');
@@ -1841,6 +1855,12 @@ async function listenToPendingQueue() {
       if (rejectedRides[ride._id] && rejectedRides[ride._id] <= now) {
         delete rejectedRides[ride._id];
       }
+      
+      if (ride.offers && ride.offers.length > 0) {
+        const myOffer = ride.offers.find(o => (o.driverId && o.driverId._id === currentUser._id) || o.driverId === currentUser._id);
+        if (myOffer) return false;
+      }
+
       return true;
     });
 
@@ -1989,6 +2009,20 @@ async function listenToDriverActiveRide() {
     }
 
     if (ride.rideStatus === 'driver_offered') {
+      const myOffer = (ride.offers || []).find(o => (o.driverId && o.driverId._id === currentUser._id) || o.driverId === currentUser._id);
+      if (!myOffer) {
+        localStorage.removeItem('toto_active_ride_id');
+        activeRideId = null;
+        driverAcceptedRideCard.classList.add('hidden');
+        showPopup('প্রত্যাখ্যাত', 'যাত্রী আপনার প্রস্তাব প্রত্যাখ্যান করেছেন।', '❌');
+        
+        rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('উপলব্ধ রাইড খুঁজছি...')}</p>`;
+        if (pollInterval) clearInterval(pollInterval);
+        listenToPendingQueue();
+        pollInterval = setInterval(listenToPendingQueue, 16000);
+        return;
+      }
+      
       rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('যাত্রীর অনুমোদনের জন্য অপেক্ষা করা হচ্ছে...')}</p>`;
       requestCountBadge.textContent = '0';
       driverAcceptedRideCard.classList.add('hidden');
@@ -2006,6 +2040,21 @@ async function listenToDriverActiveRide() {
       listenToPendingQueue();
       pollInterval = setInterval(listenToPendingQueue, 16000);
       return;
+    }
+
+    if (ride.rideStatus === 'accepted' || ride.rideStatus === 'in_progress') {
+      if (ride.driverId && (ride.driverId._id || ride.driverId) !== currentUser._id) {
+        localStorage.removeItem('toto_active_ride_id');
+        activeRideId = null;
+        driverAcceptedRideCard.classList.add('hidden');
+        showPopup('প্রত্যাখ্যাত', 'রাইডটি ইতিমধ্যে অন্য কেউ নিয়ে নিয়েছে।', '⚠️');
+        
+        rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('উপলব্ধ রাইড খুঁজছি...')}</p>`;
+        if (pollInterval) clearInterval(pollInterval);
+        listenToPendingQueue();
+        pollInterval = setInterval(listenToPendingQueue, 16000);
+        return;
+      }
     }
 
     rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('আপনার একটি ট্রিপ চলমান রয়েছে।')}</p>`;
@@ -2036,10 +2085,12 @@ async function listenToDriverActiveRide() {
     if (ride.rideStatus === 'accepted') {
         actionBtn.className = 'button primary full-width';
         actionBtn.textContent = t('ট্রিপ শুরু করুন');
+        actionBtn.disabled = false;
         actionBtn.onclick = () => startDriverActiveRide();
     } else if (ride.rideStatus === 'in_progress') {
         actionBtn.className = 'button danger full-width';
         actionBtn.textContent = t('ট্রিপ সমাপ্ত করুন');
+        actionBtn.disabled = false;
         actionBtn.onclick = () => endDriverActiveRide();
     }
   } catch (error) {
