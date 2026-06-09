@@ -1534,7 +1534,7 @@ function resetCustomerUI() {
   if (pickupColumn && dropoffColumn && pickupSummary) {
     pickupColumn.classList.remove('hidden');
     pickupSummary.classList.add('hidden');
-    dropoffColumn.classList.remove('hidden');
+    dropoffColumn.classList.add('hidden');
   }
   if (dropoffVillageSelect) dropoffVillageSelect.value = '';
   if (landmarkInput) landmarkInput.value = '';
@@ -1672,6 +1672,12 @@ function updateRidePreview() {
 }
 
 pickupVillageSelect?.addEventListener('change', () => {
+  if (pickupVillageSelect.value && dropoffColumn) {
+    dropoffColumn.classList.remove('hidden');
+  } else if (!pickupVillageSelect.value && dropoffColumn) {
+    dropoffColumn.classList.add('hidden');
+    if (dropoffVillageSelect) dropoffVillageSelect.value = '';
+  }
   updateRidePreview();
 });
 
