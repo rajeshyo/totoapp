@@ -158,8 +158,7 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
       { new: true, strict: false }
     )
     .populate('passengerId', 'firstName lastName phone profilePhoto')
-    .populate({ path: 'offers.driverId', model: 'User', select: 'firstName lastName phone profilePhoto vehicleNumber averageRating', strictPopulate: false })
-    .lean();
+    .populate({ path: 'offers.driverId', model: 'User', select: 'firstName lastName phone profilePhoto vehicleNumber averageRating', strictPopulate: false });
 
     res.status(200).json({
       success: true,

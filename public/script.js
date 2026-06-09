@@ -230,7 +230,17 @@ const uiTranslations = {
   '🏪 করাটিয়া বাজার': '🏪 Karatia Bazar',
   '🎓 গুসকরা কলেজ': '🎓 Guskara College',
   '🛣️ গুসকরা মোড়': '🛣️ Guskara More',
-  '🚌 শিমুলগ্রাম বাস স্ট্যান্ড': '🚌 Shimulgram Bus Stand'
+  '🚌 শিমুলগ্রাম বাস স্ট্যান্ড': '🚌 Shimulgram Bus Stand',
+  '🏪 গুসকরা': '🏪 Guskara',
+  '🎓 আউশগ্রাম': '🎓 Ausgram',
+  '🛣️ বননবগ্রাম': '🛣️ Bonnabgram',
+  '🚌 করটিয়া': '🚌 Karatia',
+  'গুসকরা': 'Guskara',
+  'আউশগ্রাম': 'Ausgram',
+  'বননবগ্রাম': 'Bonnabgram',
+  'করটিয়া': 'Karatia',
+  '🛣️ বননবগ্ৰাম': '🛣️ Bonnabgram',
+  'বননবগ্ৰাম': 'Bonnabgram'
 };
 
 let currentLang = localStorage.getItem('toto_lang') || 'bn';
@@ -250,7 +260,11 @@ const locationTranslations = {
   'করাপাড়া মোড়': 'Korapara More',
   'করাটিয়া': 'Karatia',
   'গুসকরা': 'Guskara',
-  'শিমুলগ্রাম': 'Shimulgram'
+  'শিমুলগ্রাম': 'Shimulgram',
+  'আউশগ্রাম': 'Ausgram',
+  'বননবগ্রাম': 'Bonnabgram',
+  'করটিয়া': 'Karatia',
+  'বননবগ্ৰাম': 'Bonnabgram'
 };
 
 function t(bengaliString) {
@@ -554,6 +568,11 @@ async function loadLocations() {
       populateVillageSelect(pickupVillageSelect, t('গ্রাম নির্বাচন করুন'));
       populateVillageSelect(dropoffVillageSelect, t('গ্রাম নির্বাচন করুন'));
       populateVillageSelect(newStoppageVillageSelect, t('গ্রাম নির্বাচন করুন'));
+      
+      renderPopularPlaces();
+      if (typeof favoriteRidesPage !== 'undefined' && !favoriteRidesPage.classList.contains('hidden')) {
+        displayFavorites();
+      }
 }
 
 loadLocations();
@@ -810,12 +829,28 @@ async function displayRideHistory(isPolling = false) {
 
 function displayFavorites() {
   const favoritesList = document.getElementById('favoritesList');
-  const popularPlaces = [
-    { name: '🏪 করাটিয়া বাজার', villageId: 'karatia', stoppageId: 'karatia-bazar' },
-    { name: '🎓 গুসকরা কলেজ', villageId: 'guskara', stoppageId: 'guskara-clg' },
-    { name: '🛣️ গুসকরা মোড়', villageId: 'guskara', stoppageId: 'guskara-more' },
-    { name: '🚌 শিমুলগ্রাম বাস স্ট্যান্ড', villageId: 'shimulgram', stoppageId: 'shimulgram-bus-stand' },
-  ];
+  
+  let popularPlaces = [];
+  if (locationData && locationData.length > 0) {
+    const guskara = locationData.find(v => v.nameBn.includes('গুসকরা'));
+    const ausgram = locationData.find(v => v.nameBn.includes('আউশগ্রাম'));
+    const bonnabgram = locationData.find(v => v.nameBn.includes('বননবগ্রাম') || v.nameBn.includes('বননবগ্ৰাম'));
+    const karatia = locationData.find(v => v.nameBn.includes('করাটিয়া') || v.nameBn.includes('করটিয়া'));
+    
+    if (guskara) popularPlaces.push({ name: '🏪 গুসকরা', villageId: guskara.id, stoppageId: guskara.stoppages?.[0]?.id || guskara.id });
+    if (ausgram) popularPlaces.push({ name: '🎓 আউশগ্রাম', villageId: ausgram.id, stoppageId: ausgram.stoppages?.[0]?.id || ausgram.id });
+    if (bonnabgram) popularPlaces.push({ name: '🛣️ বননবগ্রাম', villageId: bonnabgram.id, stoppageId: bonnabgram.stoppages?.[0]?.id || bonnabgram.id });
+    if (karatia) popularPlaces.push({ name: '🚌 করটিয়া', villageId: karatia.id, stoppageId: karatia.stoppages?.[0]?.id || karatia.id });
+  }
+  
+  if (popularPlaces.length === 0) {
+    popularPlaces = [
+      { name: '🏪 গুসকরা', villageId: 'guskara', stoppageId: 'guskara-clg' },
+      { name: '🎓 আউশগ্রাম', villageId: 'ausgram', stoppageId: 'ausgram-stand' },
+      { name: '🛣️ বননবগ্রাম', villageId: 'bonnabgram', stoppageId: 'bonnabgram-stand' },
+      { name: '🚌 করটিয়া', villageId: 'karatia', stoppageId: 'karatia-bazar' },
+    ];
+  }
   
   if (popularPlaces.length === 0) {
     favoritesList.innerHTML = `<p class="muted-text center-block">${t('কোনো প্রিয় স্থান নেই')}</p>`;
@@ -853,6 +888,10 @@ window.bookFavorite = function(villageId, stoppageId, stopName) {
 
   showHomePage();
   dropoffVillageSelect.value = villageId;
+  
+  if (dropoffColumn) {
+    dropoffColumn.classList.remove('hidden');
+  }
   updateRidePreview();
   
   showPopup('গন্তব্য সেট হয়েছে', `${stopName} গন্তব্য হিসেবে সেট করা হয়েছে। ভাড়া চেক করে রাইড খুঁজুন।`, '✅');
@@ -1288,6 +1327,7 @@ function setupCustomerDashboard() {
   }
 
   appendCustomerFooter();
+  renderPopularPlaces();
 }
 
 function appendCustomerFooter() {
@@ -1711,29 +1751,53 @@ dropoffVillageSelect?.addEventListener('change', () => {
 });
 
 // Instant Booking (Popular Places)
-stopChips.forEach(chip => {
-  chip.addEventListener('click', (e) => {
-    if (activeRideId) {
-      showPopup('অপেক্ষা করুন', 'আপনার একটি রাইড ইতিমধ্যে খোঁজা হচ্ছে।', '⏳');
-      return;
-    }
+function renderPopularPlaces() {
+  const grid = document.querySelector('.grid-quick-stops');
+  if (!grid) return;
+  
+  let popularPlaces = [];
+  if (locationData && locationData.length > 0) {
+    const guskara = locationData.find(v => v.nameBn.includes('গুসকরা'));
+    const ausgram = locationData.find(v => v.nameBn.includes('আউশগ্রাম'));
+    const bonnabgram = locationData.find(v => v.nameBn.includes('বননবগ্রাম') || v.nameBn.includes('বননবগ্ৰাম'));
+    const karatia = locationData.find(v => v.nameBn.includes('করাটিয়া') || v.nameBn.includes('করটিয়া'));
     
-    if (!pickupVillageSelect?.value) {
-      showPopup('শুরুর স্থান প্রয়োজন', 'দয়া করে প্রথমে আপনার শুরুর স্থান (পিকআপ) নির্বাচন করুন।', '📍');
-      return;
-    }
+    if (guskara) popularPlaces.push({ name: 'গুসকরা', villageId: guskara.id });
+    if (ausgram) popularPlaces.push({ name: 'আউশগ্রাম', villageId: ausgram.id });
+    if (bonnabgram) popularPlaces.push({ name: 'বননবগ্রাম', villageId: bonnabgram.id });
+    if (karatia) popularPlaces.push({ name: 'করটিয়া', villageId: karatia.id });
+  }
 
-    const villageId = e.target.dataset.villageId;
-    
-    if (pickupVillageSelect.value === villageId) {
-      showPopup('ত্রুটি', 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না।', '❌');
-      return;
-    }
+  if (popularPlaces.length === 0) {
+    popularPlaces = [
+      { name: 'গুসকরা', villageId: 'guskara' },
+      { name: 'আউশগ্রাম', villageId: 'ausgram' },
+      { name: 'বননবগ্রাম', villageId: 'bonnabgram' },
+      { name: 'করটিয়া', villageId: 'karatia' }
+    ];
+  }
 
-    dropoffVillageSelect.value = villageId;
-    updateRidePreview();
+  grid.innerHTML = popularPlaces.map(place => 
+    `<div class="stop-chip" data-village-id="${place.villageId}">${t(place.name)}</div>`
+  ).join('');
+
+  document.querySelectorAll('.stop-chip').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      if (activeRideId) { showPopup('অপেক্ষা করুন', 'আপনার একটি রাইড ইতিমধ্যে খোঁজা হচ্ছে।', '⏳'); return; }
+      if (!pickupVillageSelect?.value) { showPopup('শুরুর স্থান প্রয়োজন', 'দয়া করে প্রথমে আপনার শুরুর স্থান (পিকআপ) নির্বাচন করুন।', '📍'); return; }
+
+      const villageId = e.target.dataset.villageId;
+      if (pickupVillageSelect.value === villageId) { showPopup('ত্রুটি', 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না।', '❌'); return; }
+
+      dropoffVillageSelect.value = villageId;
+      
+      if (dropoffColumn) {
+        dropoffColumn.classList.remove('hidden');
+      }
+      updateRidePreview();
+    });
   });
-});
+}
 
 // Add New Village Logic
 addVillageBtn?.addEventListener('click', async () => {

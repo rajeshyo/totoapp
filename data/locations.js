@@ -10,7 +10,9 @@ const INITIAL_VILLAGES = [
     nameBn: 'করাটিয়া',
     distances: {
       'guskara': 10,
-      'shimulgram': 15
+      'shimulgram': 15,
+      'ausgram': 20,
+      'bonnabgram': 25
     },
     stoppages: [
       {
@@ -34,7 +36,9 @@ const INITIAL_VILLAGES = [
     nameBn: 'গুসকরা',
     distances: {
       'karatia': 10,
-      'shimulgram': 8
+      'shimulgram': 8,
+      'ausgram': 10,
+      'bonnabgram': 12
     },
     stoppages: [
       {
@@ -58,7 +62,9 @@ const INITIAL_VILLAGES = [
     nameBn: 'শিমুলগ্রাম',
     distances: {
       'karatia': 15,
-      'guskara': 8
+      'guskara': 8,
+      'ausgram': 18,
+      'bonnabgram': 20
     },
     stoppages: [
       {
@@ -74,6 +80,44 @@ const INITIAL_VILLAGES = [
         distanceIndex: 10,
         latitude: 23.5395,
         longitude: 88.2612
+      }
+    ]
+  },
+  {
+    id: 'ausgram',
+    nameBn: 'আউশগ্রাম',
+    distances: {
+      'karatia': 20,
+      'guskara': 10,
+      'shimulgram': 18,
+      'bonnabgram': 5
+    },
+    stoppages: [
+      {
+        id: 'ausgram-stand',
+        nameBn: 'আউশগ্রাম স্ট্যান্ড',
+        distanceIndex: 11,
+        latitude: 23.5500,
+        longitude: 88.2700
+      }
+    ]
+  },
+  {
+    id: 'bonnabgram',
+    nameBn: 'বননবগ্রাম',
+    distances: {
+      'karatia': 25,
+      'guskara': 12,
+      'shimulgram': 20,
+      'ausgram': 5
+    },
+    stoppages: [
+      {
+        id: 'bonnabgram-stand',
+        nameBn: 'বননবগ্রাম স্ট্যান্ড',
+        distanceIndex: 12,
+        latitude: 23.5600,
+        longitude: 88.2800
       }
     ]
   }
