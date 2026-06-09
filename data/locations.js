@@ -8,6 +8,10 @@ const INITIAL_VILLAGES = [
   {
     id: 'karatia',
     nameBn: 'করাটিয়া',
+    distances: {
+      'guskara': 10,
+      'shimulgram': 15
+    },
     stoppages: [
       {
         id: 'karatia-school-more',
@@ -28,6 +32,10 @@ const INITIAL_VILLAGES = [
   {
     id: 'guskara',
     nameBn: 'গুসকরা',
+    distances: {
+      'karatia': 10,
+      'shimulgram': 8
+    },
     stoppages: [
       {
         id: 'guskara-clg',
@@ -48,6 +56,10 @@ const INITIAL_VILLAGES = [
   {
     id: 'shimulgram',
     nameBn: 'শিমুলগ্রাম',
+    distances: {
+      'karatia': 15,
+      'guskara': 8
+    },
     stoppages: [
       {
         id: 'shimulgram-bus-stand',
@@ -81,9 +93,10 @@ async function seedLocations() {
 
 async function getAllVillages() {
   const villages = await Location.find().sort({ _id: 1 }).lean();
-  return villages.map(({ id, nameBn, stoppages }) => ({
+  return villages.map(({ id, nameBn, stoppages, distances }) => ({
     id,
     nameBn,
+    distances: distances || {},
     stoppages: stoppages.map(({ id, nameBn, distanceIndex }) => ({
       id,
       nameBn,
@@ -157,6 +170,41 @@ async function calculateDistanceKm(pickupStoppageId, dropoffStoppageId) {
   return Number(Math.max(1, indexDiff).toFixed(1));
 }
 
+async function buildLocationFromVillage(villageId, landmark) {
+  const village = await Location.findOne({ id: villageId }).lean();
+  if (!village) return null;
+
+  const location = {
+    address: village.nameBn + (landmark && landmark.trim() ? ` (${landmark.trim()})` : ''),
+    villageId: village.id,
+    villageName: village.nameBn,
+    stoppageId: village.stoppages?.[0]?.id || village.id,
+    stoppageName: village.stoppages?.[0]?.nameBn || village.nameBn,
+    latitude: village.stoppages?.[0]?.latitude || 0,
+    longitude: village.stoppages?.[0]?.longitude || 0
+  };
+
+  if (landmark && landmark.trim()) location.landmark = landmark.trim();
+  return location;
+}
+
+async function calculateDistanceKmByVillage(pickupVillageId, dropoffVillageId) {
+  if (pickupVillageId === dropoffVillageId) return 1;
+
+  const pickupVillage = await Location.findOne({ id: pickupVillageId }).lean();
+  if (pickupVillage && pickupVillage.distances && pickupVillage.distances[dropoffVillageId]) {
+    return pickupVillage.distances[dropoffVillageId];
+  }
+
+  const allVillages = await Location.find({}, { id: 1 }).sort({ _id: 1 }).lean();
+  const villageIds = allVillages.map(v => v.id);
+  const pickupVillageIdx = villageIds.indexOf(pickupVillageId);
+  const dropoffVillageIdx = villageIds.indexOf(dropoffVillageId);
+
+  const indexDiff = Math.abs(pickupVillageIdx - dropoffVillageIdx);
+  return Number(Math.max(1, indexDiff * 5).toFixed(1));
+}
+
 module.exports = {
   seedLocations,
   getAllVillages,
@@ -164,5 +212,7 @@ module.exports = {
   addStoppageToVillage,
   findStoppage,
   formatLocationAddress,
-  calculateDistanceKm
+  calculateDistanceKm,
+  buildLocationFromVillage,
+  calculateDistanceKmByVillage
 };

@@ -136,6 +136,7 @@ const uiTranslations = {
   'এই মুহূর্তে কোনো বুকিং অনুরোধ নেই।': 'No requests currently.',
   'গ্রহণ করুন': 'Accept',
   'প্রত্যাখ্যান করুন': 'Reject',
+  'যাত্রীর অনুমোদনের জন্য অপেক্ষা করা হচ্ছে...': 'Waiting for passenger approval...',
   'রাইডটি ইতিমধ্যে অন্য কেউ নিয়ে নিয়েছে অথবা বাতিল হয়েছে।': 'Ride taken or cancelled.',
   'রাইড প্রত্যাখ্যান করা হয়েছে।': 'Ride rejected.',
   'যাত্রী ট্রিপটি সমাপ্ত করেছেন।': 'Passenger ended trip.',
@@ -484,36 +485,44 @@ function setLocationSelection(villageSelect, stoppageSelect, villageId, stoppage
 }
 
 function getSelectedPickupAddress() {
-  const found = findStoppageInData(pickupStoppageSelect?.value);
-  if (!found) return '';
+  const villageId = pickupVillageSelect?.value;
+  const village = locationData.find(v => v.id === villageId);
+  if (!village) return '';
   const landmark = landmarkInput?.value?.trim();
-  let address = `${found.stoppage.nameBn}, ${found.village.nameBn}`;
+  let address = `${t(village.nameBn)}`;
   if (landmark) address += ` (${landmark})`;
   return address;
 }
 
 function getSelectedDropoffAddress() {
-  const found = findStoppageInData(dropoffStoppageSelect?.value);
-  if (!found) return '';
-  return `${found.stoppage.nameBn}, ${found.village.nameBn}`;
+  const villageId = dropoffVillageSelect?.value;
+  const village = locationData.find(v => v.id === villageId);
+  if (!village) return '';
+  return `${t(village.nameBn)}`;
 }
 
 function calculatePreviewDistance() {
-  const pickup = findStoppageInData(pickupStoppageSelect?.value);
-  const dropoff = findStoppageInData(dropoffStoppageSelect?.value);
-  if (!pickup || !dropoff) return 0;
+  const pickupId = pickupVillageSelect?.value;
+  const dropoffId = dropoffVillageSelect?.value;
+  if (!pickupId || !dropoffId) return 0;
   
-  // If pickup and dropoff are in the exact same village, fix distance to 1 km
-  if (pickup.village.id === dropoff.village.id) {
+  if (pickupId === dropoffId) {
     return 1;
   }
   
+  const pickup = locationData.find(v => v.id === pickupId);
+  const dropoff = locationData.find(v => v.id === dropoffId);
+  
+  if (pickup && pickup.distances && pickup.distances[dropoffId]) {
+    return pickup.distances[dropoffId];
+  }
+  
   const villageIds = locationData.map(v => v.id);
-  const pickupVillageIdx = villageIds.indexOf(pickup.village.id);
-  const dropoffVillageIdx = villageIds.indexOf(dropoff.village.id);
+  const pickupVillageIdx = villageIds.indexOf(pickupId);
+  const dropoffVillageIdx = villageIds.indexOf(dropoffId);
   
   const indexDiff = Math.abs(pickupVillageIdx - dropoffVillageIdx);
-  return Number(Math.max(1, indexDiff).toFixed(1));
+  return Number(Math.max(1, indexDiff * 5).toFixed(1));
 }
 
 async function loadLocations() {
@@ -816,20 +825,20 @@ window.bookFavorite = function(villageId, stoppageId, stopName) {
     return;
   }
   
-  if (!pickupStoppageSelect?.value) {
+  if (!pickupVillageSelect?.value) {
     showHomePage();
     showPopup('শুরুর স্থান প্রয়োজন', 'দয়া করে প্রথমে আপনার শুরুর স্থান (পিকআপ) নির্বাচন করুন।', '📍');
     return;
   }
 
-  if (pickupStoppageSelect.value === stoppageId) {
+  if (pickupVillageSelect.value === villageId) {
     showHomePage();
     showPopup('ত্রুটি', 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না।', '❌');
     return;
   }
 
   showHomePage();
-  setLocationSelection(dropoffVillageSelect, dropoffStoppageSelect, villageId, stoppageId);
+  dropoffVillageSelect.value = villageId;
   updateRidePreview();
   
   showPopup('গন্তব্য সেট হয়েছে', `${stopName} গন্তব্য হিসেবে সেট করা হয়েছে। ভাড়া চেক করে রাইড খুঁজুন।`, '✅');
@@ -1321,17 +1330,33 @@ async function pollCustomerRide() {
     if (ride.rideStatus === 'pending') {
       // Show finding message
       acceptedRideCard.classList.add('hidden');
+      document.getElementById('customerOfferCard')?.classList.add('hidden');
       const findingCard = document.getElementById('findingRideCard') || createFindingCard();
       findingCard.classList.remove('hidden');
+    } else if (ride.rideStatus === 'driver_offered') {
+      const findingCard = document.getElementById('findingRideCard');
+      if (findingCard) findingCard.classList.add('hidden');
+      acceptedRideCard.classList.add('hidden');
+      
+      const offerCard = document.getElementById('customerOfferCard') || createCustomerOfferCard();
+      offerCard.classList.remove('hidden');
+      
+      document.getElementById('offerDriverName').textContent = `${ride.driverId.firstName} ${ride.driverId.lastName}`;
+      document.getElementById('offerVehicleNo').textContent = ride.driverId.vehicleNumber;
+      document.getElementById('offerFare').textContent = `₹${ride.fare}`;
+      
+      document.getElementById('acceptOfferBtn').onclick = () => acceptDriverOffer(ride._id);
+      document.getElementById('rejectOfferBtn').onclick = () => rejectDriverOffer(ride._id);
     } else if (ride.rideStatus === 'accepted' || ride.rideStatus === 'in_progress') {
       // Hide finding message and show accepted ride card
       const findingCard = document.getElementById('findingRideCard');
       if (findingCard) findingCard.classList.add('hidden');
+      document.getElementById('customerOfferCard')?.classList.add('hidden');
       
       acceptedRideCard.classList.remove('hidden');
       document.getElementById('acceptedDriverName').textContent = ride.driverId ? `${ride.driverId.firstName} ${ride.driverId.lastName}` : t('নিযুক্ত হচ্ছে...');
-      document.getElementById('acceptedStart').textContent = ride.pickupLocation.address ? t(ride.pickupLocation.address) : t('পিকআপ:');
-      document.getElementById('acceptedEnd').textContent = ride.dropoffLocation.address ? t(ride.dropoffLocation.address) : t('গন্তব্য:');
+      document.getElementById('acceptedStart').textContent = t(ride.pickupLocation.villageName);
+      document.getElementById('acceptedEnd').textContent = t(ride.dropoffLocation.villageName);
       document.getElementById('acceptedDistance').textContent = `${ride.distance} km`;
       document.getElementById('acceptedFare').textContent = `₹${ride.fare}`;
       // Display driver phone number - only last 4 digits
@@ -1350,6 +1375,38 @@ async function pollCustomerRide() {
   } catch (error) {
     console.error("Error polling ride:", error);
   }
+}
+
+function createCustomerOfferCard() {
+  const card = document.createElement('div');
+  card.id = 'customerOfferCard';
+  card.className = 'card info-card';
+  card.innerHTML = `
+    <h3>${t('চালক প্রস্তাব দিয়েছেন')}</h3>
+    <p>👤 <strong id="offerDriverName"></strong></p>
+    <p>🔢 <strong id="offerVehicleNo"></strong></p>
+    <p>💰 ${t('ভাড়া:')} <strong class="text-green" id="offerFare" style="font-size: 1.5rem;"></strong></p>
+    <div style="display: flex; gap: 10px; margin-top: 15px;">
+      <button id="acceptOfferBtn" class="button primary" style="flex: 1;">${t('গ্রহণ করুন')}</button>
+      <button id="rejectOfferBtn" class="button secondary" style="flex: 1;">${t('প্রত্যাখ্যান করুন')}</button>
+    </div>
+  `;
+  document.getElementById('customerDashboard').insertBefore(card, document.getElementById('acceptedRideCard'));
+  return card;
+}
+
+async function acceptDriverOffer(rideId) {
+  try {
+    const res = await apiCall(`/rides/accept-offer/${rideId}`, 'POST');
+    if (res.success) pollCustomerRide();
+  } catch (e) { showPopup('ত্রুটি', 'গ্রহণ করতে সমস্যা হয়েছে।', '❌'); }
+}
+
+async function rejectDriverOffer(rideId) {
+  try {
+    const res = await apiCall(`/rides/reject-offer/${rideId}`, 'POST');
+    if (res.success) pollCustomerRide();
+  } catch (e) { showPopup('ত্রুটি', 'প্রত্যাখ্যান করতে সমস্যা হয়েছে।', '❌'); }
 }
 
 function createFindingCard() {
@@ -1441,44 +1498,47 @@ function resetCustomerUI() {
   acceptedRideCard.classList.add('hidden');
   const findingCard = document.getElementById('findingRideCard');
   if (findingCard) findingCard.classList.add('hidden');
+  document.getElementById('customerOfferCard')?.classList.add('hidden');
   
   // Reset form
   rideSubmitBtn.disabled = false;
   rideSubmitBtn.textContent = t('রাইড খুঁজুন');
   rideSubmitBtn.style.opacity = "1";
   if (pickupVillageSelect) pickupVillageSelect.value = '';
-  if (pickupStoppageSelect) {
-    pickupStoppageSelect.innerHTML = `<option value="">${t('স্টপেজ নির্বাচন করুন')}</option>`;
-    pickupStoppageSelect.disabled = true;
-  }
+  
   if (pickupColumn && dropoffColumn && pickupSummary) {
     pickupColumn.classList.remove('hidden');
     pickupSummary.classList.add('hidden');
-    dropoffColumn.classList.add('hidden');
+    dropoffColumn.classList.remove('hidden');
   }
   if (dropoffVillageSelect) dropoffVillageSelect.value = '';
-  if (dropoffStoppageSelect) {
-    dropoffStoppageSelect.innerHTML = `<option value="">${t('স্টপেজ নির্বাচন করুন')}</option>`;
-    dropoffStoppageSelect.disabled = true;
-  }
   if (landmarkInput) landmarkInput.value = '';
   pricePreviewCard.classList.add('hidden');
+
+  if (pickupStoppageSelect) {
+    pickupStoppageSelect.style.display = 'none';
+    if (pickupStoppageSelect.previousElementSibling) pickupStoppageSelect.previousElementSibling.style.display = 'none';
+  }
+  if (dropoffStoppageSelect) {
+    dropoffStoppageSelect.style.display = 'none';
+    if (dropoffStoppageSelect.previousElementSibling) dropoffStoppageSelect.previousElementSibling.style.display = 'none';
+  }
 }
 
 rideRequestForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (activeRideId) return;
 
-  const pickupStoppageId = pickupStoppageSelect?.value;
-  const dropoffStoppageId = dropoffStoppageSelect?.value;
+  const pickupVillageId = pickupVillageSelect?.value;
+  const dropoffVillageId = dropoffVillageSelect?.value;
   const landmark = landmarkInput?.value?.trim() || '';
 
-  if (!pickupStoppageId || !dropoffStoppageId) {
-    showPopup('ত্রুটি', 'গ্রাম ও স্টপেজ নির্বাচন করুন।', '❌');
+  if (!pickupVillageId || !dropoffVillageId) {
+    showPopup('ত্রুটি', 'গ্রাম নির্বাচন করুন।', '❌');
     return;
   }
 
-  if (pickupStoppageId === dropoffStoppageId) { 
+  if (pickupVillageId === dropoffVillageId) { 
     showPopup('ত্রুটি', 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না।', '❌'); 
     return; 
   }
@@ -1490,10 +1550,18 @@ rideRequestForm.addEventListener('submit', async event => {
   rideSubmitBtn.disabled = true;
   rideSubmitBtn.textContent = t('অপেক্ষা করুন...');
 
+  // Provide valid stoppage IDs for the live backend fallback
+  const pVillage = locationData.find(v => v.id === pickupVillageId);
+  const dVillage = locationData.find(v => v.id === dropoffVillageId);
+  const pickupStoppageId = pVillage?.stoppages?.[0]?.id || pickupVillageId;
+  const dropoffStoppageId = dVillage?.stoppages?.[0]?.id || dropoffVillageId;
+
   try {
     const response = await apiCall('/rides/request', 'POST', {
-      pickupStoppageId,   // For your new backend
-      dropoffStoppageId,  // For your new backend
+      pickupVillageId,
+      dropoffVillageId,
+      pickupStoppageId,
+      dropoffStoppageId,
       landmark,           // For your new backend
       
       // Fallback for your current live Render backend:
@@ -1568,8 +1636,8 @@ endRideBtn?.addEventListener('click', async () => {
 
 // --- Preview & Calculation ---
 function updateRidePreview() {
-  const pickup = pickupStoppageSelect?.value;
-  const drop = dropoffStoppageSelect?.value;
+  const pickup = pickupVillageSelect?.value;
+  const drop = dropoffVillageSelect?.value;
   if (!pickup || !drop || pickup === drop) { pricePreviewCard.classList.add('hidden'); return; }
   const distance = calculatePreviewDistance();
   const fare = Math.max(BASE_FARE, distance * FARE_PER_KM);
@@ -1579,34 +1647,12 @@ function updateRidePreview() {
 }
 
 pickupVillageSelect?.addEventListener('change', () => {
-  populateStoppageSelect(pickupStoppageSelect, pickupVillageSelect.value, 'স্টপেজ নির্বাচন করুন');
   updateRidePreview();
 });
 
 dropoffVillageSelect?.addEventListener('change', () => {
-  populateStoppageSelect(dropoffStoppageSelect, dropoffVillageSelect.value, 'স্টপেজ নির্বাচন করুন');
   updateRidePreview();
 });
-
-pickupStoppageSelect?.addEventListener('change', () => {
-  updateRidePreview();
-  if (pickupStoppageSelect.value && pickupColumn && dropoffColumn && pickupSummary) {
-    pickupColumn.classList.add('hidden');
-    pickupSummary.classList.remove('hidden');
-    dropoffColumn.classList.remove('hidden');
-    if (pickupSummaryText && pickupStoppageSelect.selectedIndex >= 0) {
-      pickupSummaryText.textContent = pickupStoppageSelect.options[pickupStoppageSelect.selectedIndex].text;
-    }
-  }
-});
-pickupSummary?.addEventListener('click', () => {
-  if (pickupColumn && pickupSummary && dropoffColumn) {
-    pickupColumn.classList.remove('hidden');
-    pickupSummary.classList.add('hidden');
-    dropoffColumn.classList.add('hidden');
-  }
-});
-dropoffStoppageSelect?.addEventListener('change', updateRidePreview);
 
 // Instant Booking (Popular Places)
 stopChips.forEach(chip => {
@@ -1616,20 +1662,19 @@ stopChips.forEach(chip => {
       return;
     }
     
-    if (!pickupStoppageSelect?.value) {
-      showPopup('শুরুর স্থান প্রয়োজন', 'দয়া করে প্রথমে উপরের তালিকা থেকে আপনার শুরুর স্থান (পিকআপ) নির্বাচন করুন।', '📍');
+    if (!pickupVillageSelect?.value) {
+      showPopup('শুরুর স্থান প্রয়োজন', 'দয়া করে প্রথমে আপনার শুরুর স্থান (পিকআপ) নির্বাচন করুন।', '📍');
       return;
     }
 
     const villageId = e.target.dataset.villageId;
-    const stoppageId = e.target.dataset.stoppageId;
     
-    if (pickupStoppageSelect.value === stoppageId) {
+    if (pickupVillageSelect.value === villageId) {
       showPopup('ত্রুটি', 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না।', '❌');
       return;
     }
 
-    setLocationSelection(dropoffVillageSelect, dropoffStoppageSelect, villageId, stoppageId);
+    dropoffVillageSelect.value = villageId;
     updateRidePreview();
   });
 });
@@ -1781,24 +1826,24 @@ async function listenToPendingQueue() {
       item.className = 'request-item';
       item.innerHTML = `
         <p>👤 <strong>${ride.passengerId.firstName} ${ride.passengerId.lastName}</strong></p>
-        <p>📍 ${t('পিকআপ:')} ${t(ride.pickupLocation.stoppageName || ride.pickupLocation.address)}, ${t(ride.pickupLocation.villageName || '')}</p>
+        <p>📍 ${t('পিকআপ:')} ${t(ride.pickupLocation.villageName)}</p>
         ${ride.pickupLocation.landmark ? `<p>${t('📌 স্থলচিহ্ন:')} ${ride.pickupLocation.landmark}</p>` : ''}
-        <p>🏁 ${t('গন্তব্য:')} ${t(ride.dropoffLocation.stoppageName || ride.dropoffLocation.address)}, ${t(ride.dropoffLocation.villageName || '')}</p>
-        <p>� ${t('ভাড়া:')} <span class="text-green">₹${ride.fare}</span> (${ride.distance} km)</p>
+        <p>🏁 ${t('গন্তব্য:')} ${t(ride.dropoffLocation.villageName)}</p>
+        <p>💰 ${t('ভাড়া:')} <span class="text-green">₹${ride.fare}</span> (${ride.distance} km)</p>
         <div class="request-actions">
-          <button class="button primary accept-btn" data-id="${ride._id}">${t('গ্রহণ করুন')}</button>
-          <button class="button secondary reject-btn" data-id="${ride._id}">${t('প্রত্যাখ্যান করুন')}</button>
+          <button class="button primary accept-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('গ্রহণ করুন')}</button>
+          <button class="button secondary negotiate-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('প্রত্যাখ্যান করুন')}</button>
         </div>
       `;
       rideRequestsContainer.appendChild(item);
     });
 
     document.querySelectorAll('.accept-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => acceptRide(e.target.dataset.id));
+      btn.addEventListener('click', (e) => submitOffer(e.target.dataset.id, e.target.dataset.fare));
     });
 
-    document.querySelectorAll('.reject-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => rejectRide(e.target.dataset.id));
+    document.querySelectorAll('.negotiate-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => showNegotiatePopup(e.target.dataset.id, e.target.dataset.fare));
     });
 
     // Poll for updates every 16 seconds for real-time updates
@@ -1809,52 +1854,76 @@ async function listenToPendingQueue() {
   }
 }
 
-async function acceptRide(rideId) {
+function showNegotiatePopup(rideId, currentFare) {
+  let modal = document.getElementById('negotiateModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'negotiateModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;justify-content:center;align-items:center;';
+    modal.innerHTML = `
+      <div class="card" style="width:90%;max-width:350px;background:var(--surface-color, #fff);padding:20px;border-radius:12px;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+        <h3 style="margin-top:0;margin-bottom:10px;">${t('নতুন ভাড়া প্রস্তাব করুন')}</h3>
+        <p style="margin-bottom:15px; font-size:1.1rem;">💰 ${t('বর্তমান ভাড়া:')} <strong id="negOriginalFare" class="text-green"></strong></p>
+        <div style="display:flex;justify-content:center;align-items:center;gap:15px;margin-bottom:20px;">
+          <button id="negMinusBtn" class="button secondary" style="width:50px;height:50px;font-size:1.5rem;border-radius:50%;padding:0;">-</button>
+          <input type="number" id="negFareInput" style="width:100px;font-size:1.5rem;text-align:center;padding:10px;border:1px solid #ccc;border-radius:8px;" />
+          <button id="negPlusBtn" class="button secondary" style="width:50px;height:50px;font-size:1.5rem;border-radius:50%;padding:0;">+</button>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button id="negSubmitBtn" class="button primary" style="flex:1;">${t('প্রস্তাব পাঠান')}</button>
+          <button id="negCancelBtn" class="button secondary" style="flex:1;">${t('বাতিল')}</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    document.getElementById('negMinusBtn').addEventListener('click', () => {
+      const input = document.getElementById('negFareInput');
+      input.value = Math.max(10, parseInt(input.value) - 10);
+    });
+
+    document.getElementById('negPlusBtn').addEventListener('click', () => {
+      const input = document.getElementById('negFareInput');
+      input.value = parseInt(input.value) + 10;
+    });
+
+    document.getElementById('negCancelBtn').addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+
+    document.getElementById('negSubmitBtn').addEventListener('click', () => {
+      const newFare = parseInt(document.getElementById('negFareInput').value);
+      const rideId = modal.dataset.rideId;
+      modal.style.display = 'none';
+      submitOffer(rideId, newFare);
+    });
+  }
+
+  document.getElementById('negOriginalFare').textContent = `₹${currentFare}`;
+  document.getElementById('negFareInput').value = currentFare;
+  modal.dataset.rideId = rideId;
+  modal.style.display = 'flex';
+}
+
+async function submitOffer(rideId, fare) {
   try {
-    const response = await apiCall(`/rides/accept/${rideId}`, 'POST');
+    const response = await apiCall(`/rides/accept/${rideId}`, 'POST', { fare: Number(fare) });
 
     if (response.success) {
       activeRideId = rideId;
       localStorage.setItem('toto_active_ride_id', activeRideId);
       
-      // Notify customer that ride was accepted
-      if (response.ride && response.ride.passengerId) {
-        const passengerName = response.ride.passengerId.firstName || 'যাত্রী';
-        notifyCustomerRideAccepted(t('চালক'), ''); // Notify customer
-      }
-      
-      rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('আপনার একটি ট্রিপ চলমান রয়েছে।')}</p>`;
+      rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('যাত্রীর অনুমোদনের জন্য অপেক্ষা করা হচ্ছে...')}</p>`;
       requestCountBadge.textContent = '0';
       
-      // Start polling for active ride - every 16 seconds
       if (pollInterval) clearInterval(pollInterval);
       listenToDriverActiveRide(); // Initial call
       pollInterval = setInterval(listenToDriverActiveRide, 16000);
     }
   } catch (error) {
-    console.error("Accept ride error:", error);
+    console.error("Offer error:", error);
     showPopup('ত্রুটি', 'রাইডটি ইতিমধ্যে অন্য কেউ নিয়ে নিয়েছে অথবা বাতিল হয়েছে।', '⚠️');
-    
-    // Refresh the pending queue so the taken ride disappears
     listenToPendingQueue();
-  }
-}
-
-async function rejectRide(rideId) {
-  try {
-    const response = await apiCall(`/rides/reject/${rideId}`, 'POST');
-
-    if (response.success) {
-      // Track rejected ride for 60 seconds to avoid showing it again
-      rejectedRides[rideId] = Date.now() + (60 * 1000); // 60 seconds from now
-      
-      showPopup('সফল', 'রাইড প্রত্যাখ্যান করা হয়েছে।', '✅');
-      // Refresh the pending rides list
-      listenToPendingQueue();
-    }
-  } catch (error) {
-    console.error("Reject ride error:", error);
-    showPopup('ত্রুটি', error.message || 'রাইড প্রত্যাখ্যান করতে সমস্যা হয়েছে।', '❌');
   }
 }
 
@@ -1870,14 +1939,12 @@ async function listenToDriverActiveRide() {
       activeRideId = null;
       driverAcceptedRideCard.classList.add('hidden');
       
-      // Track daily earnings if ride completed (not cancelled)
       if (ride.rideStatus === 'completed') {
         updateDailyStats(ride.fare);
       }
       
-      showPopup('ট্রিপ শেষ', 'যাত্রী ট্রিপটি সমাপ্ত করেছেন।', '✅');
+      showPopup('ট্রিপ শেষ', ride.rideStatus === 'completed' ? 'যাত্রী ট্রিপটি সমাপ্ত করেছেন।' : 'ট্রিপটি বাতিল হয়েছে।', ride.rideStatus === 'completed' ? '✅' : '⚠️');
       
-      // Reset to show available rides again with fast polling
       if (availabilityToggleCheckbox.checked) {
         rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('উপলব্ধ রাইড খুঁজছি...')}</p>`;
         requestCountBadge.textContent = '0';
@@ -1890,24 +1957,90 @@ async function listenToDriverActiveRide() {
       return;
     }
 
+    if (ride.rideStatus === 'driver_offered') {
+      rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('যাত্রীর অনুমোদনের জন্য অপেক্ষা করা হচ্ছে...')}</p>`;
+      requestCountBadge.textContent = '0';
+      driverAcceptedRideCard.classList.add('hidden');
+      return;
+    }
+
+    if (ride.rideStatus === 'pending') {
+      localStorage.removeItem('toto_active_ride_id');
+      activeRideId = null;
+      driverAcceptedRideCard.classList.add('hidden');
+      showPopup('প্রত্যাখ্যাত', 'যাত্রী আপনার প্রস্তাব প্রত্যাখ্যান করেছেন।', '❌');
+      
+      rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('উপলব্ধ রাইড খুঁজছি...')}</p>`;
+      if (pollInterval) clearInterval(pollInterval);
+      listenToPendingQueue();
+      pollInterval = setInterval(listenToPendingQueue, 16000);
+      return;
+    }
+
     rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('আপনার একটি ট্রিপ চলমান রয়েছে।')}</p>`;
     requestCountBadge.textContent = '0';
     driverAcceptedRideCard.classList.remove('hidden');
     
     document.getElementById('driverAcceptedCustomerName').textContent = `${ride.passengerId.firstName} ${ride.passengerId.lastName}`;
-    // Display customer phone - only last 4 digits
     const customerPhone = ride.passengerId.phone;
-    const customerLastFour = customerPhone.slice(-4);
-    document.getElementById('driverAcceptedCustomerPhone').textContent = `****${customerLastFour}`;
-    // Update call button with full phone
+    document.getElementById('driverAcceptedCustomerPhone').textContent = `****${customerPhone.slice(-4)}`;
     document.getElementById('customerCallBtn').href = `tel:${customerPhone}`;
     
-    document.getElementById('driverAcceptedStart').textContent = t(ride.pickupLocation.address);
-    document.getElementById('driverAcceptedEnd').textContent = t(ride.dropoffLocation.address);
+    document.getElementById('driverAcceptedStart').textContent = t(ride.pickupLocation.villageName);
+    document.getElementById('driverAcceptedEnd').textContent = t(ride.dropoffLocation.villageName);
     document.getElementById('driverAcceptedDistance').textContent = `${ride.distance} km`;
     document.getElementById('driverAcceptedFare').textContent = `₹${ride.fare}`;
+
+    let endTripBtn = document.getElementById('driverEndTripBtn');
+    if (!endTripBtn) {
+        endTripBtn = document.createElement('button');
+        endTripBtn.id = 'driverEndTripBtn';
+        endTripBtn.className = 'button primary full-width';
+        endTripBtn.style.marginTop = '15px';
+        endTripBtn.textContent = t('ট্রিপ সমাপ্ত করুন');
+        endTripBtn.onclick = () => endDriverActiveRide();
+        driverAcceptedRideCard.appendChild(endTripBtn);
+    }
   } catch (error) {
     console.error("Error getting active ride:", error);
+  }
+}
+
+async function endDriverActiveRide() {
+  if (!activeRideId) return;
+  const endBtn = document.getElementById('driverEndTripBtn');
+  if (endBtn) {
+    endBtn.disabled = true;
+    endBtn.textContent = t('অপেক্ষা করুন...');
+  }
+
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
+  }
+
+  try {
+    await apiCall(`/rides/end/${activeRideId}`, 'POST');
+    
+    localStorage.removeItem('toto_active_ride_id');
+    activeRideId = null;
+    driverAcceptedRideCard.classList.add('hidden');
+    
+    showPopup('সফলতা', 'ট্রিপ সম্পন্ন হয়েছে! 🎉', '✅', () => {
+      if (availabilityToggleCheckbox.checked) {
+        rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('উপলব্ধ রাইড খুঁজছি...')}</p>`;
+        requestCountBadge.textContent = '0';
+        listenToPendingQueue();
+        pollInterval = setInterval(listenToPendingQueue, 16000);
+      }
+    });
+  } catch (error) {
+    showPopup('ত্রুটি', 'রাইড শেষ করতে সমস্যা হয়েছে।', '❌');
+    if (endBtn) {
+      endBtn.disabled = false;
+      endBtn.textContent = t('ট্রিপ সমাপ্ত করুন');
+    }
+    pollInterval = setInterval(listenToDriverActiveRide, 16000);
   }
 }
 

@@ -5,7 +5,9 @@ const authMiddleware = require('../middleware/auth');
 const {
   findStoppage,
   formatLocationAddress,
-  calculateDistanceKm
+  calculateDistanceKm,
+  buildLocationFromVillage,
+  calculateDistanceKmByVillage
 } = require('../data/locations');
 
 const router = express.Router();
@@ -38,24 +40,32 @@ async function buildLocationFromStoppage(stoppageId, landmark) {
 // REQUEST RIDE (Passenger)
 router.post('/request', authMiddleware, async (req, res) => {
   try {
-    const { pickupStoppageId, dropoffStoppageId, landmark } = req.body;
+    const { pickupVillageId, dropoffVillageId, pickupStoppageId, dropoffStoppageId, landmark } = req.body;
 
-    if (!pickupStoppageId || !dropoffStoppageId) {
+    const pVid = pickupVillageId || pickupStoppageId;
+    const dVid = dropoffVillageId || dropoffStoppageId;
+
+    if (!pVid || !dVid) {
       return res.status(400).json({
         success: false,
-        message: 'শুরুর স্থান ও গন্তব্য স্টপেজ নির্বাচন করুন'
+        message: 'শুরুর স্থান ও গন্তব্য নির্বাচন করুন'
       });
     }
 
-    if (pickupStoppageId === dropoffStoppageId) {
+    if (pVid === dVid) {
       return res.status(400).json({
         success: false,
         message: 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না'
       });
     }
 
-    const pickupLocation = await buildLocationFromStoppage(pickupStoppageId, landmark);
-    const dropoffLocation = await buildLocationFromStoppage(dropoffStoppageId);
+    const pickupLocation = pickupVillageId 
+      ? await buildLocationFromVillage(pickupVillageId, landmark) 
+      : await buildLocationFromStoppage(pickupStoppageId, landmark);
+
+    const dropoffLocation = dropoffVillageId 
+      ? await buildLocationFromVillage(dropoffVillageId) 
+      : await buildLocationFromStoppage(dropoffStoppageId);
 
     if (!pickupLocation || !dropoffLocation) {
       return res.status(400).json({
@@ -64,7 +74,10 @@ router.post('/request', authMiddleware, async (req, res) => {
       });
     }
 
-    const distance = await calculateDistanceKm(pickupStoppageId, dropoffStoppageId);
+    const distance = pickupVillageId && dropoffVillageId
+      ? await calculateDistanceKmByVillage(pickupVillageId, dropoffVillageId)
+      : await calculateDistanceKm(pickupStoppageId, dropoffStoppageId);
+
     const fare = Math.max(BASE_FARE, distance * FARE_PER_KM);
 
     const ride = new Ride({
@@ -114,12 +127,13 @@ router.get('/pending', authMiddleware, async (req, res) => {
 // ACCEPT RIDE (Driver)
 router.post('/accept/:rideId', authMiddleware, async (req, res) => {
   try {
+    const { fare } = req.body;
     const ride = await Ride.findOneAndUpdate(
       { _id: req.params.rideId, rideStatus: 'pending' },
       { 
         driverId: req.userId, 
-        rideStatus: 'accepted',
-        startTime: new Date()
+        rideStatus: 'driver_offered',
+        fare: fare || undefined
       },
       { new: true }
     )
@@ -135,7 +149,7 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Ride accepted successfully',
+      message: 'Offer sent successfully',
       ride
     });
   } catch (error) {
@@ -143,6 +157,55 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
       success: false,
       message: error.message || 'Failed to accept ride'
     });
+  }
+});
+
+// CUSTOMER ACCEPTS OFFER
+router.post('/accept-offer/:rideId', authMiddleware, async (req, res) => {
+  try {
+    const ride = await Ride.findOneAndUpdate(
+      { _id: req.params.rideId, passengerId: req.userId, rideStatus: 'driver_offered' },
+      { 
+        rideStatus: 'accepted',
+        startTime: new Date()
+      },
+      { new: true }
+    ).populate('driverId', 'firstName lastName phone profilePhoto vehicleNumber');
+
+    if (!ride) {
+      return res.status(400).json({ success: false, message: 'Ride not found or invalid state' });
+    }
+
+    res.status(200).json({ success: true, message: 'Offer accepted', ride });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message || 'Failed to accept offer' });
+  }
+});
+
+// CUSTOMER REJECTS OFFER
+router.post('/reject-offer/:rideId', authMiddleware, async (req, res) => {
+  try {
+    const currentRide = await Ride.findById(req.params.rideId);
+    if (!currentRide) return res.status(404).json({ success: false, message: 'Ride not found' });
+
+    const originalFare = Math.max(BASE_FARE, currentRide.distance * FARE_PER_KM);
+
+    const ride = await Ride.findOneAndUpdate(
+      { _id: req.params.rideId, passengerId: req.userId, rideStatus: 'driver_offered' },
+      { 
+        $unset: { driverId: 1 },
+        $set: { rideStatus: 'pending', fare: originalFare }
+      },
+      { new: true }
+    );
+
+    if (!ride) {
+      return res.status(400).json({ success: false, message: 'Ride not found or invalid state' });
+    }
+
+    res.status(200).json({ success: true, message: 'Offer rejected', ride });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message || 'Failed to reject offer' });
   }
 });
 
