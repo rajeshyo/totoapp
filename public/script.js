@@ -1,4 +1,14 @@
 // ===== Notification Helpers =====
+function playNotificationSound() {
+  try {
+    // Using a reliable external beep sound. You can replace this URL with a local path like '/audio/beep.mp3' later!
+    const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+    audio.play().catch(e => console.warn('Browser blocked audio playback:', e));
+  } catch (err) {
+    console.error('Error playing sound:', err);
+  }
+}
+
 function sendNotification(title, options = {}) {
 }
 
@@ -440,6 +450,7 @@ let pollInterval = null;
 let adminPollInterval = null;
 let popupCloseCallback = null;
 let rejectedRides = {}; // Track rejected rides with timestamp: { rideId: timestamp }
+let knownPendingRideIds = new Set(); // Tracks active requests to avoid repeating the sound
 
 // --- Location Helpers ---
 function findStoppageInData(stoppageId) {
@@ -1863,6 +1874,22 @@ async function listenToPendingQueue() {
 
       return true;
     });
+
+    // Check for newly arrived rides to trigger the sound alert
+    let hasNewRide = false;
+    const currentIds = new Set();
+    
+    rides.forEach(ride => {
+      currentIds.add(ride._id);
+      if (!knownPendingRideIds.has(ride._id)) {
+        hasNewRide = true;
+      }
+    });
+    
+    if (hasNewRide && rides.length > 0) {
+      playNotificationSound();
+    }
+    knownPendingRideIds = currentIds; // Update the known list for the next poll
 
     requestCountBadge.textContent = rides.length.toString();
     
