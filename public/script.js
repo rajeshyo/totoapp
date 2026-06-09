@@ -115,6 +115,9 @@ const uiTranslations = {
   'দূরত্ব:': 'Distance:',
   'ভাড়া:': 'Fare:',
   'ট্রিপ সমাপ্ত করুন': 'End Trip',
+  'ট্রিপ শুরু করুন': 'Start Trip',
+  'চালকের ট্রিপ শুরু করার অপেক্ষায়...': 'Waiting for driver to start...',
+  'ট্রিপ শুরু করতে সমস্যা হয়েছে।': 'Failed to start trip.',
   'টোটো খোঁজা হচ্ছে...': 'Looking for Toto...',
   'চালকের জন্য অপেক্ষা করুন': 'Wait for Driver',
   'অপেক্ষা করুন...': 'Please wait...',
@@ -1371,6 +1374,24 @@ async function pollCustomerRide() {
           document.getElementById('acceptedVehicleNumber').textContent = `🔢 ${ride.driverId.vehicleNumber}`;
         }
       }
+
+      let customerWaitMsg = document.getElementById('customerWaitMsg');
+      if (!customerWaitMsg) {
+        customerWaitMsg = document.createElement('p');
+        customerWaitMsg.id = 'customerWaitMsg';
+        customerWaitMsg.className = 'muted-text center-block';
+        customerWaitMsg.style.fontWeight = 'bold';
+        endRideBtn.parentNode.insertBefore(customerWaitMsg, endRideBtn);
+      }
+
+      if (ride.rideStatus === 'accepted') {
+        endRideBtn.classList.add('hidden');
+        customerWaitMsg.textContent = t('চালকের ট্রিপ শুরু করার অপেক্ষায়...');
+        customerWaitMsg.classList.remove('hidden');
+      } else if (ride.rideStatus === 'in_progress') {
+        endRideBtn.classList.remove('hidden');
+        customerWaitMsg.classList.add('hidden');
+      }
     }
   } catch (error) {
     console.error("Error polling ride:", error);
@@ -1499,6 +1520,10 @@ function resetCustomerUI() {
   const findingCard = document.getElementById('findingRideCard');
   if (findingCard) findingCard.classList.add('hidden');
   document.getElementById('customerOfferCard')?.classList.add('hidden');
+  
+  if (endRideBtn) endRideBtn.classList.remove('hidden');
+  const customerWaitMsg = document.getElementById('customerWaitMsg');
+  if (customerWaitMsg) customerWaitMsg.classList.add('hidden');
   
   // Reset form
   rideSubmitBtn.disabled = false;
@@ -1991,24 +2016,54 @@ async function listenToDriverActiveRide() {
     document.getElementById('driverAcceptedDistance').textContent = `${ride.distance} km`;
     document.getElementById('driverAcceptedFare').textContent = `₹${ride.fare}`;
 
-    let endTripBtn = document.getElementById('driverEndTripBtn');
-    if (!endTripBtn) {
-        endTripBtn = document.createElement('button');
-        endTripBtn.id = 'driverEndTripBtn';
-        endTripBtn.className = 'button primary full-width';
-        endTripBtn.style.marginTop = '15px';
-        endTripBtn.textContent = t('ট্রিপ সমাপ্ত করুন');
-        endTripBtn.onclick = () => endDriverActiveRide();
-        driverAcceptedRideCard.appendChild(endTripBtn);
+    let actionBtn = document.getElementById('driverActionBtn');
+    if (!actionBtn) {
+        const oldEndBtn = document.getElementById('driverEndTripBtn');
+        if (oldEndBtn) oldEndBtn.remove();
+
+        actionBtn = document.createElement('button');
+        actionBtn.id = 'driverActionBtn';
+        actionBtn.style.marginTop = '15px';
+        driverAcceptedRideCard.appendChild(actionBtn);
+    }
+
+    if (ride.rideStatus === 'accepted') {
+        actionBtn.className = 'button primary full-width';
+        actionBtn.textContent = t('ট্রিপ শুরু করুন');
+        actionBtn.onclick = () => startDriverActiveRide();
+    } else if (ride.rideStatus === 'in_progress') {
+        actionBtn.className = 'button danger full-width';
+        actionBtn.textContent = t('ট্রিপ সমাপ্ত করুন');
+        actionBtn.onclick = () => endDriverActiveRide();
     }
   } catch (error) {
     console.error("Error getting active ride:", error);
   }
 }
 
+async function startDriverActiveRide() {
+  if (!activeRideId) return;
+  const actionBtn = document.getElementById('driverActionBtn');
+  if (actionBtn) {
+    actionBtn.disabled = true;
+    actionBtn.textContent = t('অপেক্ষা করুন...');
+  }
+
+  try {
+    await apiCall(`/rides/start/${activeRideId}`, 'POST');
+    listenToDriverActiveRide(); 
+  } catch (error) {
+    showPopup('ত্রুটি', 'ট্রিপ শুরু করতে সমস্যা হয়েছে।', '❌');
+    if (actionBtn) {
+      actionBtn.disabled = false;
+      actionBtn.textContent = t('ট্রিপ শুরু করুন');
+    }
+  }
+}
+
 async function endDriverActiveRide() {
   if (!activeRideId) return;
-  const endBtn = document.getElementById('driverEndTripBtn');
+  const endBtn = document.getElementById('driverActionBtn') || document.getElementById('driverEndTripBtn');
   if (endBtn) {
     endBtn.disabled = true;
     endBtn.textContent = t('অপেক্ষা করুন...');
