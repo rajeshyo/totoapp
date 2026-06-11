@@ -14,17 +14,14 @@ router.get('/stats', authMiddleware, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Unauthorized access' });
     }
 
-    const onlineCustomers = await User.countDocuments({ userType: 'passenger', isOnline: true });
-    const onlineDrivers = await User.countDocuments({ userType: 'driver', isOnline: true });
-    // Keeping total counts for potential future use or comparison, though not displayed in this specific request
     const totalCustomers = await User.countDocuments({ userType: 'passenger' });
     const totalDrivers = await User.countDocuments({ userType: 'driver' });
 
     res.status(200).json({
       success: true,
       stats: {
-        onlineCustomers,
-        onlineDrivers,
+        totalCustomers,
+        totalDrivers,
       }
     });
   } catch (error) {
