@@ -68,7 +68,7 @@ const uiTranslations = {
   'সহজে টোটো বুক করুন': 'Book Toto Easily',
   'সুলভ, নিরাপদ ও বিশ্বস্ত পরিষেবা': 'Affordable, Safe, Reliable',
   'তুমি কোথা থেকে যাবে?': 'Select Pickup',
-  'গ্রাম': 'Village',
+  'গ্রামের নাম লিখুন।': 'Village',
   'গ্রাম নির্বাচন করুন': 'Select Village',
   'স্টপেজ': 'Stoppage',
   'স্টপেজ নির্বাচন করুন': 'Select Stoppage',
