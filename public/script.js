@@ -530,6 +530,7 @@ let currentUser = JSON.parse(localStorage.getItem('toto_active_user')) || null;
 let activeRideId = localStorage.getItem('toto_active_ride_id') || null;
 let pollInterval = null;
 let adminPollInterval = null;
+let heartbeatInterval = null; // New interval for online status heartbeat
 let popupCloseCallback = null;
 let rejectedRides = {}; // Track rejected rides with timestamp: { rideId: timestamp }
 let knownPendingRideIds = new Set(); // Tracks active requests to avoid repeating the sound
@@ -728,6 +729,7 @@ function clearAllListeners() {
     clearInterval(pollInterval);
     pollInterval = null;
   }
+  if (heartbeatInterval) clearInterval(heartbeatInterval); // Clear heartbeat on section change
   if (adminPollInterval) {
     clearInterval(adminPollInterval);
     adminPollInterval = null;
@@ -741,6 +743,7 @@ function showHomePage() {
     setupCustomerDashboard();
   } else if (currentUser.userType === 'driver') {
     showSection(driverDashboard);
+    startOnlineHeartbeat(); // Start heartbeat for drivers
     setupDriverDashboard();
   } else if (currentUser.userType === 'admin') {
     showSection(adminDashboard);
@@ -748,6 +751,7 @@ function showHomePage() {
   }
   updateNavButtons('home');
 }
+
 
 async function showProfilePage() {
   showSection(profilePage);
@@ -993,13 +997,13 @@ async function loadAdminStats() {
     const response = await apiCall('/admin/stats');
     if (response.success && response.stats) {
       statsRow.innerHTML = `
-        <div class="stat-box">
-          <span class="stat-val">👤 ${response.stats.totalCustomers}</span>
-          <span class="stat-lbl">${t('মোট গ্রাহক')}</span>
+        <div class="stat-box" style="background: var(--primary-brand-light); color: var(--primary-brand);">
+          <span class="stat-val">👤 ${response.stats.onlineCustomers}</span>
+          <span class="stat-lbl">${t('মোট অনলাইন গ্রাহক')}</span>
         </div>
-        <div class="stat-box">
-          <span class="stat-val">🚗 ${response.stats.totalDrivers}</span>
-          <span class="stat-lbl">${t('মোট চালক')}</span>
+        <div class="stat-box" style="background: var(--success-light); color: var(--success-color);">
+          <span class="stat-val">🚗 ${response.stats.onlineDrivers}</span>
+          <span class="stat-lbl">${t('মোট অনলাইন চালক')}</span>
         </div>
       `;
     }
@@ -1136,6 +1140,7 @@ sidebarLogoutBtn.addEventListener('click', () => {
   localStorage.removeItem('toto_active_user');
   localStorage.removeItem('toto_token');
   localStorage.removeItem('toto_active_ride_id');
+  sendOnlineStatus(false); // Set user offline on logout
   currentUser = null;
   activeRideId = null;
   clearAllListeners();
@@ -1200,6 +1205,7 @@ document.getElementById('logoutProfileBtn')?.addEventListener('click', () => {
   localStorage.removeItem('toto_active_user');
   localStorage.removeItem('toto_token');
   localStorage.removeItem('toto_active_ride_id');
+  sendOnlineStatus(false); // Set user offline on logout
   currentUser = null;
   activeRideId = null;
   clearAllListeners();
@@ -1352,6 +1358,7 @@ signupForm.addEventListener('submit', async event => {
       localStorage.setItem('toto_active_user', JSON.stringify(currentUser));
       localStorage.setItem('toto_token', response.token);
       authMessage.textContent = '';
+      sendOnlineStatus(true); // Set user online on login
       renderApp();
     }
   } catch (error) {
@@ -1387,6 +1394,7 @@ loginForm.addEventListener('submit', async event => {
       localStorage.setItem('toto_active_user', JSON.stringify(currentUser));
       localStorage.setItem('toto_token', response.token);
       authMessage.textContent = '';
+      sendOnlineStatus(true); // Set user online on login
       renderApp();
     }
   } catch (error) {
@@ -1995,6 +2003,7 @@ availabilityToggleCheckbox.addEventListener('change', () => {
   const isAvailable = availabilityToggleCheckbox.checked;
   localStorage.setItem('toto_driver_online', isAvailable);
   toggleDriverStatus(isAvailable);
+  sendOnlineStatus(isAvailable); // Update driver's online status in backend
 });
 
 function toggleDriverStatus(isAvailable) {
@@ -2004,9 +2013,11 @@ function toggleDriverStatus(isAvailable) {
   if (isAvailable) {
     // Start polling when going online - every 16 seconds
     if (pollInterval) clearInterval(pollInterval);
+    if (heartbeatInterval) clearInterval(heartbeatInterval); // Stop previous heartbeat if any
     listenToPendingQueue(); // Initial call
     pollInterval = setInterval(listenToPendingQueue, 16000);
   } else {
+    if (heartbeatInterval) clearInterval(heartbeatInterval); // Stop heartbeat when offline
     if (pollInterval) clearInterval(pollInterval);
     rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('আপনি অফলাইনে আছেন। রাইড পেতে অনলাইন মোড চালু করুন।')}</p>`;
     requestCountBadge.textContent = '0';
