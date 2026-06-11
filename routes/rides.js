@@ -52,6 +52,13 @@ router.post('/request', authMiddleware, async (req, res) => {
       });
     }
 
+    if (pVid === dVid) {
+      return res.status(400).json({
+        success: false,
+        message: 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না'
+      });
+    }
+
     const pickupLocation = pickupVillageId 
       ? await buildLocationFromVillage(pickupVillageId, landmark) 
       : await buildLocationFromStoppage(pickupStoppageId, landmark);

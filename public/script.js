@@ -227,8 +227,6 @@ const uiTranslations = {
   'মতামত দিন (Feedback)': 'Give Feedback',
   'অ্যাপটি উন্নত করতে আপনার মূল্যবান মতামত বা পরামর্শ দিন।': 'Give your valuable feedback or suggestions to improve the app.',
   'এখানে লিখুন...': 'Write here...',
-  'মোট গ্রাহক': 'Total Customers',
-  'মোট চালক': 'Total Drivers',
   'আপনার মতামত সফলভাবে জমা হয়েছে। ধন্যবাদ!': 'Your feedback has been submitted successfully. Thank you!',
   'মতামত জমা দিতে সমস্যা হয়েছে।': 'Failed to submit feedback.',
   'কোনো মতামত পাওয়া যায়নি': 'No feedback found',
@@ -603,7 +601,7 @@ function calculatePreviewDistance() {
   if (!pickupId || !dropoffId) return 0;
   
   if (pickupId === dropoffId) {
-    return 3;
+    return 1;
   }
   
   const pickup = locationData.find(v => v.id === pickupId);
@@ -949,6 +947,12 @@ window.bookFavorite = function(villageId, stoppageId, stopName) {
     return;
   }
 
+  if (pickupVillageSelect.value === villageId) {
+    showHomePage();
+    showPopup('ত্রুটি', 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না।', '❌');
+    return;
+  }
+
   showHomePage();
   dropoffVillageSelect.value = villageId;
   
@@ -963,11 +967,9 @@ window.bookFavorite = function(villageId, stoppageId, stopName) {
 // --- Admin Logic ---
 function setupAdminDashboard() {
   loadAdminUsers();
-  loadAdminStats();
 
   if (adminPollInterval) clearInterval(adminPollInterval);
   adminPollInterval = setInterval(() => {
-    loadAdminStats();
     if (document.getElementById('adminUsersPanel') && !document.getElementById('adminUsersPanel').classList.contains('hidden')) {
       loadAdminUsers();
     }
@@ -975,38 +977,6 @@ function setupAdminDashboard() {
       loadAdminFeedback();
     }
   }, 16000);
-}
-
-async function loadAdminStats() {
-  let statsRow = document.getElementById('adminStatsRow');
-  if (!statsRow) {
-    const adminDashboard = document.getElementById('adminDashboard');
-    const authTabs = adminDashboard.querySelector('.auth-tabs');
-    if (authTabs) {
-      statsRow = document.createElement('div');
-      statsRow.id = 'adminStatsRow';
-      statsRow.className = 'grid-stats-row';
-      statsRow.style.marginBottom = '20px';
-      adminDashboard.insertBefore(statsRow, authTabs);
-    } else return;
-  }
-  try {
-    const response = await apiCall('/admin/stats');
-    if (response.success && response.stats) {
-      statsRow.innerHTML = `
-        <div class="stat-box">
-          <span class="stat-val">👤 ${response.stats.totalCustomers}</span>
-          <span class="stat-lbl">${t('মোট গ্রাহক')}</span>
-        </div>
-        <div class="stat-box">
-          <span class="stat-val">🚗 ${response.stats.totalDrivers}</span>
-          <span class="stat-lbl">${t('মোট চালক')}</span>
-        </div>
-      `;
-    }
-  } catch (error) {
-    console.error('Failed to load admin stats:', error);
-  }
 }
 
 adminUsersTabBtn?.addEventListener('click', () => {
@@ -1735,6 +1705,11 @@ rideRequestForm.addEventListener('submit', async event => {
     return;
   }
 
+  if (pickupVillageId === dropoffVillageId) {
+    showPopup('ত্রুটি', 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না।', '❌');
+    return;
+  }
+
   const pickupAddress = getSelectedPickupAddress();
   const dropoffAddress = getSelectedDropoffAddress();
   const distance = calculatePreviewDistance();
@@ -1830,7 +1805,7 @@ endRideBtn?.addEventListener('click', async () => {
 function updateRidePreview() {
   const pickup = pickupVillageSelect?.value;
   const drop = dropoffVillageSelect?.value;
-  if (!pickup || !drop) { pricePreviewCard.classList.add('hidden'); return; }
+  if (!pickup || !drop || pickup === drop) { pricePreviewCard.classList.add('hidden'); return; }
   const distance = calculatePreviewDistance();
   const fare = Math.max(BASE_FARE, distance * FARE_PER_KM);
   distanceInfoInput.value = `${distance} km`;
@@ -1889,6 +1864,7 @@ function renderPopularPlaces() {
       if (!pickupVillageSelect?.value) { showPopup('শুরুর স্থান প্রয়োজন', 'দয়া করে প্রথমে আপনার শুরুর স্থান (পিকআপ) নির্বাচন করুন।', '📍'); return; }
 
       const villageId = e.target.dataset.villageId;
+      if (pickupVillageSelect.value === villageId) { showPopup('ত্রুটি', 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না।', '❌'); return; }
 
       dropoffVillageSelect.value = villageId;
       
