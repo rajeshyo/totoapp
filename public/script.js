@@ -77,7 +77,7 @@ const uiTranslations = {
   'ভাড়া উক্তি:': 'Fare Quote:',
   'স্থলচিহ্ন (ঐচ্ছিক)': 'Landmark (Optional)',
   'যেমন: বড় বটগাছের পাশে': 'e.g. near banyan tree',
-  'রাইড খুঁজুন': 'Find Ride',
+  'টোটো খুঁজুন': 'Find Ride',
   'জনপ্রিয় স্থান (তাত্ক্ষণিক বুকিং)': 'Popular Places',
   'প্রথমে শুরুর স্থান সেট করুন, তারপর গন্তব্যে ক্লিক করুন।': 'First select pickup, then drop.',
   'নতুন স্টপেজ যোগ করুন': 'Add New Stoppage',
@@ -227,6 +227,8 @@ const uiTranslations = {
   'মতামত দিন (Feedback)': 'Give Feedback',
   'অ্যাপটি উন্নত করতে আপনার মূল্যবান মতামত বা পরামর্শ দিন।': 'Give your valuable feedback or suggestions to improve the app.',
   'এখানে লিখুন...': 'Write here...',
+  'মোট গ্রাহক': 'Total Customers',
+  'মোট চালক': 'Total Drivers',
   'আপনার মতামত সফলভাবে জমা হয়েছে। ধন্যবাদ!': 'Your feedback has been submitted successfully. Thank you!',
   'মতামত জমা দিতে সমস্যা হয়েছে।': 'Failed to submit feedback.',
   'কোনো মতামত পাওয়া যায়নি': 'No feedback found',
@@ -954,12 +956,56 @@ window.bookFavorite = function(villageId, stoppageId, stopName) {
   }
   updateRidePreview();
   
-  showPopup('গন্তব্য সেট হয়েছে', `${stopName} গন্তব্য হিসেবে সেট করা হয়েছে। ভাড়া চেক করে রাইড খুঁজুন।`, '✅');
+  showPopup('গন্তব্য সেট হয়েছে', `${stopName} গন্তব্য হিসেবে সেট করা হয়েছে। ভাড়া চেক করে টোটো খুঁজুন।`, '✅');
 }
 
 // --- Admin Logic ---
 function setupAdminDashboard() {
   loadAdminUsers();
+  loadAdminStats();
+
+  if (adminPollInterval) clearInterval(adminPollInterval);
+  adminPollInterval = setInterval(() => {
+    loadAdminStats();
+    if (document.getElementById('adminUsersPanel') && !document.getElementById('adminUsersPanel').classList.contains('hidden')) {
+      loadAdminUsers();
+    }
+    if (document.getElementById('adminFeedbackPanel') && !document.getElementById('adminFeedbackPanel').classList.contains('hidden')) {
+      loadAdminFeedback();
+    }
+  }, 16000);
+}
+
+async function loadAdminStats() {
+  let statsRow = document.getElementById('adminStatsRow');
+  if (!statsRow) {
+    const adminDashboard = document.getElementById('adminDashboard');
+    const authTabs = adminDashboard.querySelector('.auth-tabs');
+    if (authTabs) {
+      statsRow = document.createElement('div');
+      statsRow.id = 'adminStatsRow';
+      statsRow.className = 'grid-stats-row';
+      statsRow.style.marginBottom = '20px';
+      adminDashboard.insertBefore(statsRow, authTabs);
+    } else return;
+  }
+  try {
+    const response = await apiCall('/admin/stats');
+    if (response.success && response.stats) {
+      statsRow.innerHTML = `
+        <div class="stat-box">
+          <span class="stat-val">👤 ${response.stats.totalCustomers}</span>
+          <span class="stat-lbl">${t('মোট গ্রাহক')}</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-val">🚗 ${response.stats.totalDrivers}</span>
+          <span class="stat-lbl">${t('মোট চালক')}</span>
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('Failed to load admin stats:', error);
+  }
 }
 
 adminUsersTabBtn?.addEventListener('click', () => {
@@ -1653,7 +1699,7 @@ function resetCustomerUI() {
   
   // Reset form
   rideSubmitBtn.disabled = false;
-  rideSubmitBtn.textContent = t('রাইড খুঁজুন');
+  rideSubmitBtn.textContent = t('টোটো খুঁজুন');
   rideSubmitBtn.style.opacity = "1";
   if (pickupVillageSelect) pickupVillageSelect.value = '';
   

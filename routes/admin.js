@@ -6,6 +6,29 @@ const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
 
+// Get dashboard stats
+router.get('/stats', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || user.userType !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Unauthorized access' });
+    }
+
+    const totalCustomers = await User.countDocuments({ userType: 'passenger' });
+    const totalDrivers = await User.countDocuments({ userType: 'driver' });
+
+    res.status(200).json({
+      success: true,
+      stats: {
+        totalCustomers,
+        totalDrivers,
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message || 'Failed to fetch stats' });
+  }
+});
+
 // Get all users
 router.get('/users', authMiddleware, async (req, res) => {
   try {
