@@ -601,7 +601,7 @@ function calculatePreviewDistance() {
   if (!pickupId || !dropoffId) return 0;
   
   if (pickupId === dropoffId) {
-    return 1;
+    return 3;
   }
   
   const pickup = locationData.find(v => v.id === pickupId);
@@ -943,12 +943,6 @@ window.bookFavorite = function(villageId, stoppageId, stopName) {
   if (!pickupVillageSelect?.value) {
     showHomePage();
     showPopup('শুরুর স্থান প্রয়োজন', 'দয়া করে প্রথমে আপনার শুরুর স্থান (পিকআপ) নির্বাচন করুন।', '📍');
-    return;
-  }
-
-  if (pickupVillageSelect.value === villageId) {
-    showHomePage();
-    showPopup('ত্রুটি', 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না।', '❌');
     return;
   }
 
@@ -1694,11 +1688,6 @@ rideRequestForm.addEventListener('submit', async event => {
     return;
   }
 
-  if (pickupVillageId === dropoffVillageId) { 
-    showPopup('ত্রুটি', 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না।', '❌'); 
-    return; 
-  }
-
   const pickupAddress = getSelectedPickupAddress();
   const dropoffAddress = getSelectedDropoffAddress();
   const distance = calculatePreviewDistance();
@@ -1794,7 +1783,7 @@ endRideBtn?.addEventListener('click', async () => {
 function updateRidePreview() {
   const pickup = pickupVillageSelect?.value;
   const drop = dropoffVillageSelect?.value;
-  if (!pickup || !drop || pickup === drop) { pricePreviewCard.classList.add('hidden'); return; }
+  if (!pickup || !drop) { pricePreviewCard.classList.add('hidden'); return; }
   const distance = calculatePreviewDistance();
   const fare = Math.max(BASE_FARE, distance * FARE_PER_KM);
   distanceInfoInput.value = `${distance} km`;
@@ -1853,7 +1842,6 @@ function renderPopularPlaces() {
       if (!pickupVillageSelect?.value) { showPopup('শুরুর স্থান প্রয়োজন', 'দয়া করে প্রথমে আপনার শুরুর স্থান (পিকআপ) নির্বাচন করুন।', '📍'); return; }
 
       const villageId = e.target.dataset.villageId;
-      if (pickupVillageSelect.value === villageId) { showPopup('ত্রুটি', 'শুরুর স্থান এবং গন্তব্য একই হতে পারে না।', '❌'); return; }
 
       dropoffVillageSelect.value = villageId;
       

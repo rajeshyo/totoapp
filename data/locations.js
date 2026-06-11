@@ -200,9 +200,9 @@ async function calculateDistanceKm(pickupStoppageId, dropoffStoppageId) {
 
   if (!pickup || !dropoff) return 0;
   
-  // If pickup and dropoff are in the exact same village, fix distance to 1 km
+  // If pickup and dropoff are in the exact same village, fix distance to 3 km (Local booking)
   if (pickup.village.id === dropoff.village.id) {
-    return 1;
+    return 3;
   }
 
   const allVillages = await Location.find({}, { id: 1 }).sort({ _id: 1 }).lean();
@@ -233,7 +233,7 @@ async function buildLocationFromVillage(villageId, landmark) {
 }
 
 async function calculateDistanceKmByVillage(pickupVillageId, dropoffVillageId) {
-  if (pickupVillageId === dropoffVillageId) return 1;
+  if (pickupVillageId === dropoffVillageId) return 3; // Local Booking
 
   const pickupVillage = await Location.findOne({ id: pickupVillageId }).lean();
   if (pickupVillage && pickupVillage.distances && pickupVillage.distances[dropoffVillageId]) {
