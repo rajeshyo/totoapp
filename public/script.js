@@ -75,7 +75,7 @@ const uiTranslations = {
   'তুমি কোথায় যাবে?': 'Select Destination',
   'মোট দূরত্ব:': 'Total Distance:',
   'ভাড়া উক্তি:': 'Fare Quote:',
-  'স্থলচিহ্ন (ঐচ্ছিক)': 'Landmark (Optional)',
+  'কাছাকাছি স্থানের নাম লিখুন': 'Landmark (Optional)',
   'যেমন: বড় বটগাছের পাশে': 'e.g. near banyan tree',
   'টোটো খুঁজুন': 'Find Ride',
   'জনপ্রিয় স্থান (তাত্ক্ষণিক বুকিং)': 'Popular Places',
@@ -1137,10 +1137,10 @@ closeMenuBtn.addEventListener('click', closeSidebar);
 sideMenuOverlay.addEventListener('click', closeSidebar);
 
 sidebarLogoutBtn.addEventListener('click', () => {
+  sendOnlineStatus(false); // Set user offline on logout
   localStorage.removeItem('toto_active_user');
   localStorage.removeItem('toto_token');
   localStorage.removeItem('toto_active_ride_id');
-  sendOnlineStatus(false); // Set user offline on logout
   currentUser = null;
   activeRideId = null;
   clearAllListeners();
@@ -1202,10 +1202,10 @@ document.getElementById('navFavBtn')?.addEventListener('click', showFavoritesPag
 
 // Logout button in profile page
 document.getElementById('logoutProfileBtn')?.addEventListener('click', () => {
+  sendOnlineStatus(false); // Set user offline on logout
   localStorage.removeItem('toto_active_user');
   localStorage.removeItem('toto_token');
   localStorage.removeItem('toto_active_ride_id');
-  sendOnlineStatus(false); // Set user offline on logout
   currentUser = null;
   activeRideId = null;
   clearAllListeners();
@@ -2370,7 +2370,30 @@ window.addEventListener('load', () => {
   if (currentUser?.userType === 'driver' && activeRideId) {
     startDriverPoll();
   }
+  
+  // Start heartbeat for all logged-in users on page reload
+  if (currentUser) {
+    startOnlineHeartbeat();
+  }
 });
+
+// --- Online Status Heartbeat ---
+async function sendOnlineStatus(isOnline) {
+  if (!currentUser) return;
+  try {
+    await apiCall('/auth/online-status', 'PUT', { isOnline });
+  } catch (error) {
+    console.error('Failed to update online status:', error);
+  }
+}
+
+function startOnlineHeartbeat() {
+  if (heartbeatInterval) clearInterval(heartbeatInterval);
+  // Send heartbeat every 5 minutes (300,000 ms)
+  heartbeatInterval = setInterval(() => {
+    sendOnlineStatus(true);
+  }, 300000); // 5 minutes
+}
 
 // --- Rating Popup UI ---
 function showRatingPopup(rideId, driverName) {
