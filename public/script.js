@@ -58,7 +58,7 @@ const uiTranslations = {
   'পাসওয়ার্ড দিন': 'Enter password',
   'আপনি কী?': 'What are you?',
   'যাত্রী': 'Passenger',
-  'চালক': 'Driver',
+  'ড্রাইভার': 'Driver',
   'মোবাইল নম্বর': 'Mobile Number',
   'নামের প্রথমাংশ': 'First Name',
   'পদবী': 'Last Name',
