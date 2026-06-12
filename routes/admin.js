@@ -6,6 +6,21 @@ const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
 
+// Get admin stats (online drivers count)
+router.get('/stats', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || user.userType !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Unauthorized access' });
+    }
+    // Count drivers who have turned their dashboard status to "online"
+    const onlineDriversCount = await User.countDocuments({ userType: 'driver', isOnline: true });
+    res.status(200).json({ success: true, onlineDriversCount });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message || 'Failed to fetch stats' });
+  }
+});
+
 // Get all users
 router.get('/users', authMiddleware, async (req, res) => {
   try {

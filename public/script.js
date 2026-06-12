@@ -961,9 +961,11 @@ window.bookFavorite = function(villageId, stoppageId, stopName) {
 // --- Admin Logic ---
 function setupAdminDashboard() {
   loadAdminUsers();
+  loadAdminStats();
 
   if (adminPollInterval) clearInterval(adminPollInterval);
   adminPollInterval = setInterval(() => {
+    loadAdminStats();
     if (document.getElementById('adminUsersPanel') && !document.getElementById('adminUsersPanel').classList.contains('hidden')) {
       loadAdminUsers();
     }
@@ -971,6 +973,18 @@ function setupAdminDashboard() {
       loadAdminFeedback();
     }
   }, 16000);
+}
+
+async function loadAdminStats() {
+  try {
+    const res = await apiCall('/admin/stats');
+    if (res.success) {
+      const countEl = document.getElementById('adminOnlineDriversCount');
+      if (countEl) countEl.textContent = `🛺 ${res.onlineDriversCount}`;
+    }
+  } catch (error) {
+    console.error('Failed to load admin stats:', error);
+  }
 }
 
 adminUsersTabBtn?.addEventListener('click', () => {
@@ -1098,6 +1112,7 @@ closeMenuBtn.addEventListener('click', closeSidebar);
 sideMenuOverlay.addEventListener('click', closeSidebar);
 
 sidebarLogoutBtn.addEventListener('click', () => {
+  if (currentUser?.userType === 'driver') updateOnlineStatus(false);
   localStorage.removeItem('toto_active_user');
   localStorage.removeItem('toto_token');
   localStorage.removeItem('toto_active_ride_id');
@@ -1162,6 +1177,7 @@ document.getElementById('navFavBtn')?.addEventListener('click', showFavoritesPag
 
 // Logout button in profile page
 document.getElementById('logoutProfileBtn')?.addEventListener('click', () => {
+  if (currentUser?.userType === 'driver') updateOnlineStatus(false);
   localStorage.removeItem('toto_active_user');
   localStorage.removeItem('toto_token');
   localStorage.removeItem('toto_active_ride_id');
@@ -1942,6 +1958,7 @@ async function setupDriverDashboard() {
   const isAvailable = localStorage.getItem('toto_driver_online') === 'true';
   availabilityToggleCheckbox.checked = isAvailable;
   toggleDriverStatus(isAvailable);
+  updateOnlineStatus(isAvailable);
   if (activeRideId) {
     listenToDriverActiveRide();
   }
@@ -1953,6 +1970,7 @@ availabilityToggleCheckbox.addEventListener('change', () => {
   const isAvailable = availabilityToggleCheckbox.checked;
   localStorage.setItem('toto_driver_online', isAvailable);
   toggleDriverStatus(isAvailable);
+  updateOnlineStatus(isAvailable);
 });
 
 function toggleDriverStatus(isAvailable) {

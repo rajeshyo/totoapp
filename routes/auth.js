@@ -153,6 +153,18 @@ router.get('/profile', authMiddleware, async (req, res) => {
   }
 });
 
+// UPDATE ONLINE STATUS
+router.put('/online-status', authMiddleware, async (req, res) => {
+  try {
+    const { isOnline } = req.body;
+    // Update the isOnline flag in the database
+    await User.findByIdAndUpdate(req.userId, { isOnline: !!isOnline });
+    res.status(200).json({ success: true, message: 'Online status updated' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message || 'Failed to update online status' });
+  }
+});
+
 // UPDATE USER PROFILE
 router.put('/profile', authMiddleware, async (req, res) => {
   try {

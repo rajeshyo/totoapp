@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>TotoBondhu</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛺</text></svg>">
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=3.0" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -321,8 +321,13 @@
 
       <!-- Admin Dashboard -->
       <section id="adminDashboard" class="dashboard hidden">
-        <div class="page-header">
+        <div class="page-header" style="text-align: center;">
           <h2>অ্যাডমিন প্যানেল (Admin Panel)</h2>
+          <div style="margin-top: 15px;">
+            <span style="display: inline-block; background: var(--accent-soft); color: var(--primary-brand); padding: 8px 20px; border-radius: 30px; font-weight: 700; font-size: 1.2rem; border: 1px solid var(--primary-brand); box-shadow: 0 4px 6px rgba(9, 102, 62, 0.1);">
+              অনলাইন চালক: <span id="adminOnlineDriversCount">🛺 0</span>
+            </span>
+          </div>
         </div>
         
         <div class="auth-tabs" style="margin-bottom: 20px;">
@@ -576,7 +581,7 @@
   </div>
 
   <!-- Note the type="module" here, which is required for Firebase -->
-  <script type="module" src="script.js"></script>
+  <script type="module" src="script.js?v=3.0"></script>
   
 </body>
 </html>
