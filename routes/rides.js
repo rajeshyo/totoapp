@@ -14,6 +14,10 @@ if (Ride && Ride.schema && !Ride.schema.path('otp')) {
   Ride.schema.add({ otp: { type: String } });
 }
 
+if (Ride && Ride.schema && !Ride.schema.path('arriveTime')) {
+  Ride.schema.add({ arriveTime: { type: Date } });
+}
+
 const router = express.Router();
 
 const FARE_PER_KM = 10; // per km rate
@@ -245,7 +249,10 @@ router.post('/arrive/:rideId', authMiddleware, async (req, res) => {
   try {
     const ride = await Ride.findOneAndUpdate(
       { _id: req.params.rideId, driverId: req.userId, rideStatus: 'accepted' },
-      { rideStatus: 'arrived' },
+      { 
+        rideStatus: 'arrived',
+        arriveTime: new Date()
+      },
       { new: true }
     );
 
@@ -512,6 +519,7 @@ setInterval(async () => {
   try {
     const now = new Date();
     const fifteenMinsAgo = new Date(now.getTime() - 15 * 60 * 1000);
+    const fiveMinsAgo = new Date(now.getTime() - 5 * 60 * 1000);
 
     // 1. Cancel rides that nobody accepted within 15 minutes
     await Ride.updateMany(
@@ -522,6 +530,12 @@ setInterval(async () => {
     // 2. Cancel accepted rides where the driver never arrived within 15 minutes
     await Ride.updateMany(
       { rideStatus: 'accepted', startTime: { $lt: fifteenMinsAgo } },
+      { $set: { rideStatus: 'cancelled' } }
+    );
+
+    // 3. Cancel arrived rides where the trip didn't start within 5 minutes
+    await Ride.updateMany(
+      { rideStatus: 'arrived', arriveTime: { $lt: fiveMinsAgo } },
       { $set: { rideStatus: 'cancelled' } }
     );
   } catch (error) {

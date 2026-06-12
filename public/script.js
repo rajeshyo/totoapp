@@ -541,6 +541,7 @@ let adminPollInterval = null;
 let popupCloseCallback = null;
 let rejectedRides = {}; // Track rejected rides with timestamp: { rideId: timestamp }
 let knownPendingRideIds = new Set(); // Tracks active requests to avoid repeating the sound
+let arrivalTimerInterval = null;
 
 // --- Location Helpers ---
 function findStoppageInData(stoppageId) {
@@ -739,6 +740,10 @@ function clearAllListeners() {
   if (adminPollInterval) {
     clearInterval(adminPollInterval);
     adminPollInterval = null;
+  }
+  if (arrivalTimerInterval) {
+    clearInterval(arrivalTimerInterval);
+    arrivalTimerInterval = null;
   }
 }
 
@@ -1563,7 +1568,31 @@ async function pollCustomerRide() {
         }
       } else if (ride.rideStatus === 'arrived') {
         endRideBtn.classList.add('hidden');
-        customerWaitMsg.textContent = t('আপনার টোটো বাইরে অপেক্ষা করছে!');
+        
+        if (ride.arriveTime) {
+          if (!arrivalTimerInterval) {
+            const updateTimer = () => {
+              const arriveDate = new Date(ride.arriveTime).getTime();
+              const cancelTime = arriveDate + 5 * 60 * 1000;
+              const now = new Date().getTime();
+              const distance = cancelTime - now;
+              
+              if (distance < 0) {
+                customerWaitMsg.innerHTML = `${t('আপনার টোটো বাইরে অপেক্ষা করছে!')}<br><span style="color: var(--danger-color); font-size: 1.1rem; font-weight: 800;">⏳ 0:00</span>`;
+                if (arrivalTimerInterval) clearInterval(arrivalTimerInterval);
+              } else {
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                customerWaitMsg.innerHTML = `${t('আপনার টোটো বাইরে অপেক্ষা করছে!')}<br><span style="color: var(--danger-color); font-size: 1.1rem; font-weight: 800;">⏳ ${minutes}:${seconds < 10 ? '0' : ''}${seconds}</span>`;
+              }
+            };
+            updateTimer();
+            arrivalTimerInterval = setInterval(updateTimer, 1000);
+          }
+        } else {
+          customerWaitMsg.textContent = t('আপনার টোটো বাইরে অপেক্ষা করছে!');
+        }
+        
         customerWaitMsg.classList.remove('hidden');
         
         const otpContainer = document.getElementById('passengerOtpContainer');
@@ -1573,6 +1602,10 @@ async function pollCustomerRide() {
           otpValue.textContent = ride.otp;
         }
       } else if (ride.rideStatus === 'in_progress') {
+        if (arrivalTimerInterval) {
+          clearInterval(arrivalTimerInterval);
+          arrivalTimerInterval = null;
+        }
         endRideBtn.classList.add('hidden');
         customerWaitMsg.textContent = t('আপনার ট্রিপ চলছে...');
         customerWaitMsg.classList.remove('hidden');
@@ -1689,6 +1722,10 @@ function updateStatsDisplay() {
 }
 
 function resetCustomerUI() {
+  if (arrivalTimerInterval) {
+    clearInterval(arrivalTimerInterval);
+    arrivalTimerInterval = null;
+  }
   // Show booking form and popular section
   document.querySelector('.ride-booking-card').classList.remove('hidden');
   document.querySelector('.popular-section').classList.remove('hidden');
