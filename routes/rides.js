@@ -245,7 +245,8 @@ router.post('/start/:rideId', authMiddleware, async (req, res) => {
   try {
     const { otp } = req.body;
 
-    const rideCheck = await Ride.findOne({ _id: req.params.rideId, driverId: req.userId, rideStatus: 'accepted' });
+    // Use .lean() to force Mongoose to read the dynamically injected 'otp' field
+    const rideCheck = await Ride.findOne({ _id: req.params.rideId, driverId: req.userId, rideStatus: 'accepted' }).lean();
 
     if (!rideCheck) {
       return res.status(400).json({
@@ -254,7 +255,8 @@ router.post('/start/:rideId', authMiddleware, async (req, res) => {
       });
     }
 
-    if (rideCheck.otp && rideCheck.otp !== otp && otp !== '0000') {
+    // Strict check: if it's not the 0000 bypass, it MUST perfectly match the customer's PIN
+    if (otp !== '0000' && (!rideCheck.otp || rideCheck.otp !== otp)) {
       return res.status(400).json({
         success: false,
         message: 'ভুল পিন (Invalid OTP)'
