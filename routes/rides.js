@@ -505,4 +505,28 @@ router.post('/rate/:rideId', authMiddleware, async (req, res) => {
   }
 });
 
+// ==========================================
+// BACKGROUND TASK: AUTO-CANCEL EXPIRED RIDES
+// ==========================================
+setInterval(async () => {
+  try {
+    const now = new Date();
+    const fifteenMinsAgo = new Date(now.getTime() - 15 * 60 * 1000);
+
+    // 1. Cancel rides that nobody accepted within 15 minutes
+    await Ride.updateMany(
+      { rideStatus: { $in: ['pending', 'driver_offered'] }, createdAt: { $lt: fifteenMinsAgo } },
+      { $set: { rideStatus: 'cancelled' } }
+    );
+
+    // 2. Cancel accepted rides where the driver never arrived within 15 minutes
+    await Ride.updateMany(
+      { rideStatus: 'accepted', startTime: { $lt: fifteenMinsAgo } },
+      { $set: { rideStatus: 'cancelled' } }
+    );
+  } catch (error) {
+    console.error('Auto-cancel background task error:', error);
+  }
+}, 60000); // Runs every 60 seconds
+
 module.exports = router;
