@@ -240,13 +240,42 @@ router.post('/reject-offer/:rideId', authMiddleware, async (req, res) => {
   }
 });
 
+// ARRIVE AT PICKUP (Driver)
+router.post('/arrive/:rideId', authMiddleware, async (req, res) => {
+  try {
+    const ride = await Ride.findOneAndUpdate(
+      { _id: req.params.rideId, driverId: req.userId, rideStatus: 'accepted' },
+      { rideStatus: 'arrived' },
+      { new: true }
+    );
+
+    if (!ride) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ride not found or invalid state'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Driver arrived',
+      ride
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to update ride status'
+    });
+  }
+});
+
 // START RIDE (Driver)
 router.post('/start/:rideId', authMiddleware, async (req, res) => {
   try {
     const { otp } = req.body;
 
     // Use .lean() to force Mongoose to read the dynamically injected 'otp' field
-    const rideCheck = await Ride.findOne({ _id: req.params.rideId, driverId: req.userId, rideStatus: 'accepted' }).lean();
+    const rideCheck = await Ride.findOne({ _id: req.params.rideId, driverId: req.userId, rideStatus: { $in: ['accepted', 'arrived'] } }).lean();
 
     if (!rideCheck) {
       return res.status(400).json({
@@ -264,7 +293,7 @@ router.post('/start/:rideId', authMiddleware, async (req, res) => {
     }
 
     const ride = await Ride.findOneAndUpdate(
-      { _id: req.params.rideId, driverId: req.userId, rideStatus: 'accepted' },
+      { _id: req.params.rideId, driverId: req.userId, rideStatus: { $in: ['accepted', 'arrived'] } },
       { rideStatus: 'in_progress' },
       { new: true }
     );
@@ -289,7 +318,7 @@ router.post('/end/:rideId', authMiddleware, async (req, res) => {
       { 
         _id: req.params.rideId, 
         $or: [{ driverId: req.userId }, { passengerId: req.userId }],
-        rideStatus: { $in: ['accepted', 'in_progress'] } 
+        rideStatus: { $in: ['accepted', 'arrived', 'in_progress'] } 
       },
       { 
         rideStatus: 'completed',
@@ -380,7 +409,7 @@ router.post('/cancel/:rideId', authMiddleware, async (req, res) => {
       { 
         _id: req.params.rideId, 
         $or: [{ passengerId: req.userId }, { driverId: req.userId }],
-        rideStatus: { $in: ['pending', 'accepted'] } 
+        rideStatus: { $in: ['pending', 'accepted', 'arrived'] } 
       },
       { rideStatus: 'cancelled' },
       { new: true }

@@ -250,7 +250,10 @@ const uiTranslations = {
   'পিন প্রয়োজন': 'PIN Required',
   'দয়া করে যাত্রীর পিন নম্বর লিখুন।': 'Please enter passenger PIN.',
   'আপনার পিন (Your PIN)': 'Your PIN',
-  'পিন (PIN)': 'PIN'
+  'পিন (PIN)': 'PIN',
+  'আপনার টোটো বাইরে অপেক্ষা করছে!': 'Your Toto is waiting outside!',
+  'আমি পৌঁছেছি': 'I Have Arrived',
+  'আপডেট করতে সমস্যা হয়েছে।': 'Failed to update.'
 };
 
 let currentLang = localStorage.getItem('toto_lang') || 'bn';
@@ -1513,7 +1516,7 @@ async function pollCustomerRide() {
       } else {
         offerCard.innerHTML = `<p class="muted-text center-block">${t('অপেক্ষা করুন...')}</p>`;
       }
-    } else if (ride.rideStatus === 'accepted' || ride.rideStatus === 'in_progress') {
+    } else if (ride.rideStatus === 'accepted' || ride.rideStatus === 'arrived' || ride.rideStatus === 'in_progress') {
       // Hide finding message and show accepted ride card
       const findingCard = document.getElementById('findingRideCard');
       if (findingCard) findingCard.classList.add('hidden');
@@ -1550,6 +1553,17 @@ async function pollCustomerRide() {
       if (ride.rideStatus === 'accepted') {
         endRideBtn.classList.add('hidden');
         customerWaitMsg.textContent = t('চালকের ট্রিপ শুরু করার অপেক্ষায়...');
+        customerWaitMsg.classList.remove('hidden');
+        
+        const otpContainer = document.getElementById('passengerOtpContainer');
+        const otpValue = document.getElementById('passengerOtpValue');
+        if (otpContainer && otpValue && ride.otp) {
+          otpContainer.classList.remove('hidden');
+          otpValue.textContent = ride.otp;
+        }
+      } else if (ride.rideStatus === 'arrived') {
+        endRideBtn.classList.add('hidden');
+        customerWaitMsg.textContent = t('আপনার টোটো বাইরে অপেক্ষা করছে!');
         customerWaitMsg.classList.remove('hidden');
         
         const otpContainer = document.getElementById('passengerOtpContainer');
@@ -2238,7 +2252,7 @@ async function listenToDriverActiveRide() {
       return;
     }
 
-    if (ride.rideStatus === 'accepted' || ride.rideStatus === 'in_progress') {
+    if (ride.rideStatus === 'accepted' || ride.rideStatus === 'arrived' || ride.rideStatus === 'in_progress') {
       if (ride.driverId && (ride.driverId._id || ride.driverId) !== currentUser._id) {
         localStorage.removeItem('toto_active_ride_id');
         activeRideId = null;
@@ -2305,6 +2319,12 @@ async function listenToDriverActiveRide() {
     }
 
     if (ride.rideStatus === 'accepted') {
+        otpInput.style.display = 'none';
+        actionBtn.className = 'button primary full-width';
+        actionBtn.textContent = t('আমি পৌঁছেছি');
+        actionBtn.disabled = false;
+        actionBtn.onclick = () => arriveDriverActiveRide();
+    } else if (ride.rideStatus === 'arrived') {
         otpInput.style.display = 'block';
         actionBtn.className = 'button primary full-width';
         actionBtn.textContent = t('Verify & Start');
@@ -2319,6 +2339,29 @@ async function listenToDriverActiveRide() {
     }
   } catch (error) {
     console.error("Error getting active ride:", error);
+  }
+}
+
+async function arriveDriverActiveRide() {
+  if (!activeRideId) return;
+  const actionBtn = document.getElementById('driverActionBtn');
+  
+  if (actionBtn) {
+    actionBtn.disabled = true;
+    actionBtn.textContent = t('অপেক্ষা করুন...');
+  }
+
+  try {
+    const res = await apiCall(`/rides/arrive/${activeRideId}`, 'POST');
+    if (res.success) {
+      listenToDriverActiveRide(); 
+    }
+  } catch (error) {
+    showPopup('ত্রুটি', error.message || 'আপডেট করতে সমস্যা হয়েছে।', '❌');
+    if (actionBtn) {
+      actionBtn.disabled = false;
+      actionBtn.textContent = t('আমি পৌঁছেছি');
+    }
   }
 }
 
