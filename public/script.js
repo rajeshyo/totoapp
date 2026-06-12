@@ -130,6 +130,7 @@ const uiTranslations = {
   'ট্রিপ সমাপ্ত করুন': 'End Trip',
   'ট্রিপ শুরু করুন': 'Start Trip',
   'চালকের ট্রিপ শুরু করার অপেক্ষায়...': 'Waiting for driver to start...',
+  'আপনার ট্রিপ চলছে...': 'Your trip is going on...',
   'ট্রিপ শুরু করতে সমস্যা হয়েছে।': 'Failed to start trip.',
   'টোটো খোঁজা হচ্ছে...': 'Looking for Toto...',
   'চালকের জন্য অপেক্ষা করুন': 'Wait for Driver',
@@ -1545,8 +1546,9 @@ async function pollCustomerRide() {
         customerWaitMsg.textContent = t('চালকের ট্রিপ শুরু করার অপেক্ষায়...');
         customerWaitMsg.classList.remove('hidden');
       } else if (ride.rideStatus === 'in_progress') {
-        endRideBtn.classList.remove('hidden');
-        customerWaitMsg.classList.add('hidden');
+        endRideBtn.classList.add('hidden');
+        customerWaitMsg.textContent = t('আপনার ট্রিপ চলছে...');
+        customerWaitMsg.classList.remove('hidden');
       }
     }
   } catch (error) {
@@ -1945,6 +1947,15 @@ addStoppageBtn?.addEventListener('click', async () => {
 });
 
 // --- Driver Logic ---
+async function updateOnlineStatus(isOnline) {
+  if (!currentUser || currentUser.userType !== 'driver') return;
+  try {
+    await apiCall('/auth/online-status', 'PUT', { isOnline });
+  } catch (e) {
+    console.error('Failed to update online status', e);
+  }
+}
+
 async function setupDriverDashboard() {
   // Fetch fresh profile data to get latest ratings
   try {
