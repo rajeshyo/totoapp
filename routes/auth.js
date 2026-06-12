@@ -26,14 +26,6 @@ router.post('/signup', async (req, res) => {
       });
     }
 
-    // Validate vehicle number for drivers
-    if (userType === 'driver' && !vehicleNumber) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vehicle number is required for drivers'
-      });
-    }
-
     // Check if user already exists
     const existingUser = await User.findOne({ phone });
     if (existingUser) {

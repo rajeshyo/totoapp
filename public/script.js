@@ -1292,13 +1292,6 @@ signupForm.addEventListener('submit', async event => {
     return;
   }
   
-  // Validate vehicle number for drivers
-  if (userType === 'driver' && !vehicleNumber) {
-    authMessage.style.color = 'var(--danger-color)';
-    authMessage.textContent = 'গাড়ির নম্বর প্রয়োজনীয়।';
-    return;
-  }
-  
   authMessage.textContent = t('অ্যাকাউন্ট তৈরি হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...');
   authMessage.style.color = '#09663e';
   
