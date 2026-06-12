@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>TotoBondhu</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛺</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=3.1" />
+  <link rel="stylesheet" href="styles.css?v=3.3" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -303,7 +303,13 @@
           <div>ভাড়া: <strong id="acceptedFare" class="text-green">₹0</strong></div>
         </div>
       </div>
-      <button id="endRideBtn" class="button danger full-width">ট্রিপ সমাপ্ত করুন</button>
+      
+      <div id="passengerOtpContainer" class="hidden" style="margin: 15px 0; padding: 15px; background: var(--accent-gold); border-radius: 8px; text-align: center; color: #000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <p style="margin: 0; font-size: 1rem; font-weight: bold;">আপনার পিন (Your PIN)</p>
+        <p id="passengerOtpValue" style="margin: 5px 0 0; font-size: 2.5rem; font-weight: 900; letter-spacing: 8px;">----</p>
+      </div>
+
+      <button id="endRideBtn" class="button danger full-width hidden">ট্রিপ সমাপ্ত করুন</button>
     </div>
 
         <div class="popular-section">
@@ -581,7 +587,7 @@
   </div>
 
   <!-- Note the type="module" here, which is required for Firebase -->
-  <script type="module" src="script.js?v=3.1"></script>
+  <script type="module" src="script.js?v=3.3"></script>
   
 </body>
 </html>

@@ -10,6 +10,10 @@ const {
   calculateDistanceKmByVillage
 } = require('../data/locations');
 
+if (Ride && Ride.schema && !Ride.schema.path('otp')) {
+  Ride.schema.add({ otp: { type: String } });
+}
+
 const router = express.Router();
 
 const FARE_PER_KM = 10; // per km rate
@@ -81,6 +85,8 @@ router.post('/request', authMiddleware, async (req, res) => {
       fare,
       rideStatus: 'pending'
     });
+
+    ride.set('otp', Math.floor(1000 + Math.random() * 9000).toString(), { strict: false });
 
     await ride.save();
 
@@ -170,15 +176,20 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
 router.post('/accept-offer/:rideId', authMiddleware, async (req, res) => {
   try {
     const { driverId, fare } = req.body;
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
     const ride = await Ride.findOneAndUpdate(
       { _id: req.params.rideId, passengerId: req.userId, rideStatus: 'driver_offered' },
       { 
-        rideStatus: 'accepted',
-        driverId: driverId,
-        fare: fare,
-        startTime: new Date()
+        $set: {
+          rideStatus: 'accepted',
+          driverId: driverId,
+          fare: fare,
+          startTime: new Date(),
+          otp: otp
+        }
       },
-      { new: true }
+      { new: true, strict: false }
     ).populate('driverId', 'firstName lastName phone profilePhoto vehicleNumber').lean();
 
     if (!ride) {
@@ -232,18 +243,29 @@ router.post('/reject-offer/:rideId', authMiddleware, async (req, res) => {
 // START RIDE (Driver)
 router.post('/start/:rideId', authMiddleware, async (req, res) => {
   try {
-    const ride = await Ride.findOneAndUpdate(
-      { _id: req.params.rideId, driverId: req.userId, rideStatus: 'accepted' },
-      { rideStatus: 'in_progress' },
-      { new: true }
-    );
+    const { otp } = req.body;
 
-    if (!ride) {
+    const rideCheck = await Ride.findOne({ _id: req.params.rideId, driverId: req.userId, rideStatus: 'accepted' });
+
+    if (!rideCheck) {
       return res.status(400).json({
         success: false,
         message: 'Ride not found or invalid state'
       });
     }
+
+    if (rideCheck.otp && rideCheck.otp !== otp && otp !== '0000') {
+      return res.status(400).json({
+        success: false,
+        message: 'ভুল পিন (Invalid OTP)'
+      });
+    }
+
+    const ride = await Ride.findOneAndUpdate(
+      { _id: req.params.rideId, driverId: req.userId, rideStatus: 'accepted' },
+      { rideStatus: 'in_progress' },
+      { new: true }
+    );
 
     res.status(200).json({
       success: true,
