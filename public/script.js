@@ -616,7 +616,7 @@ function calculatePreviewDistance() {
   const dropoffVillageIdx = villageIds.indexOf(dropoffId);
   
   const indexDiff = Math.abs(pickupVillageIdx - dropoffVillageIdx);
-  return Number(Math.max(1, indexDiff * 5).toFixed(1));
+  return Number(Math.max(1, indexDiff * 3).toFixed(1));
 }
 
 async function loadLocations() {

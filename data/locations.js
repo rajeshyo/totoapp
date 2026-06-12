@@ -211,7 +211,7 @@ async function calculateDistanceKm(pickupStoppageId, dropoffStoppageId) {
   const dropoffVillageIdx = villageIds.indexOf(dropoff.village.id);
 
   const indexDiff = Math.abs(pickupVillageIdx - dropoffVillageIdx);
-  return Number(Math.max(1, indexDiff).toFixed(1));
+  return Number(Math.max(1, indexDiff * 3).toFixed(1));
 }
 
 async function buildLocationFromVillage(villageId, landmark) {
@@ -246,7 +246,7 @@ async function calculateDistanceKmByVillage(pickupVillageId, dropoffVillageId) {
   const dropoffVillageIdx = villageIds.indexOf(dropoffVillageId);
 
   const indexDiff = Math.abs(pickupVillageIdx - dropoffVillageIdx);
-  return Number(Math.max(1, indexDiff * 5).toFixed(1));
+  return Number(Math.max(1, indexDiff * 3).toFixed(1));
 }
 
 module.exports = {
