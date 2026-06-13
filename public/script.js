@@ -254,7 +254,8 @@ const uiTranslations = {
   'আপনার টোটো বাইরে অপেক্ষা করছে!': 'Your Toto is waiting outside!',
   'আমি পৌঁছেছি': 'I Have Arrived',
   'আপডেট করতে সমস্যা হয়েছে।': 'Failed to update.',
-  'বেশি ভাড়া লাগবে সন্ধ্যা ৬টা থেকে সকাল ৬টা পর্যন্ত': 'Higher fares will apply from 6 PM to 6 AM.'
+  'বেশি ভাড়া লাগবে সন্ধ্যা ৬টা থেকে সকাল ৬টা পর্যন্ত': 'Higher fares will apply from 6 PM to 6 AM.',
+  'নেভিগেট': 'Navigate'
 };
 
 let currentLang = localStorage.getItem('toto_lang') || 'bn';
@@ -2349,6 +2350,20 @@ async function listenToDriverActiveRide() {
     document.getElementById('driverAcceptedEnd').textContent = t(ride.dropoffLocation.villageName);
     document.getElementById('driverAcceptedDistance').textContent = `${ride.distance} km`;
     document.getElementById('driverAcceptedFare').textContent = `₹${ride.fare}`;
+    
+    // Dynamically set Navigation Link
+    const navigateBtn = document.getElementById('driverNavigateBtn');
+    
+    // Add district and state to avoid random locations in Google Maps
+    const pickupFullAddress = `${ride.pickupLocation.address}, Purba Bardhaman, West Bengal`;
+    const dropoffFullAddress = `${ride.dropoffLocation.address}, Purba Bardhaman, West Bengal`;
+    
+    if (ride.rideStatus === 'in_progress') {
+      navigateBtn.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dropoffFullAddress)}`;
+    } else {
+      // Draw path from Pickup to Dropoff
+      navigateBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickupFullAddress)}&destination=${encodeURIComponent(dropoffFullAddress)}`;
+    }
 
     let otpInputContainer = document.getElementById('driverOtpContainer');
     let actionBtn = document.getElementById('driverActionBtn');
