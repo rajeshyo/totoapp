@@ -1,8 +1,8 @@
 // ===== Notification Helpers =====
 function playNotificationSound() {
   try {
-    // Using a reliable external beep sound. You can replace this URL with a local path like '/audio/beep.mp3' later!
-    const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+    // Using the custom local TotoBondhu notification sound
+    const audio = new Audio('image/totobook.mp3');
     audio.play().catch(e => console.warn('Browser blocked audio playback:', e));
   } catch (err) {
     console.error('Error playing sound:', err);
@@ -252,7 +252,7 @@ const uiTranslations = {
   'আপনার পিন (Your PIN)': 'Your PIN',
   'পিন (PIN)': 'PIN',
   'আপনার টোটো বাইরে অপেক্ষা করছে!': 'Your Toto is waiting outside!',
-  'আমি পৌঁছেছি': 'I Have Arrived',
+  'আমি পৌঁছেগেছি': 'I Have Arrived',
   'আপডেট করতে সমস্যা হয়েছে।': 'Failed to update.'
 };
 
@@ -2358,7 +2358,7 @@ async function listenToDriverActiveRide() {
     if (ride.rideStatus === 'accepted') {
         otpInput.style.display = 'none';
         actionBtn.className = 'button primary full-width';
-        actionBtn.textContent = t('আমি পৌঁছেছি');
+        actionBtn.textContent = t('আমি পৌঁছেগেছি');
         actionBtn.disabled = false;
         actionBtn.onclick = () => arriveDriverActiveRide();
     } else if (ride.rideStatus === 'arrived') {
@@ -2397,7 +2397,7 @@ async function arriveDriverActiveRide() {
     showPopup('ত্রুটি', error.message || 'আপডেট করতে সমস্যা হয়েছে।', '❌');
     if (actionBtn) {
       actionBtn.disabled = false;
-      actionBtn.textContent = t('আমি পৌঁছেছি');
+      actionBtn.textContent = t('আমি পৌঁছেগেছি');
     }
   }
 }
