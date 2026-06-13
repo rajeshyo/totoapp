@@ -2450,7 +2450,12 @@ async function endDriverActiveRide() {
   }
 
   try {
-    await apiCall(`/rides/end/${activeRideId}`, 'POST');
+    const res = await apiCall(`/rides/end/${activeRideId}`, 'POST');
+    
+    // Update driver's daily stats using the final fare from the completed ride
+    if (res.success && res.ride) {
+      updateDailyStats(res.ride.fare);
+    }
     
     localStorage.removeItem('toto_active_ride_id');
     activeRideId = null;
