@@ -252,8 +252,9 @@ const uiTranslations = {
   'আপনার পিন (Your PIN)': 'Your PIN',
   'পিন (PIN)': 'PIN',
   'আপনার টোটো বাইরে অপেক্ষা করছে!': 'Your Toto is waiting outside!',
-  'আমি পৌঁছেগেছি': 'I Have Arrived',
-  'আপডেট করতে সমস্যা হয়েছে।': 'Failed to update.'
+  'আমি পৌঁছেছি': 'I Have Arrived',
+  'আপডেট করতে সমস্যা হয়েছে।': 'Failed to update.',
+  'বেশি ভাড়া লাগবে সন্ধ্যা ৬টা থেকে সকাল ৬টা পর্যন্ত': 'Higher fares will apply from 6 PM to 6 AM.'
 };
 
 let currentLang = localStorage.getItem('toto_lang') || 'bn';
@@ -1423,6 +1424,7 @@ function setupCustomerDashboard() {
 
   appendCustomerFooter();
   renderPopularPlaces();
+  checkNightFareWarning();
 }
 
 function appendCustomerFooter() {
@@ -1445,6 +1447,19 @@ function appendCustomerFooter() {
   
   footer.appendChild(content);
   customerDashboard.appendChild(footer);
+}
+
+function checkNightFareWarning() {
+  const warningEl = document.getElementById('nightFareWarning');
+  if (warningEl) {
+    const hour = new Date().getHours();
+    // 18 is 6 PM, 6 is 6 AM
+    if (hour >= 18 || hour < 6) {
+      warningEl.classList.remove('hidden');
+    } else {
+      warningEl.classList.add('hidden');
+    }
+  }
 }
 
 async function pollCustomerRide() {
@@ -1726,6 +1741,7 @@ function resetCustomerUI() {
     clearInterval(arrivalTimerInterval);
     arrivalTimerInterval = null;
   }
+  checkNightFareWarning();
   // Show booking form and popular section
   document.querySelector('.ride-booking-card').classList.remove('hidden');
   document.querySelector('.popular-section').classList.remove('hidden');
