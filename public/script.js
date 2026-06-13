@@ -245,7 +245,7 @@ const uiTranslations = {
   'করটিয়া': 'Karatia',
   '🛣️ বননবগ্ৰাম': '🛣️ Bonnabgram',
   'বননবগ্ৰাম': 'Bonnabgram',
-  'Verify & Start': 'Verify & Start',
+  'টোটোটি চালু করুন': 'Verify & Start',
   'ভুল পিন (Invalid OTP)': 'Invalid OTP',
   'পিন প্রয়োজন': 'PIN Required',
   'দয়া করে যাত্রীর পিন নম্বর লিখুন।': 'Please enter passenger PIN.',
@@ -1799,6 +1799,13 @@ rideRequestForm.addEventListener('submit', async event => {
   const dropoffAddress = getSelectedDropoffAddress();
   const distance = calculatePreviewDistance();
   
+  // Calculate exact fare requested so it syncs perfectly with driver dashboard
+  let fare = Math.max(BASE_FARE, distance * FARE_PER_KM);
+  const hour = new Date().getHours();
+  if (hour >= 18 || hour < 6) {
+    fare = Math.ceil(fare * 1.20);
+  }
+  
   rideSubmitBtn.disabled = true;
   rideSubmitBtn.textContent = t('অপেক্ষা করুন...');
 
@@ -1815,6 +1822,7 @@ rideRequestForm.addEventListener('submit', async event => {
       pickupStoppageId,
       dropoffStoppageId,
       landmark,           // For your new backend
+      fare,               // Pass explicit calculated fare
       
       // Fallback for your current live Render backend:
       pickupLocation: {
@@ -1827,7 +1835,8 @@ rideRequestForm.addEventListener('submit', async event => {
         latitude: 0,
         longitude: 0
       },
-      distance: Number(distance.toFixed(1))
+      distance: Number(distance.toFixed(1)),
+      fare: fare
     });
 
     if (response.success) {
@@ -1892,7 +1901,14 @@ function updateRidePreview() {
   const drop = dropoffVillageSelect?.value;
   if (!pickup || !drop) { pricePreviewCard.classList.add('hidden'); return; }
   const distance = calculatePreviewDistance();
-  const fare = Math.max(BASE_FARE, distance * FARE_PER_KM);
+  let fare = Math.max(BASE_FARE, distance * FARE_PER_KM);
+  
+  // Apply 20% night surge to preview based on user's local phone time
+  const hour = new Date().getHours();
+  if (hour >= 18 || hour < 6) {
+    fare = Math.ceil(fare * 1.20);
+  }
+  
   distanceInfoInput.value = `${distance} km`;
   fareInfoInput.value = `₹${fare}`;
   pricePreviewCard.classList.remove('hidden');
@@ -2146,7 +2162,7 @@ async function listenToPendingQueue() {
         <p>💰 ${t('ভাড়া:')} <span class="text-green">₹${ride.fare}</span> (${ride.distance} km)</p>
         <div class="request-actions">
           <button class="button primary accept-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('গ্রহণ করুন')}</button>
-          <button class="button secondary negotiate-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('প্রত্যাখ্যান করুন')}</button>
+          <button class="button secondary negotiate-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('ভাড়া বাড়ান')}</button>
         </div>
       `;
       rideRequestsContainer.appendChild(item);
@@ -2380,7 +2396,7 @@ async function listenToDriverActiveRide() {
     } else if (ride.rideStatus === 'arrived') {
         otpInput.style.display = 'block';
         actionBtn.className = 'button primary full-width';
-        actionBtn.textContent = t('Verify & Start');
+        actionBtn.textContent = t('টোটোটি চালু করুন');
         actionBtn.disabled = false;
         actionBtn.onclick = () => startDriverActiveRide();
     } else if (ride.rideStatus === 'in_progress') {

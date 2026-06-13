@@ -48,7 +48,7 @@ async function buildLocationFromStoppage(stoppageId, landmark) {
 // REQUEST RIDE (Passenger)
 router.post('/request', authMiddleware, async (req, res) => {
   try {
-    const { pickupVillageId, dropoffVillageId, pickupStoppageId, dropoffStoppageId, landmark } = req.body;
+    const { pickupVillageId, dropoffVillageId, pickupStoppageId, dropoffStoppageId, landmark, fare: requestedFare } = req.body;
 
     const pVid = pickupVillageId || pickupStoppageId;
     const dVid = dropoffVillageId || dropoffStoppageId;
@@ -79,7 +79,17 @@ router.post('/request', authMiddleware, async (req, res) => {
       ? await calculateDistanceKmByVillage(pickupVillageId, dropoffVillageId)
       : await calculateDistanceKm(pickupStoppageId, dropoffStoppageId);
 
-    const fare = Math.max(BASE_FARE, distance * FARE_PER_KM);
+    let fare = requestedFare ? Number(requestedFare) : Math.max(BASE_FARE, distance * FARE_PER_KM);
+
+    if (!requestedFare) {
+      // Apply 20% night surge (6 PM to 6 AM)
+      const now = new Date();
+      const localTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000)); // Adjusted for IST/BST (UTC+5:30)
+      const hour = localTime.getUTCHours();
+      if (hour >= 18 || hour < 6) {
+        fare = Math.ceil(fare * 1.20);
+      }
+    }
 
     const ride = new Ride({
       passengerId: req.userId,
@@ -220,15 +230,13 @@ router.post('/reject-offer/:rideId', authMiddleware, async (req, res) => {
     });
 
     const status = offers.length === 0 ? 'pending' : 'driver_offered';
-    const originalFare = Math.max(BASE_FARE, currentRide.distance * FARE_PER_KM);
 
     const ride = await Ride.findOneAndUpdate(
       { _id: req.params.rideId, passengerId: req.userId, rideStatus: 'driver_offered' },
       { 
         $set: { 
           offers: offers, 
-          rideStatus: status,
-          fare: status === 'pending' ? originalFare : currentRide.fare 
+          rideStatus: status
         }
       },
       { new: true, strict: false }
