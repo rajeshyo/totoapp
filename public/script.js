@@ -255,7 +255,8 @@ const uiTranslations = {
   'আমি পৌঁছেছি': 'I Have Arrived',
   'আপডেট করতে সমস্যা হয়েছে।': 'Failed to update.',
   'বেশি ভাড়া লাগবে সন্ধ্যা ৬টা থেকে সকাল ৬টা পর্যন্ত': 'Higher fares will apply from 6 PM to 6 AM.',
-  'নেভিগেট': 'Navigate'
+  'নেভিগেট': 'Navigate',
+  'লোকেশন চেক করা হচ্ছে...': 'Getting location...'
 };
 
 let currentLang = localStorage.getItem('toto_lang') || 'bn';
@@ -1561,6 +1562,14 @@ async function pollCustomerRide() {
           document.getElementById('acceptedVehicleNumber').textContent = `🔢 ${ride.driverId.vehicleNumber}`;
         }
       }
+      
+      // Set Customer Navigation link
+      const custNavigateBtn = document.getElementById('customerNavigateBtn');
+      if (custNavigateBtn) {
+        const pickupFullAddress = `${ride.pickupLocation.address}, Purba Bardhaman, West Bengal`;
+        const dropoffFullAddress = `${ride.dropoffLocation.address}, Purba Bardhaman, West Bengal`;
+        custNavigateBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickupFullAddress)}&destination=${encodeURIComponent(dropoffFullAddress)}`;
+      }
 
       let customerWaitMsg = document.getElementById('customerWaitMsg');
       if (!customerWaitMsg) {
@@ -1808,6 +1817,22 @@ rideRequestForm.addEventListener('submit', async event => {
   }
   
   rideSubmitBtn.disabled = true;
+  rideSubmitBtn.textContent = t('লোকেশন চেক করা হচ্ছে...');
+
+  let pickupLat = 0;
+  let pickupLng = 0;
+  if (navigator.geolocation) {
+    try {
+      const pos = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+      });
+      pickupLat = pos.coords.latitude;
+      pickupLng = pos.coords.longitude;
+    } catch (err) {
+      console.warn("Could not get exact location", err);
+    }
+  }
+  
   rideSubmitBtn.textContent = t('অপেক্ষা করুন...');
 
   // Provide valid stoppage IDs for the live backend fallback
@@ -1824,6 +1849,8 @@ rideRequestForm.addEventListener('submit', async event => {
       dropoffStoppageId,
       landmark,           // For your new backend
       fare,               // Pass explicit calculated fare
+      pickupLat,          // Explicit exact location
+      pickupLng,          // Explicit exact location
       
       // Fallback for your current live Render backend:
       pickupLocation: {
@@ -2359,10 +2386,15 @@ async function listenToDriverActiveRide() {
     const dropoffFullAddress = `${ride.dropoffLocation.address}, Purba Bardhaman, West Bengal`;
     
     if (ride.rideStatus === 'in_progress') {
-      navigateBtn.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dropoffFullAddress)}`;
-    } else {
-      // Draw path from Pickup to Dropoff
+      // Once ride starts, show route from Pickup to Dropoff
       navigateBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickupFullAddress)}&destination=${encodeURIComponent(dropoffFullAddress)}`;
+    } else {
+      // Before pickup, navigate Driver's current location to Customer's exact GPS (or village fallback)
+      let destination = pickupFullAddress;
+      if (ride.pickupLocation.latitude && ride.pickupLocation.longitude) {
+        destination = `${ride.pickupLocation.latitude},${ride.pickupLocation.longitude}`;
+      }
+      navigateBtn.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
     }
 
     let otpInputContainer = document.getElementById('driverOtpContainer');

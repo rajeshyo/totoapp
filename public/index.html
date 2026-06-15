@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>TotoBondhu</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛺</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=3.15" />
+  <link rel="stylesheet" href="styles.css?v=3.16" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -294,7 +294,12 @@
           <p id="acceptedDriverPhone" class="car-no">📞 ****</p>
           <p id="acceptedVehicleNumber" class="car-no">🔢 -</p>
         </div>
-        <a href="tel:0" id="driverCallBtn" class="call-action-btn" onclick="callDriver()">📞 কল করুন</a>
+        <div style="display: flex; gap: 8px;">
+          <a href="tel:0" id="driverCallBtn" class="call-action-btn" onclick="callDriver()">📞 কল করুন</a>
+          <a href="#" id="customerNavigateBtn" target="_blank" class="call-action-btn" style="background: #f8f9fa; border: 1px solid #dadce0; display: flex; align-items: center; justify-content: center; padding: 0 15px;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/a/aa/Google_Maps_icon_%282020%29.svg" alt="Google Maps" style="width: 24px; height: 24px;" />
+          </a>
+        </div>
       </div>
       <div class="trip-route-summary">
         <p><strong>পিকআপ:</strong> <span id="acceptedStart"></span></p>
@@ -605,7 +610,7 @@
   </div>
 
   <!-- Note the type="module" here, which is required for Firebase -->
-  <script type="module" src="script.js?v=3.15"></script>
+  <script type="module" src="script.js?v=3.16"></script>
   
 </body>
 </html>

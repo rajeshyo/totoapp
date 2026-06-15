@@ -48,7 +48,7 @@ async function buildLocationFromStoppage(stoppageId, landmark) {
 // REQUEST RIDE (Passenger)
 router.post('/request', authMiddleware, async (req, res) => {
   try {
-    const { pickupVillageId, dropoffVillageId, pickupStoppageId, dropoffStoppageId, landmark, fare: requestedFare } = req.body;
+    const { pickupVillageId, dropoffVillageId, pickupStoppageId, dropoffStoppageId, landmark, fare: requestedFare, pickupLat, pickupLng } = req.body;
 
     const pVid = pickupVillageId || pickupStoppageId;
     const dVid = dropoffVillageId || dropoffStoppageId;
@@ -63,6 +63,11 @@ router.post('/request', authMiddleware, async (req, res) => {
     const pickupLocation = pickupVillageId 
       ? await buildLocationFromVillage(pickupVillageId, landmark) 
       : await buildLocationFromStoppage(pickupStoppageId, landmark);
+
+    if (pickupLat && pickupLng) {
+      pickupLocation.latitude = Number(pickupLat);
+      pickupLocation.longitude = Number(pickupLng);
+    }
 
     const dropoffLocation = dropoffVillageId 
       ? await buildLocationFromVillage(dropoffVillageId) 
