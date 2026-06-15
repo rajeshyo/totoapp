@@ -146,7 +146,7 @@ router.get('/pending', authMiddleware, async (req, res) => {
 // ACCEPT RIDE (Driver)
 router.post('/accept/:rideId', authMiddleware, async (req, res) => {
   try {
-    const { fare } = req.body;
+    const { fare, driverLat, driverLng } = req.body;
     const currentRide = await Ride.findById(req.params.rideId).lean();
 
     if (!currentRide) {
@@ -165,7 +165,13 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
       const idStr = (o.driverId && o.driverId._id) ? o.driverId._id.toString() : (o.driverId ? o.driverId.toString() : '');
       return idStr !== req.userId;
     });
-    offers.push({ driverId: req.userId, fare: fare || currentRide.fare });
+
+    const offerDetails = { driverId: req.userId, fare: fare || currentRide.fare };
+    if (driverLat != null && driverLng != null) {
+      offerDetails.location = { lat: driverLat, lng: driverLng };
+    }
+
+    offers.push(offerDetails);
 
     const ride = await Ride.findOneAndUpdate(
       { _id: req.params.rideId, rideStatus: { $in: ['pending', 'driver_offered'] } },
@@ -194,28 +200,50 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
 // CUSTOMER ACCEPTS OFFER
 router.post('/accept-offer/:rideId', authMiddleware, async (req, res) => {
   try {
-    const { driverId, fare } = req.body;
+    const { driverId, fare, passengerLat, passengerLng } = req.body;
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
+    const currentRide = await Ride.findOne({ _id: req.params.rideId, passengerId: req.userId, rideStatus: 'driver_offered' }).lean();
+    if (!currentRide) {
+      return res.status(400).json({ success: false, message: 'Ride not found or invalid state' });
+    }
+
+    const updatePayload = {
+      rideStatus: 'accepted',
+      driverId: driverId,
+      fare: fare,
+      startTime: new Date(),
+      otp: otp
+    };
+
+    if (passengerLat != null && passengerLng != null) {
+      updatePayload['pickupLocation.latitude'] = Number(passengerLat);
+      updatePayload['pickupLocation.longitude'] = Number(passengerLng);
+    }
+
+    const acceptedOffer = (currentRide.offers || []).find(o => {
+      const idStr = (o.driverId && o.driverId._id) ? o.driverId._id.toString() : (o.driverId ? o.driverId.toString() : '');
+      return idStr === driverId;
+    });
+
+    if (acceptedOffer && acceptedOffer.location) {
+      updatePayload.driverLocation = {
+        type: 'Point',
+        coordinates: [acceptedOffer.location.lng, acceptedOffer.location.lat]
+      };
+    }
 
     const ride = await Ride.findOneAndUpdate(
       { _id: req.params.rideId, passengerId: req.userId, rideStatus: 'driver_offered' },
-      { 
-        $set: {
-          rideStatus: 'accepted',
-          driverId: driverId,
-          fare: fare,
-          startTime: new Date(),
-          otp: otp
-        }
-      },
+      { $set: updatePayload },
       { new: true, strict: false }
     ).populate('driverId', 'firstName lastName phone profilePhoto vehicleNumber').lean();
 
     if (!ride) {
-      return res.status(400).json({ success: false, message: 'Ride not found or invalid state' });
+      return res.status(400).json({ success: false, message: 'Could not accept offer, ride may have been taken.' });
     }
 
-    res.status(200).json({ success: true, message: 'Offer accepted', ride });
+    res.status(200).json({ success: true, message: 'Offer accepted!', ride });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message || 'Failed to accept offer' });
   }

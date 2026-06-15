@@ -1530,7 +1530,7 @@ async function pollCustomerRide() {
         });
 
         document.querySelectorAll('.accept-offer-btn').forEach(btn => {
-          btn.onclick = () => acceptDriverOffer(ride._id, btn.dataset.driver, btn.dataset.fare);
+          btn.onclick = () => acceptDriverOffer(ride._id, btn.dataset.driver, btn.dataset.fare, btn);
         });
         document.querySelectorAll('.reject-offer-btn').forEach(btn => {
           btn.onclick = () => rejectDriverOffer(ride._id, btn.dataset.driver);
@@ -1568,7 +1568,23 @@ async function pollCustomerRide() {
       if (custNavigateBtn) {
         const pickupFullAddress = `${ride.pickupLocation.address}, Purba Bardhaman, West Bengal`;
         const dropoffFullAddress = `${ride.dropoffLocation.address}, Purba Bardhaman, West Bengal`;
-        custNavigateBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickupFullAddress)}&destination=${encodeURIComponent(dropoffFullAddress)}`;
+
+        if ((ride.rideStatus === 'accepted' || ride.rideStatus === 'arrived') && ride.driverLocation && ride.driverLocation.coordinates && ride.driverLocation.coordinates.length === 2) {
+          // Phase 1: Show route to the driver's current location
+          const [lng, lat] = ride.driverLocation.coordinates;
+          if (lat !== 0 || lng !== 0) {
+            let destination = pickupFullAddress;
+            if (ride.pickupLocation.latitude != null && ride.pickupLocation.longitude != null && (ride.pickupLocation.latitude !== 0 || ride.pickupLocation.longitude !== 0)) {
+              destination = `${ride.pickupLocation.latitude},${ride.pickupLocation.longitude}`;
+            }
+            custNavigateBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${lat},${lng}&destination=${encodeURIComponent(destination)}`;
+          } else {
+            custNavigateBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickupFullAddress)}&destination=${encodeURIComponent(dropoffFullAddress)}`;
+          }
+        } else {
+          // Phase 2 (in_progress or fallback): Show the main trip route
+          custNavigateBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickupFullAddress)}&destination=${encodeURIComponent(dropoffFullAddress)}`;
+        }
       }
 
       let customerWaitMsg = document.getElementById('customerWaitMsg');
@@ -1652,11 +1668,39 @@ function createCustomerOfferCard() {
   return card;
 }
 
-async function acceptDriverOffer(rideId, driverId, fare) {
+async function acceptDriverOffer(rideId, driverId, fare, btn) {
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = t('অপেক্ষা করুন...');
+  }
   try {
-    const res = await apiCall(`/rides/accept-offer/${rideId}`, 'POST', { driverId, fare: Number(fare) });
+    let passengerLat = null;
+    let passengerLng = null;
+    if (navigator.geolocation) {
+      try {
+        const pos = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 }));
+        passengerLat = pos.coords.latitude;
+        passengerLng = pos.coords.longitude;
+      } catch (err) {
+        console.warn("Could not get exact location", err);
+      }
+    }
+
+    const payload = { driverId, fare: Number(fare) };
+    if (passengerLat != null && passengerLng != null) {
+      payload.passengerLat = passengerLat;
+      payload.passengerLng = passengerLng;
+    }
+
+    const res = await apiCall(`/rides/accept-offer/${rideId}`, 'POST', payload);
     if (res.success) pollCustomerRide();
-  } catch (e) { showPopup('ত্রুটি', 'গ্রহণ করতে সমস্যা হয়েছে।', '❌'); }
+  } catch (e) { 
+    showPopup('ত্রুটি', 'গ্রহণ করতে সমস্যা হয়েছে।', '❌'); 
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = t('গ্রহণ করুন');
+    }
+  }
 }
 
 async function rejectDriverOffer(rideId, driverId) {
@@ -2264,8 +2308,20 @@ function showNegotiatePopup(rideId, currentFare) {
 }
 
 async function submitOffer(rideId, fare) {
+  let driverLat = 0;
+  let driverLng = 0;
+  if (navigator.geolocation) {
+    try {
+      const pos = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 }));
+      driverLat = pos.coords.latitude;
+      driverLng = pos.coords.longitude;
+    } catch (err) {
+      console.warn("Could not get driver's exact location for offer", err);
+    }
+  }
+
   try {
-    const response = await apiCall(`/rides/accept/${rideId}`, 'POST', { fare: Number(fare) });
+    const response = await apiCall(`/rides/accept/${rideId}`, 'POST', { fare: Number(fare), driverLat, driverLng });
 
     if (response.success) {
       activeRideId = rideId;
@@ -2391,7 +2447,7 @@ async function listenToDriverActiveRide() {
     } else {
       // Before pickup, navigate Driver's current location to Customer's exact GPS (or village fallback)
       let destination = pickupFullAddress;
-      if (ride.pickupLocation.latitude && ride.pickupLocation.longitude) {
+      if (ride.pickupLocation.latitude != null && ride.pickupLocation.longitude != null && (ride.pickupLocation.latitude !== 0 || ride.pickupLocation.longitude !== 0)) {
         destination = `${ride.pickupLocation.latitude},${ride.pickupLocation.longitude}`;
       }
       navigateBtn.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
