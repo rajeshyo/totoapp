@@ -48,6 +48,16 @@ async function buildLocationFromStoppage(stoppageId, landmark) {
 // REQUEST RIDE (Passenger)
 router.post('/request', authMiddleware, async (req, res) => {
   try {
+    const user = await User.findById(req.userId);
+    // Block booking if user has an outstanding penalty
+    if (user.activePenalty && user.activePenalty.amount > 0) {
+      return res.status(403).json({
+        success: false,
+        message: 'PENALTY_DUE',
+        penalty: user.activePenalty
+      });
+    }
+
     const { pickupVillageId, dropoffVillageId, pickupStoppageId, dropoffStoppageId, landmark, fare: requestedFare, pickupLat, pickupLng } = req.body;
 
     const pVid = pickupVillageId || pickupStoppageId;
@@ -453,27 +463,62 @@ router.get('/user/rides', authMiddleware, async (req, res) => {
 // CANCEL RIDE
 router.post('/cancel/:rideId', authMiddleware, async (req, res) => {
   try {
-    const ride = await Ride.findOneAndUpdate(
-      { 
-        _id: req.params.rideId, 
-        $or: [{ passengerId: req.userId }, { driverId: req.userId }],
-        rideStatus: { $in: ['pending', 'accepted', 'arrived'] } 
-      },
-      { rideStatus: 'cancelled' },
-      { new: true }
-    );
+    const ride = await Ride.findOne({
+      _id: req.params.rideId,
+      $or: [{ passengerId: req.userId }, { driverId: req.userId }]
+    }).populate('driverId');
 
     if (!ride) {
       return res.status(400).json({
         success: false,
-        message: 'Ride not found or cannot be cancelled'
+        message: 'Ride not found or you are not authorized'
+      });
+    }
+
+    if (ride.rideStatus === 'cancelled') {
+      return res.status(200).json({
+        success: true,
+        message: 'Ride is already cancelled',
+        ride,
+        penaltyApplied: false
+      });
+    }
+
+    if (!['pending', 'driver_offered', 'accepted', 'arrived'].includes(ride.rideStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ride cannot be cancelled at this stage'
+      });
+    }
+
+    const isPassenger = ride.passengerId.toString() === req.userId;
+    const isDriver = ride.driverId && ride.driverId._id.toString() === req.userId;
+
+    let applyPenalty = false;
+    // Penalty Rule 1: Passenger cancels after a driver accepted or arrived
+    if (isPassenger && ['accepted', 'arrived'].includes(ride.rideStatus)) applyPenalty = true;
+    // Penalty Rule 2: Driver cancels after arriving (Passenger No-Show)
+    if (isDriver && ride.rideStatus === 'arrived') applyPenalty = true;
+
+    ride.rideStatus = 'cancelled';
+    await ride.save();
+
+    if (applyPenalty && ride.driverId) {
+      await User.findByIdAndUpdate(ride.passengerId, {
+        $set: {
+          'activePenalty.amount': 20,
+          'activePenalty.driverId': ride.driverId._id,
+          'activePenalty.driverName': `${ride.driverId.firstName} ${ride.driverId.lastName}`,
+          'activePenalty.driverUpiId': ride.driverId.upiId || ''
+        }
       });
     }
 
     res.status(200).json({
       success: true,
       message: 'Ride cancelled successfully',
-      ride
+      ride,
+      penaltyApplied: applyPenalty
     });
   } catch (error) {
     res.status(500).json({
@@ -574,11 +619,22 @@ setInterval(async () => {
       { $set: { rideStatus: 'cancelled' } }
     );
 
-    // 3. Cancel arrived rides where the trip didn't start within 5 minutes
-    await Ride.updateMany(
-      { rideStatus: 'arrived', arriveTime: { $lt: fiveMinsAgo } },
-      { $set: { rideStatus: 'cancelled' } }
-    );
+    // 3. Auto-Cancel arrived rides (5 mins) and perfectly penalize the passenger for No-Show
+    const timedOutArrived = await Ride.find({ rideStatus: 'arrived', arriveTime: { $lt: fiveMinsAgo } }).populate('driverId');
+    for (const r of timedOutArrived) {
+      r.rideStatus = 'cancelled';
+      await r.save();
+      if (r.driverId) {
+        await User.findByIdAndUpdate(r.passengerId, {
+          $set: {
+            'activePenalty.amount': 20,
+            'activePenalty.driverId': r.driverId._id,
+            'activePenalty.driverName': `${r.driverId.firstName} ${r.driverId.lastName}`,
+            'activePenalty.driverUpiId': r.driverId.upiId || ''
+          }
+        });
+      }
+    }
   } catch (error) {
     console.error('Auto-cancel background task error:', error);
   }

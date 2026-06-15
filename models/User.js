@@ -45,6 +45,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  activePenalty: {
+    amount: { type: Number, default: 0 },
+    driverId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    driverName: { type: String, default: '' },
+    driverUpiId: { type: String, default: '' }
+  },
   averageRating: {
     type: Number,
     default: 0

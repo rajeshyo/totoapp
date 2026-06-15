@@ -257,7 +257,11 @@ const uiTranslations = {
   'বেশি ভাড়া লাগবে সন্ধ্যা ৬টা থেকে সকাল ৬টা পর্যন্ত': 'Higher fares will apply from 6 PM to 6 AM.',
   'নেভিগেট': 'Navigate',
   'লোকেশন চেক করা হচ্ছে...': 'Getting location...',
-  'যোগ করা হয়নি': 'Not Added'
+  'যোগ করা হয়নি': 'Not Added',
+  'ট্রিপ বাতিল করুন': 'Cancel Trip',
+  'আপনি কি ট্রিপটি বাতিল করতে চান?': 'Are you sure you want to cancel?',
+  'পেনাল্টি বাকি আছে': 'Penalty Due',
+  'Penalty Due: আপনার আগের একটি বাতিল রাইডের জন্য ₹২০ ফি বাকি আছে।': 'Penalty Due: You have an unpaid ₹20 fee for a previous cancelled ride.'
 };
 
 let currentLang = localStorage.getItem('toto_lang') || 'bn';
@@ -490,6 +494,7 @@ const pricePreviewCard = document.getElementById('pricePreviewCard');
 const rideSubmitBtn = document.getElementById('rideSubmitBtn');
 const acceptedRideCard = document.getElementById('acceptedRideCard');
 const endRideBtn = document.getElementById('endRideBtn');
+const cancelRideBtn = document.getElementById('cancelRideBtn');
 const stopChips = document.querySelectorAll('.stop-chip');
 
 // Add Stoppage UI
@@ -507,6 +512,7 @@ const toggleStatusLabel = document.getElementById('toggleStatusLabel');
 const rideRequestsContainer = document.getElementById('rideRequests');
 const requestCountBadge = document.getElementById('requestCountBadge');
 const driverAcceptedRideCard = document.getElementById('driverAcceptedRideCard');
+const driverCancelRideBtn = document.getElementById('driverCancelRideBtn');
 
 // Admin workflow targets
 const adminUsersTabBtn = document.getElementById('adminUsersTabBtn');
@@ -1493,7 +1499,18 @@ async function pollCustomerRide() {
       localStorage.removeItem('toto_active_ride_id');
       activeRideId = null;
       resetCustomerUI();
-      showPopup('বাতিল', 'আপনার ট্রিপটি বাতিল হয়েছে।', '⚠️');
+      
+      // Check if passenger got penalized (e.g. from 5-min auto cancel)
+      try {
+        const userRes = await apiCall('/auth/profile');
+        if (userRes.success && userRes.user.activePenalty && userRes.user.activePenalty.amount > 0) {
+          showPopup('পেনাল্টি বাকি আছে', 'Penalty Due: আপনার আগের একটি বাতিল রাইডের জন্য ₹২০ ফি বাকি আছে।', '⛔');
+        } else {
+          showPopup('বাতিল', 'আপনার ট্রিপটি বাতিল হয়েছে।', '⚠️');
+        }
+      } catch (e) {
+        showPopup('বাতিল', 'আপনার ট্রিপটি বাতিল হয়েছে।', '⚠️');
+      }
       return;
     }
 
@@ -1608,6 +1625,7 @@ async function pollCustomerRide() {
         endRideBtn.classList.add('hidden');
         customerWaitMsg.textContent = t('চালকের ট্রিপ শুরু করার অপেক্ষায়...');
         customerWaitMsg.classList.remove('hidden');
+        if (cancelRideBtn) cancelRideBtn.classList.remove('hidden');
         
         const otpContainer = document.getElementById('passengerOtpContainer');
         const otpValue = document.getElementById('passengerOtpValue');
@@ -1643,6 +1661,7 @@ async function pollCustomerRide() {
         }
         
         customerWaitMsg.classList.remove('hidden');
+        if (cancelRideBtn) cancelRideBtn.classList.remove('hidden');
         
         const otpContainer = document.getElementById('passengerOtpContainer');
         const otpValue = document.getElementById('passengerOtpValue');
@@ -1658,6 +1677,7 @@ async function pollCustomerRide() {
         endRideBtn.classList.add('hidden');
         customerWaitMsg.textContent = t('আপনার ট্রিপ চলছে...');
         customerWaitMsg.classList.remove('hidden');
+        if (cancelRideBtn) cancelRideBtn.classList.add('hidden');
         
         const otpContainer = document.getElementById('passengerOtpContainer');
         if (otpContainer) otpContainer.classList.add('hidden');
@@ -1815,6 +1835,7 @@ function resetCustomerUI() {
   document.getElementById('customerOfferCard')?.classList.add('hidden');
   
   if (endRideBtn) endRideBtn.classList.remove('hidden');
+  if (cancelRideBtn) cancelRideBtn.classList.add('hidden');
   const customerWaitMsg = document.getElementById('customerWaitMsg');
   if (customerWaitMsg) customerWaitMsg.classList.add('hidden');
   const otpContainer = document.getElementById('passengerOtpContainer');
@@ -1923,6 +1944,8 @@ rideRequestForm.addEventListener('submit', async event => {
       activeRideId = response.ride._id;
       localStorage.setItem('toto_active_ride_id', activeRideId);
       
+      if (cancelRideBtn) cancelRideBtn.classList.remove('hidden');
+      
       // Start polling - every 16 seconds for real-time updates
       if (pollInterval) clearInterval(pollInterval);
       pollCustomerRide(); // Initial call
@@ -1935,7 +1958,11 @@ rideRequestForm.addEventListener('submit', async event => {
     }
   } catch (error) {
     console.error("Booking error:", error);
-    showPopup('ত্রুটি', error.message || 'বুকিং করতে সমস্যা হচ্ছে, আবার চেষ্টা করুন।', '❌');
+    if (error.message === 'PENALTY_DUE') {
+      showPopup('পেনাল্টি বাকি আছে', 'Penalty Due: আপনার আগের একটি বাতিল রাইডের জন্য ₹২০ ফি বাকি আছে।', '⛔');
+    } else {
+      showPopup('ত্রুটি', error.message || 'বুকিং করতে সমস্যা হচ্ছে, আবার চেষ্টা করুন।', '❌');
+    }
     resetCustomerUI();
   }
 });
@@ -1972,6 +1999,31 @@ endRideBtn?.addEventListener('click', async () => {
       // Restart polling if failed
       pollInterval = setInterval(pollCustomerRide, 16000);
     }
+  }
+});
+
+cancelRideBtn?.addEventListener('click', async () => {
+  if (!activeRideId) return;
+  if (!confirm(t('আপনি কি ট্রিপটি বাতিল করতে চান?'))) return;
+
+  cancelRideBtn.disabled = true;
+  cancelRideBtn.textContent = t('অপেক্ষা করুন...');
+  
+  try {
+    const res = await apiCall(`/rides/cancel/${activeRideId}`, 'POST');
+    localStorage.removeItem('toto_active_ride_id');
+    activeRideId = null;
+    resetCustomerUI();
+    if (res.penaltyApplied) {
+      showPopup('পেনাল্টি বাকি আছে', 'Penalty Due: আপনার আগের একটি বাতিল রাইডের জন্য ₹২০ ফি বাকি আছে।', '⛔');
+    } else {
+      showPopup('সফল', 'ট্রিপ বাতিল করা হয়েছে।', '✅');
+    }
+  } catch (err) {
+    showPopup('ত্রুটি', 'বাতিল করতে সমস্যা হয়েছে।', '❌');
+  } finally {
+    cancelRideBtn.disabled = false;
+    cancelRideBtn.textContent = t('ট্রিপ বাতিল করুন');
   }
 });
 
@@ -2503,18 +2555,21 @@ async function listenToDriverActiveRide() {
         actionBtn.className = 'button primary full-width';
         actionBtn.textContent = t('আমি পৌঁছেগেছি');
         actionBtn.disabled = false;
+        if (driverCancelRideBtn) driverCancelRideBtn.classList.remove('hidden');
         actionBtn.onclick = () => arriveDriverActiveRide();
     } else if (ride.rideStatus === 'arrived') {
         otpInput.style.display = 'block';
         actionBtn.className = 'button primary full-width';
         actionBtn.textContent = t('টোটোটি চালু করুন');
         actionBtn.disabled = false;
+        if (driverCancelRideBtn) driverCancelRideBtn.classList.remove('hidden');
         actionBtn.onclick = () => startDriverActiveRide();
     } else if (ride.rideStatus === 'in_progress') {
         otpInput.style.display = 'none';
         actionBtn.className = 'button danger full-width';
         actionBtn.textContent = t('ট্রিপ সমাপ্ত করুন');
         actionBtn.disabled = false;
+        if (driverCancelRideBtn) driverCancelRideBtn.classList.add('hidden');
         actionBtn.onclick = () => endDriverActiveRide();
     }
   } catch (error) {
@@ -2621,6 +2676,34 @@ async function endDriverActiveRide() {
     pollInterval = setInterval(listenToDriverActiveRide, 16000);
   }
 }
+
+driverCancelRideBtn?.addEventListener('click', async () => {
+  if (!activeRideId) return;
+  if (!confirm(t('আপনি কি ট্রিপটি বাতিল করতে চান?'))) return;
+
+  driverCancelRideBtn.disabled = true;
+  driverCancelRideBtn.textContent = t('অপেক্ষা করুন...');
+  
+  try {
+    await apiCall(`/rides/cancel/${activeRideId}`, 'POST');
+    localStorage.removeItem('toto_active_ride_id');
+    activeRideId = null;
+    document.getElementById('driverAcceptedRideCard').classList.add('hidden');
+    showPopup('সফল', 'ট্রিপ বাতিল করা হয়েছে।', '✅');
+    
+    // Restart finding
+    if (availabilityToggleCheckbox.checked) {
+      listenToPendingQueue();
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(listenToPendingQueue, 16000);
+    }
+  } catch (err) {
+    showPopup('ত্রুটি', 'বাতিল করতে সমস্যা হয়েছে।', '❌');
+  } finally {
+    driverCancelRideBtn.disabled = false;
+    driverCancelRideBtn.textContent = t('ট্রিপ বাতিল করুন');
+  }
+});
 
 // Poll for driver active ride
 function startDriverPoll() {
