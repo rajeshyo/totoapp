@@ -256,7 +256,8 @@ const uiTranslations = {
   'আপডেট করতে সমস্যা হয়েছে।': 'Failed to update.',
   'বেশি ভাড়া লাগবে সন্ধ্যা ৬টা থেকে সকাল ৬টা পর্যন্ত': 'Higher fares will apply from 6 PM to 6 AM.',
   'নেভিগেট': 'Navigate',
-  'লোকেশন চেক করা হচ্ছে...': 'Getting location...'
+  'লোকেশন চেক করা হচ্ছে...': 'Getting location...',
+  'যোগ করা হয়নি': 'Not Added'
 };
 
 let currentLang = localStorage.getItem('toto_lang') || 'bn';
@@ -821,6 +822,7 @@ function displayProfileInfo() {
   document.getElementById('profilePagePhone').textContent = `***${currentUser.phone.slice(-4)}`;
   document.getElementById('profilePageEmail').textContent = currentUser.email || t('লেখা নেই');
   document.getElementById('profilePagePhoneFull').textContent = currentUser.phone;
+  document.getElementById('profilePageUpi').textContent = currentUser.upiId || t('যোগ করা হয়নি');
   document.getElementById('profilePageAvatar').src = `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.firstName}`;
   
   if (currentUser.userType === 'driver') {
@@ -1230,6 +1232,10 @@ document.getElementById('editProfileBtn')?.addEventListener('click', () => {
             <label style="font-size:0.9rem;color:var(--text-muted, #666);">ফোন নম্বর <small>(পরিবর্তনযোগ্য নয়)</small></label>
             <input type="text" id="editPhone" readonly style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;background:#f5f5f5;color:#888;box-sizing:border-box;margin-top:5px;font-size:1rem;">
           </div>
+          <div>
+            <label style="font-size:0.9rem;color:var(--text-muted, #666);">ইউপিআই আইডি (UPI ID)</label>
+            <input type="text" id="editUpiId" placeholder="যেমন: 9876543210@ybl" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;margin-top:5px;font-size:1rem;">
+          </div>
           <div id="editVehicleWrapper" style="display:none;">
             <label style="font-size:0.9rem;color:var(--text-muted, #666);">গাড়ির নম্বর <small>(পরিবর্তনযোগ্য নয়)</small></label>
             <input type="text" id="editVehicle" readonly style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;background:#f5f5f5;color:#888;box-sizing:border-box;margin-top:5px;font-size:1rem;">
@@ -1254,9 +1260,10 @@ document.getElementById('editProfileBtn')?.addEventListener('click', () => {
       // Update user details
       currentUser.firstName = document.getElementById('editFirstName').value.trim();
       currentUser.lastName = document.getElementById('editLastName').value.trim();
+      currentUser.upiId = document.getElementById('editUpiId').value.trim();
       localStorage.setItem('toto_active_user', JSON.stringify(currentUser));
       
-      try { await apiCall('/auth/profile', 'PUT', { firstName: currentUser.firstName, lastName: currentUser.lastName }); } catch (err) { /* Optional fallback if backend route isn't strictly defined yet */ }
+      try { await apiCall('/auth/profile', 'PUT', { firstName: currentUser.firstName, lastName: currentUser.lastName, upiId: currentUser.upiId }); } catch (err) { /* Optional fallback */ }
 
       displayProfileInfo();
       renderApp();
@@ -1272,6 +1279,7 @@ document.getElementById('editProfileBtn')?.addEventListener('click', () => {
   document.getElementById('editFirstName').value = currentUser.firstName || '';
   document.getElementById('editLastName').value = currentUser.lastName || '';
   document.getElementById('editPhone').value = currentUser.phone || '';
+  document.getElementById('editUpiId').value = currentUser.upiId || '';
   document.getElementById('editVehicleWrapper').style.display = currentUser.userType === 'driver' ? 'block' : 'none';
   if (currentUser.userType === 'driver') document.getElementById('editVehicle').value = currentUser.vehicleNumber || '';
 

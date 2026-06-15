@@ -41,6 +41,10 @@ const userSchema = new mongoose.Schema({
     default: null,
     trim: true
   },
+  upiId: {
+    type: String,
+    default: ''
+  },
   averageRating: {
     type: Number,
     default: 0

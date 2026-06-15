@@ -168,11 +168,11 @@ router.put('/online-status', authMiddleware, async (req, res) => {
 // UPDATE USER PROFILE
 router.put('/profile', authMiddleware, async (req, res) => {
   try {
-    const { firstName, lastName, email, profilePhoto } = req.body;
+    const { firstName, lastName, email, profilePhoto, upiId } = req.body;
 
     const user = await User.findByIdAndUpdate(
       req.userId,
-      { firstName, lastName, email, profilePhoto },
+      { firstName, lastName, email, profilePhoto, upiId },
       { new: true }
     );
 
