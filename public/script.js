@@ -296,7 +296,9 @@ const uiTranslations = {
   'হ্যাঁ, আমি ₹30 পেয়েছি': 'Yes, I received ₹30',
   'আপনার অনুরোধ চালকের কাছে পাঠানো হয়েছে। চালক নিশ্চিত করলে আপনি নতুন রাইড বুক করতে পারবেন।': 'Request sent to driver. Once confirmed, you can book a new ride.',
   '💳 এখনই পে করুন (Pay Now)': '💳 Pay Now',
-  '৫ মিনিট পার হওয়ায় ট্রিপ বাতিল হয়েছে এবং যাত্রীকে ₹30 পেনাল্টি দেওয়া হয়েছে।': 'Ride cancelled due to 5 min timeout, and a ₹30 penalty applied to the passenger.'
+  '৫ মিনিট পার হওয়ায় ট্রিপ বাতিল হয়েছে এবং যাত্রীকে ₹30 পেনাল্টি দেওয়া হয়েছে।': 'Ride cancelled due to 5 min timeout, and a ₹30 penalty applied to the passenger.',
+  '📜 শর্তাবলী (Terms)': '📜 Terms & Conditions',
+  '🔒 গোপনীয়তা (Privacy)': '🔒 Privacy Policy'
 };
 
 let currentLang = localStorage.getItem('toto_lang') || 'bn';
@@ -500,6 +502,8 @@ const profilePage = document.getElementById('profilePage');
 const rideHistoryPage = document.getElementById('rideHistoryPage');
 const favoriteRidesPage = document.getElementById('favoriteRidesPage');
 const helpSupportPage = document.getElementById('helpSupportPage');
+const termsPage = document.getElementById('termsPage');
+const privacyPage = document.getElementById('privacyPage');
 const mainHeader = document.getElementById('mainHeader');
 const appBottomNav = document.getElementById('appBottomNav');
 
@@ -793,6 +797,8 @@ function showSection(section) {
   rideHistoryPage.classList.add('hidden');
   favoriteRidesPage.classList.add('hidden');
   if (helpSupportPage) helpSupportPage.classList.add('hidden');
+  if (termsPage) termsPage.classList.add('hidden');
+  if (privacyPage) privacyPage.classList.add('hidden');
   section.classList.remove('hidden');
 }
 
@@ -904,6 +910,16 @@ function showFavoritesPage() {
 
 function showHelpPage() {
   showSection(helpSupportPage);
+  document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+}
+
+function showTermsPage() {
+  showSection(termsPage);
+  document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+}
+
+function showPrivacyPage() {
+  showSection(privacyPage);
   document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
 }
 
@@ -1247,6 +1263,8 @@ document.getElementById('menuHome')?.addEventListener('click', () => { closeSide
 document.getElementById('menuHistory')?.addEventListener('click', () => { closeSidebar(); showRideHistoryPage(); });
 document.getElementById('menuFav')?.addEventListener('click', () => { closeSidebar(); showFavoritesPage(); });
 document.getElementById('menuHelp')?.addEventListener('click', () => { closeSidebar(); showHelpPage(); });
+document.getElementById('menuTerms')?.addEventListener('click', () => { closeSidebar(); showTermsPage(); });
+document.getElementById('menuPrivacy')?.addEventListener('click', () => { closeSidebar(); showPrivacyPage(); });
 
 // Settings Modal Logic
 document.getElementById('menuSettings')?.addEventListener('click', () => {

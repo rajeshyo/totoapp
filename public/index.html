@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>TotoBondhu</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛺</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=3.23" />
+  <link rel="stylesheet" href="styles.css?v=3.24" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -57,6 +57,8 @@
         <a href="#" class="menu-item" id="menuHistory">📅 আমার রাইড ইতিহাস</a>
         <a href="#" class="menu-item" id="menuFav">❤️ প্রিয় স্থান (Favorites)</a>
         <a href="#" class="menu-item" id="menuHelp">❓ সাহায্য ও সাপোর্ট</a>
+        <a href="#" class="menu-item" id="menuTerms">📜 শর্তাবলী (Terms)</a>
+        <a href="#" class="menu-item" id="menuPrivacy">🔒 গোপনীয়তা (Privacy)</a>
         <a href="#" class="menu-item" id="menuSettings">⚙️ সেটিংস</a>
       </div>
       <div class="menu-footer">
@@ -583,6 +585,34 @@
           </div>
         </div>
       </section>
+
+      <!-- Terms and Conditions Page -->
+      <section id="termsPage" class="dashboard hidden">
+        <div class="page-header">
+          <h2>শর্তাবলী (Terms)</h2>
+        </div>
+        <div class="card" style="padding: 20px; line-height: 1.6; text-align: left;">
+          <p><strong>১. সাধারণ নিয়ম:</strong> টোটোবন্ধু (TotoBondhu) ব্যবহার করে আপনি আমাদের শর্তাবলীতে সম্মত হচ্ছেন। প্ল্যাটফর্মে কোনো অবৈধ বা অশালীন কার্যকলাপ কঠোরভাবে নিষিদ্ধ।</p>
+          <p><strong>২. বুকিং ও পেনাল্টি:</strong> একবার চালক আপনার অনুরোধ গ্রহণ করার পর, আপনি যদি টোটো পৌঁছানোর <strong>৫ মিনিট পর</strong> রাইড বাতিল করেন, তবে আপনাকে <strong>₹৩০ পেনাল্টি ফি</strong> দিতে হবে যা সরাসরি চালকের UPI-এ প্রদান করতে হবে। পেনাল্টি পরিশোধ না করা পর্যন্ত নতুন রাইড বুক করা যাবে না।</p>
+          <p><strong>৩. চালকের দায়িত্ব:</strong> চালকদের ট্রিপ শুরু করার আগে অবশ্যই যাত্রীর কাছ থেকে <strong>PIN (পিন)</strong> ভেরিফাই করতে হবে।</p>
+          <p><strong>৪. মূল্য নির্ধারণ:</strong> বেস ফেয়ার এবং দূরত্বের উপর ভিত্তি করে ভাড়া স্বয়ংক্রিয়ভাবে গণনা করা হয়। সন্ধ্যা ৬টা থেকে সকাল ৬টা পর্যন্ত ২০% অতিরিক্ত নাইট সার্জ প্রযোজ্য।</p>
+          <p><strong>৫. দায়বদ্ধতা:</strong> টোটোবন্ধু শুধুমাত্র একটি বুকিং মাধ্যম। যাত্রাপথে কোনো দুর্ঘটনা বা সমস্যার জন্য সরাসরি চালক ও যাত্রী দায়ী থাকবেন।</p>
+        </div>
+      </section>
+
+      <!-- Privacy Policy Page -->
+      <section id="privacyPage" class="dashboard hidden">
+        <div class="page-header">
+          <h2>গোপনীয়তা (Privacy)</h2>
+        </div>
+        <div class="card" style="padding: 20px; line-height: 1.6; text-align: left;">
+          <p><strong>১. ব্যক্তিগত তথ্য সংগ্রহ:</strong> আমরা আপনার নাম, ফোন নম্বর, এবং (চালকদের ক্ষেত্রে) গাড়ির নম্বর ও UPI ID সংগ্রহ করি। এই তথ্যগুলি শুধুমাত্র অ্যাপের স্বাভাবিক কার্যকলাপের জন্য ব্যবহৃত হয়।</p>
+          <p><strong>২. লোকেশন (GPS) ট্র্যাকিং:</strong> সঠিক পিকআপ এবং নেভিগেশনের জন্য আমরা আপনার বর্তমান GPS লোকেশন সংগ্রহ করি যা চালকদের সাথে শেয়ার করা হয়।</p>
+          <p><strong>৩. তথ্য শেয়ারিং:</strong> একবার রাইড কনফার্ম হলে, যোগাযোগ সহজ করার জন্য আপনার ফোন নম্বরটি আপনার চালক বা যাত্রীর সাথে শেয়ার করা হয়। আমরা কোনো তৃতীয় পক্ষের কাছে আপনার তথ্য বিক্রি করি না।</p>
+          <p><strong>৪. তথ্যের নিরাপত্তা:</strong> আপনার পাসওয়ার্ড এনক্রিপ্ট করে সুরক্ষিত রাখা হয় এবং আপনার অ্যাকাউন্ট সুরক্ষায় আমরা সর্বদা প্রতিশ্রুতিবদ্ধ।</p>
+          <p><strong>৫. ডেটা ডিলিট:</strong> আপনি চাইলে অ্যাডমিনের সাথে যোগাযোগ করে আপনার অ্যাকাউন্ট এবং সমস্ত ডেটা স্থায়ীভাবে মুছে ফেলার অনুরোধ করতে পারেন।</p>
+        </div>
+      </section>
     </main>
 
     <footer class="bottom-nav hidden" id="appBottomNav">
@@ -638,7 +668,7 @@
   </div>
 
   <!-- Note the type="module" here, which is required for Firebase -->
-  <script type="module" src="script.js?v=3.23"></script>
+  <script type="module" src="script.js?v=3.24"></script>
   
 </body>
 </html>
