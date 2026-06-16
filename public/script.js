@@ -289,13 +289,14 @@ const uiTranslations = {
   'ট্রিপ বাতিল করুন': 'Cancel Trip',
   'আপনি কি ট্রিপটি বাতিল করতে চান?': 'Are you sure you want to cancel?',
   'পেনাল্টি বাকি আছে': 'Penalty Due',
-  'Penalty Due: আপনার আগের একটি বাতিল রাইডের জন্য ₹২০ ফি বাকি আছে।': 'Penalty Due: You have an unpaid ₹20 fee for a previous cancelled ride.',
+  'Penalty Due: আপনার আগের একটি বাতিল রাইডের জন্য ₹30 ফি বাকি আছে।': 'Penalty Due: You have an unpaid ₹30 fee for a previous cancelled ride.',
   'আমি পেমেন্ট করেছি': 'I Have Paid',
   'বন্ধ করুন': 'Close',
   'চালকের কনফার্মেশনের জন্য অপেক্ষা করা হচ্ছে...': 'Waiting for driver confirmation...',
-  'হ্যাঁ, আমি ₹20 পেয়েছি': 'Yes, I received ₹20',
+  'হ্যাঁ, আমি ₹30 পেয়েছি': 'Yes, I received ₹30',
   'আপনার অনুরোধ চালকের কাছে পাঠানো হয়েছে। চালক নিশ্চিত করলে আপনি নতুন রাইড বুক করতে পারবেন।': 'Request sent to driver. Once confirmed, you can book a new ride.',
-  '💳 এখনই পে করুন (Pay Now)': '💳 Pay Now'
+  '💳 এখনই পে করুন (Pay Now)': '💳 Pay Now',
+  '৫ মিনিট পার হওয়ায় ট্রিপ বাতিল হয়েছে এবং যাত্রীকে ₹30 পেনাল্টি দেওয়া হয়েছে।': 'Ride cancelled due to 5 min timeout, and a ₹30 penalty applied to the passenger.'
 };
 
 let currentLang = localStorage.getItem('toto_lang') || 'bn';
@@ -735,7 +736,7 @@ function showPenaltyModal(penalty) {
   const msg = document.getElementById('penaltyStatusMsg');
 
   if (penalty.driverUpiId && penalty.status !== 'pending_confirmation') {
-    const upiLink = `upi://pay?pa=${encodeURIComponent(penalty.driverUpiId)}&pn=${encodeURIComponent(penalty.driverName || 'Driver')}&am=${penalty.amount || 20}&cu=INR&tn=TotoBondhu%20Penalty`;
+    const upiLink = `upi://pay?pa=${encodeURIComponent(penalty.driverUpiId)}&pn=${encodeURIComponent(penalty.driverName || 'Driver')}&am=${penalty.amount || 30}&cu=INR&tn=TotoBondhu%20Penalty`;
     if (payNowBtn) {
       payNowBtn.href = upiLink;
       payNowBtn.classList.remove('hidden');
@@ -1590,19 +1591,23 @@ async function pollCustomerRide() {
       showRatingPopup(rideIdToRate, driverName);
       return;
     } else if (ride.rideStatus === 'cancelled') {
+      const wasPenalized = ride.penaltyApplied;
       localStorage.removeItem('toto_active_ride_id');
       activeRideId = null;
       resetCustomerUI();
       
-      // Check if passenger got penalized (e.g. from 5-min auto cancel)
-      try {
-        const userRes = await apiCall('/auth/profile');
-        if (userRes.success && userRes.user.activePenalty && userRes.user.activePenalty.amount > 0) {
-          showPenaltyModal(userRes.user.activePenalty);
-        } else {
-          showPopup('বাতিল', 'আপনার ট্রিপটি বাতিল হয়েছে।', '⚠️');
+      if (wasPenalized) {
+        try {
+          const userRes = await apiCall('/auth/profile');
+          if (userRes.success && userRes.user.activePenalty && userRes.user.activePenalty.amount > 0) {
+            showPenaltyModal(userRes.user.activePenalty);
+          } else {
+            showPopup('পেনাল্টি বাকি আছে', 'Penalty Due: আপনার আগের একটি বাতিল রাইডের জন্য ₹30 ফি বাকি আছে।', '⛔');
+          }
+        } catch (e) {
+          showPopup('পেনাল্টি বাকি আছে', 'Penalty Due: আপনার আগের একটি বাতিল রাইডের জন্য ₹30 ফি বাকি আছে।', '⛔');
         }
-      } catch (e) {
+      } else {
         showPopup('বাতিল', 'আপনার ট্রিপটি বাতিল হয়েছে।', '⚠️');
       }
       return;
@@ -1741,10 +1746,12 @@ async function pollCustomerRide() {
               if (distance < 0) {
                 customerWaitMsg.innerHTML = `${t('আপনার টোটো বাইরে অপেক্ষা করছে!')}<br><span style="color: var(--danger-color); font-size: 1.1rem; font-weight: 800;">⏳ 0:00</span>`;
                 if (arrivalTimerInterval) clearInterval(arrivalTimerInterval);
+                if (cancelRideBtn) cancelRideBtn.classList.add('hidden');
               } else {
                 const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((distance % (1000 * 60)) / 1000);
                 customerWaitMsg.innerHTML = `${t('আপনার টোটো বাইরে অপেক্ষা করছে!')}<br><span style="color: var(--danger-color); font-size: 1.1rem; font-weight: 800;">⏳ ${minutes}:${seconds < 10 ? '0' : ''}${seconds}</span>`;
+                if (cancelRideBtn) cancelRideBtn.classList.remove('hidden');
               }
             };
             updateTimer();
@@ -1752,10 +1759,10 @@ async function pollCustomerRide() {
           }
         } else {
           customerWaitMsg.textContent = t('আপনার টোটো বাইরে অপেক্ষা করছে!');
+          if (cancelRideBtn) cancelRideBtn.classList.remove('hidden');
         }
         
         customerWaitMsg.classList.remove('hidden');
-        if (cancelRideBtn) cancelRideBtn.classList.remove('hidden');
         
         const otpContainer = document.getElementById('passengerOtpContainer');
         const otpValue = document.getElementById('passengerOtpValue');
@@ -2056,7 +2063,7 @@ rideRequestForm.addEventListener('submit', async event => {
       if (error.data && error.data.penalty) {
         showPenaltyModal(error.data.penalty);
       } else {
-        showPopup('পেনাল্টি বাকি আছে', 'Penalty Due: আপনার আগের একটি বাতিল রাইডের জন্য ₹২০ ফি বাকি আছে।', '⛔');
+          showPopup('পেনাল্টি বাকি আছে', 'Penalty Due: আপনার আগের একটি বাতিল রাইডের জন্য ₹30 ফি বাকি আছে।', '⛔');
       }
     } else {
       showPopup('ত্রুটি', error.message || 'বুকিং করতে সমস্যা হচ্ছে, আবার চেষ্টা করুন।', '❌');
@@ -2119,7 +2126,7 @@ cancelRideBtn?.addEventListener('click', async () => {
           showPenaltyModal(userRes.user.activePenalty);
         }
       } catch(e) {
-        showPopup('পেনাল্টি বাকি আছে', 'Penalty Due: আপনার আগের একটি বাতিল রাইডের জন্য ₹২০ ফি বাকি আছে।', '⛔');
+          showPopup('পেনাল্টি বাকি আছে', 'Penalty Due: আপনার আগের একটি বাতিল রাইডের জন্য ₹30 ফি বাকি আছে।', '⛔');
       }
     } else {
       showPopup('সফল', 'ট্রিপ বাতিল করা হয়েছে।', '✅');
@@ -2354,8 +2361,8 @@ async function fetchPendingPenalties() {
       container.innerHTML = res.pending.map(p => `
         <div style="background: #fff3e0; border: 1px solid #ffb74d; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
           <h4 style="margin:0 0 10px 0; color:#e65100;">⚠️ পেনাল্টি পেমেন্ট কনফার্মেশন</h4>
-          <p style="margin: 0 0 10px 0;">যাত্রী <strong>${p.firstName} ${p.lastName}</strong> (${p.phone}) জানিয়েছেন যে তিনি আপনার বাতিল রাইডের <strong>₹20</strong> পেনাল্টি পরিশোধ করেছেন।</p>
-          <button class="button primary full-width" onclick="confirmPenaltyPayment('${p._id}')" style="background:#f57c00; border:none;">হ্যাঁ, আমি ₹20 পেয়েছি</button>
+          <p style="margin: 0 0 10px 0;">যাত্রী <strong>${p.firstName} ${p.lastName}</strong> (${p.phone}) জানিয়েছেন যে তিনি আপনার বাতিল রাইডের <strong>₹30</strong> পেনাল্টি পরিশোধ করেছেন।</p>
+          <button class="button primary full-width" onclick="confirmPenaltyPayment('${p._id}')" style="background:#f57c00; border:none;">হ্যাঁ, আমি ₹30 পেয়েছি</button>
         </div>
       `).join('');
       container.classList.remove('hidden');
@@ -2571,9 +2578,14 @@ async function listenToDriverActiveRide() {
       
       if (ride.rideStatus === 'completed') {
         updateDailyStats(ride.fare);
+        showPopup('ট্রিপ শেষ', 'যাত্রী ট্রিপটি সমাপ্ত করেছেন।', '✅');
+      } else {
+        if (ride.penaltyApplied) {
+          showPopup('ট্রিপ শেষ', '৫ মিনিট পার হওয়ায় ট্রিপ বাতিল হয়েছে এবং যাত্রীকে ₹30 পেনাল্টি দেওয়া হয়েছে।', '⚠️');
+        } else {
+          showPopup('ট্রিপ শেষ', 'ট্রিপটি বাতিল হয়েছে।', '⚠️');
+        }
       }
-      
-      showPopup('ট্রিপ শেষ', ride.rideStatus === 'completed' ? 'যাত্রী ট্রিপটি সমাপ্ত করেছেন।' : 'ট্রিপটি বাতিল হয়েছে।', ride.rideStatus === 'completed' ? '✅' : '⚠️');
       
       if (availabilityToggleCheckbox.checked) {
         rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('উপলব্ধ রাইড খুঁজছি...')}</p>`;
@@ -2841,12 +2853,17 @@ driverCancelRideBtn?.addEventListener('click', async () => {
   driverCancelRideBtn.textContent = t('অপেক্ষা করুন...');
   
   try {
-    await apiCall(`/rides/cancel/${activeRideId}`, 'POST');
+    const res = await apiCall(`/rides/cancel/${activeRideId}`, 'POST');
     localStorage.removeItem('toto_active_ride_id');
     activeRideId = null;
     document.getElementById('driverAcceptedRideCard').classList.add('hidden');
-    showPopup('সফল', 'ট্রিপ বাতিল করা হয়েছে।', '✅');
     
+    if (res.penaltyApplied) {
+      showPopup('সফল', '৫ মিনিট পার হওয়ায় ট্রিপ বাতিল হয়েছে এবং যাত্রীকে ₹30 পেনাল্টি দেওয়া হয়েছে।', '✅');
+    } else {
+      showPopup('সফল', 'ট্রিপ বাতিল করা হয়েছে।', '✅');
+    }
+
     // Restart finding
     if (availabilityToggleCheckbox.checked) {
       listenToPendingQueue();

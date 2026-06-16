@@ -18,6 +18,10 @@ if (Ride && Ride.schema && !Ride.schema.path('arriveTime')) {
   Ride.schema.add({ arriveTime: { type: Date } });
 }
 
+if (Ride && Ride.schema && !Ride.schema.path('penaltyApplied')) {
+  Ride.schema.add({ penaltyApplied: { type: Boolean, default: false } });
+}
+
 const router = express.Router();
 
 const FARE_PER_KM = 10; // per km rate
@@ -480,7 +484,7 @@ router.post('/cancel/:rideId', authMiddleware, async (req, res) => {
         success: true,
         message: 'Ride is already cancelled',
         ride,
-        penaltyApplied: false
+        penaltyApplied: ride.penaltyApplied || false
       });
     }
 
@@ -491,22 +495,21 @@ router.post('/cancel/:rideId', authMiddleware, async (req, res) => {
       });
     }
 
-    const isPassenger = ride.passengerId.toString() === req.userId;
-    const isDriver = ride.driverId && ride.driverId._id.toString() === req.userId;
-
     let applyPenalty = false;
-    // Penalty Rule 1: Passenger cancels after a driver accepted or arrived
-    if (isPassenger && ['accepted', 'arrived'].includes(ride.rideStatus)) applyPenalty = true;
-    // Penalty Rule 2: Driver cancels after arriving (Passenger No-Show)
-    if (isDriver && ride.rideStatus === 'arrived') applyPenalty = true;
-
-    ride.rideStatus = 'cancelled';
-    await ride.save();
+    
+    // Penalty ONLY applies if the driver has arrived and 4 minutes 50 seconds (290,000 ms) have passed
+    if (ride.rideStatus === 'arrived' && ride.arriveTime) {
+      const arriveDate = new Date(ride.arriveTime).getTime();
+      const now = new Date().getTime();
+      if (now - arriveDate >= 290000) {
+        applyPenalty = true;
+      }
+    }
 
     if (applyPenalty && ride.driverId) {
       await User.findByIdAndUpdate(ride.passengerId, {
         $set: {
-          'activePenalty.amount': 20,
+          'activePenalty.amount': 30,
           'activePenalty.driverId': ride.driverId._id,
           'activePenalty.driverName': `${ride.driverId.firstName} ${ride.driverId.lastName}`,
           'activePenalty.driverUpiId': ride.driverId.upiId || '',
@@ -515,6 +518,10 @@ router.post('/cancel/:rideId', authMiddleware, async (req, res) => {
         }
       });
     }
+
+    ride.rideStatus = 'cancelled';
+    ride.set('penaltyApplied', applyPenalty, { strict: false });
+    await ride.save();
 
     res.status(200).json({
       success: true,
@@ -624,12 +631,10 @@ setInterval(async () => {
     // 3. Auto-Cancel arrived rides (5 mins) and perfectly penalize the passenger for No-Show
     const timedOutArrived = await Ride.find({ rideStatus: 'arrived', arriveTime: { $lt: fiveMinsAgo } }).populate('driverId');
     for (const r of timedOutArrived) {
-      r.rideStatus = 'cancelled';
-      await r.save();
       if (r.driverId) {
         await User.findByIdAndUpdate(r.passengerId, {
           $set: {
-            'activePenalty.amount': 20,
+            'activePenalty.amount': 30,
             'activePenalty.driverId': r.driverId._id,
             'activePenalty.driverName': `${r.driverId.firstName} ${r.driverId.lastName}`,
             'activePenalty.driverUpiId': r.driverId.upiId || '',
@@ -638,6 +643,9 @@ setInterval(async () => {
           }
         });
       }
+      r.rideStatus = 'cancelled';
+      r.set('penaltyApplied', true, { strict: false });
+      await r.save();
     }
   } catch (error) {
     console.error('Auto-cancel background task error:', error);
