@@ -81,7 +81,7 @@ const uiTranslations = {
   '⚙️ সেটিংস': '⚙️ Settings',
   'লগআউট করুন': 'Logout',
   'লগইন করুন': 'Login',
-  'সাইন আপ করুন': 'Sign Up',
+  'খাতা খোলো': 'Sign Up',
   'ফোন নম্বর লিখুন': 'Enter phone number',
   'পাসওয়ার্ড দিন': 'Enter password',
   'আপনি কী?': 'What are you?',
