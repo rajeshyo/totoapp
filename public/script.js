@@ -1,15 +1,43 @@
 // ===== Notification Helpers =====
+let currentNotificationAudio = null;
+
 function playNotificationSound() {
   try {
-    // Using the custom local TotoBondhu notification sound
-    const audio = new Audio('image/totobook.mp3');
-    audio.play().catch(e => console.warn('Browser blocked audio playback:', e));
+    if (currentNotificationAudio) {
+      currentNotificationAudio.pause();
+      currentNotificationAudio.currentTime = 0;
+    }
+    currentNotificationAudio = new Audio('image/totobook.mp3');
+    currentNotificationAudio.loop = true;
+    currentNotificationAudio.play().catch(e => console.warn('Browser blocked audio playback:', e));
   } catch (err) {
     console.error('Error playing sound:', err);
   }
 }
 
+function stopNotificationSound() {
+  if (currentNotificationAudio) {
+    currentNotificationAudio.pause();
+    currentNotificationAudio.currentTime = 0;
+    currentNotificationAudio = null;
+  }
+}
+
 function sendNotification(title, options = {}) {
+  if (!("Notification" in window)) return;
+
+  if (Notification.permission === "granted") {
+    const notification = new Notification(title, {
+      icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛺</text></svg>',
+      ...options
+    });
+
+    // If they click the native push notification, focus the browser tab
+    notification.onclick = function() {
+      window.focus();
+      this.close();
+    };
+  }
 }
 
 function notifyDriversOfRide(rideId, pickupLocation, fare) {
@@ -1208,6 +1236,7 @@ sidebarLogoutBtn.addEventListener('click', () => {
   localStorage.removeItem('toto_active_ride_id');
   currentUser = null;
   activeRideId = null;
+  stopNotificationSound();
   clearAllListeners();
   renderApp();
 });
@@ -1273,6 +1302,7 @@ document.getElementById('logoutProfileBtn')?.addEventListener('click', () => {
   localStorage.removeItem('toto_active_ride_id');
   currentUser = null;
   activeRideId = null;
+  stopNotificationSound();
   clearAllListeners();
   renderApp();
 });
@@ -2287,6 +2317,12 @@ async function setupDriverDashboard() {
 
 availabilityToggleCheckbox.addEventListener('change', () => {
   const isAvailable = availabilityToggleCheckbox.checked;
+  
+  // Request native push notification permission when driver goes online
+  if (isAvailable && "Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+    Notification.requestPermission();
+  }
+  
   localStorage.setItem('toto_driver_online', isAvailable);
   toggleDriverStatus(isAvailable);
   updateOnlineStatus(isAvailable);
@@ -2305,6 +2341,7 @@ function toggleDriverStatus(isAvailable) {
     if (pollInterval) clearInterval(pollInterval);
     rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('আপনি অফলাইনে আছেন। রাইড পেতে অনলাইন মোড চালু করুন।')}</p>`;
     requestCountBadge.textContent = '0';
+    stopNotificationSound();
   }
 }
 
@@ -2386,6 +2423,7 @@ async function listenToPendingQueue() {
     
     if (rides.length === 0) {
       rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('এই মুহূর্তে কোনো বুকিং অনুরোধ নেই।')}</p>`;
+      stopNotificationSound();
       return;
     }
 
@@ -2399,9 +2437,10 @@ async function listenToPendingQueue() {
         ${ride.pickupLocation.landmark ? `<p>${t('📌 স্থলচিহ্ন:')} ${ride.pickupLocation.landmark}</p>` : ''}
         <p>🏁 ${t('গন্তব্য:')} ${t(ride.dropoffLocation.villageName)}</p>
         <p>💰 ${t('ভাড়া:')} <span class="text-green">₹${ride.fare}</span> (${ride.distance} km)</p>
-        <div class="request-actions">
+        <div class="request-actions" style="flex-wrap: wrap;">
           <button class="button primary accept-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('গ্রহণ করুন')}</button>
           <button class="button secondary negotiate-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('ভাড়া বাড়ান')}</button>
+          <button class="button danger reject-pending-btn" data-id="${ride._id}" style="width: 100%; margin-top: 5px; background: #e0e0e0; color: #333;">${t('প্রত্যাখ্যান করুন')}</button>
         </div>
       `;
       rideRequestsContainer.appendChild(item);
@@ -2413,6 +2452,15 @@ async function listenToPendingQueue() {
 
     document.querySelectorAll('.negotiate-btn').forEach(btn => {
       btn.addEventListener('click', (e) => showNegotiatePopup(e.target.dataset.id, e.target.dataset.fare));
+    });
+    
+    document.querySelectorAll('.reject-pending-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const rideId = e.target.dataset.id;
+        rejectedRides[rideId] = Date.now() + 60000; // Hide for 60 seconds
+        stopNotificationSound();
+        listenToPendingQueue(); // Re-render immediately
+      });
     });
 
     // Poll for updates every 16 seconds for real-time updates
@@ -2475,6 +2523,7 @@ function showNegotiatePopup(rideId, currentFare) {
 }
 
 async function submitOffer(rideId, fare) {
+  stopNotificationSound();
   let driverLat = 0;
   let driverLng = 0;
   if (navigator.geolocation) {
