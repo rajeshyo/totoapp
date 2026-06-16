@@ -2349,7 +2349,7 @@ async function fetchPendingPenalties() {
   const container = document.getElementById('driverPenaltyNotifications');
   if (!container) return;
   try {
-    const res = await apiCall('/driver/pending-penalties');
+    const res = await apiCall('/rides/driver/pending-penalties');
     if (res.success && res.pending && res.pending.length > 0) {
       container.innerHTML = res.pending.map(p => `
         <div style="background: #fff3e0; border: 1px solid #ffb74d; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
@@ -2370,7 +2370,7 @@ async function fetchPendingPenalties() {
 
 window.confirmPenaltyPayment = async function(passengerId) {
   try {
-    const res = await apiCall(`/driver/confirm-penalty/${passengerId}`, 'POST');
+    const res = await apiCall(`/rides/driver/confirm-penalty/${passengerId}`, 'POST');
     if (res.success) { showPopup('সফল', 'পেনাল্টি পেমেন্ট নিশ্চিত করা হয়েছে!', '✅'); fetchPendingPenalties(); }
   } catch (e) { showPopup('ত্রুটি', 'নিশ্চিত করতে সমস্যা হয়েছে।', '❌'); }
 };

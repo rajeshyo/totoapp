@@ -509,7 +509,9 @@ router.post('/cancel/:rideId', authMiddleware, async (req, res) => {
           'activePenalty.amount': 20,
           'activePenalty.driverId': ride.driverId._id,
           'activePenalty.driverName': `${ride.driverId.firstName} ${ride.driverId.lastName}`,
-          'activePenalty.driverUpiId': ride.driverId.upiId || ''
+          'activePenalty.driverUpiId': ride.driverId.upiId || '',
+          'activePenalty.driverPhone': ride.driverId.phone || '',
+          'activePenalty.status': 'unpaid'
         }
       });
     }
@@ -630,7 +632,9 @@ setInterval(async () => {
             'activePenalty.amount': 20,
             'activePenalty.driverId': r.driverId._id,
             'activePenalty.driverName': `${r.driverId.firstName} ${r.driverId.lastName}`,
-            'activePenalty.driverUpiId': r.driverId.upiId || ''
+            'activePenalty.driverUpiId': r.driverId.upiId || '',
+            'activePenalty.driverPhone': r.driverId.phone || '',
+            'activePenalty.status': 'unpaid'
           }
         });
       }
