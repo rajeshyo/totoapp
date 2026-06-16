@@ -1293,7 +1293,10 @@ function renderRoutesList(routes) {
   adminRoutesList.innerHTML = routes.map(route => `
     <div class="request-item" style="margin-bottom: 10px;">
       <p><strong>${route.name}</strong></p>
-      <p class="muted-text text-sm">${route.villages.map(v => t(v.nameBn)).join(' ➔ ')}</p>
+      <p class="muted-text text-sm">${route.villages.map(vId => {
+        const loc = locationData.find(l => l.id === vId || l._id === vId);
+        return loc ? t(loc.nameBn) : vId;
+      }).join(' ➔ ')}</p>
       <div style="text-align: right; margin-top: 8px; display: flex; gap: 8px; justify-content: flex-end;">
         <button class="button secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick='editRoute(${JSON.stringify(route)})'>✏️ ${t('এডিট')}</button>
         <button class="button danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="deleteRoute('${route._id}')">🗑️ ${t('ডিলিট')}</button>
@@ -1304,13 +1307,46 @@ function renderRoutesList(routes) {
 
 function populateVillageChecklist(villages) {
   if (!newRouteVillages) return;
-  newRouteVillages.innerHTML = villages.map(v => `
-    <li data-id="${v.id}" draggable="true" style="padding: 10px; border-bottom: 1px solid #eee; background: white; cursor: grab; display: flex; align-items: center; gap: 10px;">
-      <input type="checkbox" id="v-${v.id}" style="transform: scale(1.2);">
-      <label for="v-${v.id}" style="flex: 1;">${t(v.nameBn)}</label>
-    </li>
-  `).join('');
+  newRouteVillages.innerHTML = villages.map(v => {
+    const idToUse = v.id || v._id;
+    const htmlId = `v-${String(idToUse).replace(/[^a-zA-Z0-9]/g, '_')}`;
+    return `
+      <li data-id="${idToUse}" draggable="true" class="route-village-item" style="padding: 10px; border-bottom: 1px solid #eee; background: white; cursor: grab; display: flex; align-items: center; gap: 10px; transition: all 0.2s ease;">
+        <div class="drag-handle" style="cursor: grab; font-size: 1.5rem; color: #aaa; padding: 0 5px;">☰</div>
+        <div class="clickable-area" style="flex: 1; display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 5px 0;">
+          <input type="checkbox" value="${idToUse}" id="${htmlId}" class="route-checkbox" style="transform: scale(1.5); margin: 0; cursor: pointer;">
+          <label for="${htmlId}" style="flex: 1; cursor: pointer; font-weight: 500; margin: 0; font-size: 1.1rem; user-select: none;">${t(v.nameBn)}</label>
+        </div>
+      </li>
+    `;
+  }).join('');
   setupDragAndDrop();
+
+  document.querySelectorAll('.route-village-item').forEach(li => {
+    const cb = li.querySelector('.route-checkbox');
+    const clickableArea = li.querySelector('.clickable-area');
+    
+    const updateBg = () => {
+      li.style.background = cb.checked ? '#e8f5e9' : 'white';
+      li.style.borderLeft = cb.checked ? '4px solid var(--primary-brand, #09663e)' : 'none';
+    };
+
+    cb.addEventListener('change', updateBg);
+
+    clickableArea.addEventListener('click', (e) => {
+      if (e.target !== cb && e.target.tagName !== 'LABEL') {
+        cb.checked = !cb.checked;
+        updateBg();
+      }
+    });
+
+    // Prevent drag issues when interacting with checkboxes
+    clickableArea.addEventListener('mousedown', () => li.setAttribute('draggable', 'false'));
+    clickableArea.addEventListener('mouseup', () => li.setAttribute('draggable', 'true'));
+    clickableArea.addEventListener('mouseleave', () => li.setAttribute('draggable', 'true'));
+    clickableArea.addEventListener('touchstart', () => li.setAttribute('draggable', 'false'), {passive: true});
+    clickableArea.addEventListener('touchend', () => li.setAttribute('draggable', 'true'), {passive: true});
+  });
 }
 
 function setupDragAndDrop() {
@@ -1353,7 +1389,7 @@ addRouteForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const id = editRouteId.value;
   const name = newRouteName.value.trim();
-  const selectedVillages = [...newRouteVillages.querySelectorAll('input[type="checkbox"]:checked')].map(cb => cb.parentElement.dataset.id);
+  const selectedVillages = [...newRouteVillages.querySelectorAll('input[type="checkbox"]:checked')].map(cb => cb.value);
 
   if (!name || selectedVillages.length < 2) {
     showPopup('ত্রুটি', 'রুটের নাম এবং কমপক্ষে দুটি গ্রাম নির্বাচন করুন।', '❌');
@@ -1390,15 +1426,23 @@ window.editRoute = function(route) {
   newRouteName.value = route.name;
   cancelEditRouteBtn.classList.remove('hidden');
 
-  const villageIds = route.villages.map(v => v._id);
+  const villageIds = route.villages.map(v => typeof v === 'object' && v !== null ? (v.id || v._id) : v);
   // Uncheck all and re-check and re-order
   const villageItems = [...newRouteVillages.querySelectorAll('li')];
-  villageItems.forEach(li => li.querySelector('input').checked = false);
+  villageItems.forEach(li => {
+    const cb = li.querySelector('input');
+    if (cb) cb.checked = false;
+    li.style.background = 'white';
+    li.style.borderLeft = 'none';
+  });
   
   villageIds.reverse().forEach(id => {
     const li = villageItems.find(item => item.dataset.id === id);
     if (li) {
-      li.querySelector('input').checked = true;
+      const cb = li.querySelector('input');
+      if (cb) cb.checked = true;
+      li.style.background = '#e8f5e9';
+      li.style.borderLeft = '4px solid var(--primary-brand, #09663e)';
       newRouteVillages.prepend(li);
     }
   });
@@ -1423,7 +1467,12 @@ function resetRouteForm() {
   addRouteBtn.textContent = t('রুট যোগ করুন');
   cancelEditRouteBtn.classList.add('hidden');
   // Uncheck all boxes
-  newRouteVillages.querySelectorAll('input').forEach(i => i.checked = false);
+  newRouteVillages.querySelectorAll('li').forEach(li => {
+    const cb = li.querySelector('input');
+    if (cb) cb.checked = false;
+    li.style.background = 'white';
+    li.style.borderLeft = 'none';
+  });
 }
 
 cancelEditRouteBtn?.addEventListener('click', resetRouteForm);

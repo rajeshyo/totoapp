@@ -14,7 +14,7 @@ const adminOnly = (req, res, next) => {
 // GET all active routes, populated with village names
 router.get('/', authMiddleware, adminOnly, async (req, res) => {
     try {
-        const routes = await Route.find({ isActive: true }).populate('villages', 'nameBn').sort({ name: 1 });
+        const routes = await Route.find({ isActive: true }).sort({ name: 1 });
         res.json({ success: true, routes });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -30,8 +30,7 @@ router.post('/', authMiddleware, adminOnly, async (req, res) => {
         }
         const newRoute = new Route({ name, villages });
         await newRoute.save();
-        const populatedRoute = await Route.findById(newRoute._id).populate('villages', 'nameBn');
-        res.status(201).json({ success: true, route: populatedRoute, message: 'Route created successfully.' });
+        res.status(201).json({ success: true, route: newRoute, message: 'Route created successfully.' });
     } catch (error) {
         if (error.code === 11000) { // Duplicate key error
             return res.status(400).json({ success: false, message: 'A route with this name already exists.' });
@@ -47,7 +46,7 @@ router.put('/:id', authMiddleware, adminOnly, async (req, res) => {
         if (!name || !villages || !Array.isArray(villages)) {
             return res.status(400).json({ success: false, message: 'Route name and a list of villages are required.' });
         }
-        const updatedRoute = await Route.findByIdAndUpdate(req.params.id, { name, villages }, { new: true }).populate('villages', 'nameBn');
+        const updatedRoute = await Route.findByIdAndUpdate(req.params.id, { name, villages }, { new: true });
         if (!updatedRoute) {
             return res.status(404).json({ success: false, message: 'Route not found.' });
         }

@@ -7,10 +7,8 @@ const routeSchema = new mongoose.Schema({
     unique: true,
     trim: true
   },
-  // An ordered list of Village ObjectIds
   villages: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Village'
+    type: String
   }],
   isActive: {
     type: Boolean,
