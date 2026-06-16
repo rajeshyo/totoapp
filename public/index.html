@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>TotoBondhu</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛺</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=3.20" />
+  <link rel="stylesheet" href="styles.css?v=3.22" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -422,6 +422,9 @@
           </div>
         </div>
 
+        <!-- Driver Notification Area -->
+        <div id="driverPenaltyNotifications" class="hidden" style="margin-bottom: 20px;"></div>
+
         <div class="request-stream-container">
           <div class="section-title-row">
             <h3>নতুন রাইড অনুরোধ</h3>
@@ -613,10 +616,29 @@
         <button id="popupCloseBtn" class="button primary full-width">ঠিক আছে</button>
       </div>
     </div>
+
+    <!-- Special Penalty Modal -->
+    <div id="penaltyModal" class="popup-overlay hidden" aria-hidden="true" style="z-index: 10001;">
+      <div class="popup-card" role="dialog" aria-modal="true" style="border: 2px solid var(--danger-color);">
+        <h3 style="color: var(--danger-color); margin-top: 0;">পেনাল্টি বাকি আছে (Penalty Due)</h3>
+        <p>আপনার আগের একটি বাতিল রাইডের জন্য <strong>₹২০</strong> ফি বাকি আছে। পরবর্তী রাইড বুক করার আগে চালককে পরিশোধ করুন।</p>
+        <div style="background: #ffebee; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: left;">
+          <p style="margin: 0 0 5px 0;">👤 চালকের নাম: <strong id="penaltyDriverName">-</strong></p>
+          <p style="margin: 0 0 5px 0;">📞 ফোন নম্বর: <strong id="penaltyDriverPhone">-</strong></p>
+          <p style="margin: 0 0 0 0; font-size: 1.1rem;">💳 <strong>UPI ID: <span id="penaltyDriverUpi" style="color: red;">-</span></strong></p>
+        </div>
+        <div id="penaltyStatusMsg" style="margin-bottom: 15px; font-weight: bold; color: #f57c00;" class="hidden">
+          চালকের কনফার্মেশনের জন্য অপেক্ষা করা হচ্ছে...
+        </div>
+        <a id="payNowUpiBtn" href="#" class="button full-width hidden" style="background: #25D366; color: white; margin-bottom: 10px; text-decoration: none; text-align: center; font-weight: bold; display: block; border-radius: 8px; padding: 12px;">💳 এখনই পে করুন (Pay Now)</a>
+        <button id="markPenaltyPaidBtn" class="button primary full-width">আমি পেমেন্ট করেছি</button>
+        <button id="closePenaltyBtn" class="button secondary full-width" style="margin-top: 10px;">বন্ধ করুন</button>
+      </div>
+    </div>
   </div>
 
   <!-- Note the type="module" here, which is required for Firebase -->
-  <script type="module" src="script.js?v=3.20"></script>
+  <script type="module" src="script.js?v=3.22"></script>
   
 </body>
 </html>

@@ -640,4 +640,54 @@ setInterval(async () => {
   }
 }, 60000); // Runs every 60 seconds
 
+// ==========================================
+// PENALTY RESOLUTION ROUTES
+// ==========================================
+
+// 1. CUSTOMER MARKS PENALTY AS PAID
+router.post('/penalty/mark-paid', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (user.activePenalty && user.activePenalty.amount > 0) {
+      user.activePenalty.status = 'pending_confirmation';
+      await user.save();
+      res.status(200).json({ success: true, message: 'Penalty marked as pending' });
+    } else {
+      res.status(400).json({ success: false, message: 'No active penalty found' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// 2. DRIVER FETCHES PENDING CONFIRMATIONS
+router.get('/driver/pending-penalties', authMiddleware, async (req, res) => {
+  try {
+    const pendingUsers = await User.find({
+      'activePenalty.driverId': req.userId,
+      'activePenalty.amount': { $gt: 0 },
+      'activePenalty.status': 'pending_confirmation'
+    }).select('firstName lastName phone activePenalty');
+    res.status(200).json({ success: true, pending: pendingUsers });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// 3. DRIVER CONFIRMS PAYMENT RECEIVED
+router.post('/driver/confirm-penalty/:passengerId', authMiddleware, async (req, res) => {
+  try {
+    const passenger = await User.findById(req.params.passengerId);
+    if (passenger && passenger.activePenalty && passenger.activePenalty.driverId.toString() === req.userId) {
+      passenger.activePenalty = { amount: 0, driverId: null, driverName: '', driverUpiId: '', driverPhone: '', status: 'unpaid' };
+      await passenger.save();
+      res.status(200).json({ success: true, message: 'Penalty completely cleared' });
+    } else {
+      res.status(400).json({ success: false, message: 'Invalid penalty confirmation' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 module.exports = router;
