@@ -313,7 +313,10 @@ const uiTranslations = {
   'টিপে ধরে টেনে এনে সাজান (Drag to reorder)': 'Drag to reorder',
   'আজকের রুট (Today\'s Route)': 'Today\'s Route',
   'রুট নির্বাচন করুন...': 'Select Route...',
-  'অনলাইন হওয়ার আগে আজকের রুট নির্বাচন করুন।': 'Please select today\'s route before going online.'
+  'অনলাইন হওয়ার আগে আজকের রুট নির্বাচন করুন।': 'Please select today\'s route before going online.',
+  '📥 এক্সেল ডাউনলোড (Download Backup)': '📥 Download Excel Backup',
+  'এক্সেল ফাইল ডাউনলোড সফল হয়েছে।': 'Excel file downloaded successfully.',
+  'ফাইল ডাউনলোড করতে সমস্যা হয়েছে।': 'Failed to download file.'
 };
 
 let currentLang = localStorage.getItem('toto_lang') || 'bn';
@@ -594,6 +597,7 @@ const driverCancelRideBtn = document.getElementById('driverCancelRideBtn');
 const adminUsersTabBtn = document.getElementById('adminUsersTabBtn');
 const adminLocationsTabBtn = document.getElementById('adminLocationsTabBtn');
 const adminFeedbackTabBtn = document.getElementById('adminFeedbackTabBtn');
+const adminDownloadExcelBtn = document.getElementById('adminDownloadExcelBtn');
 const adminUsersPanel = document.getElementById('adminUsersPanel');
 const adminLocationsPanel = document.getElementById('adminLocationsPanel');
 const adminFeedbackPanel = document.getElementById('adminFeedbackPanel');
@@ -1233,6 +1237,69 @@ adminFeedbackTabBtn?.addEventListener('click', () => {
   adminUsersTabBtn.classList.remove('active');
   adminLocationsTabBtn.classList.remove('active');
   loadAdminFeedback();
+});
+
+adminDownloadExcelBtn?.addEventListener('click', async () => {
+  adminDownloadExcelBtn.disabled = true;
+  adminDownloadExcelBtn.textContent = t('অপেক্ষা করুন...');
+  try {
+    // Fetch all data points concurrently
+    const [usersRes, ridesRes, routesRes] = await Promise.all([
+      apiCall('/admin/users'),
+      apiCall('/admin/rides'),
+      apiCall('/routes')
+    ]);
+
+    if (typeof XLSX === 'undefined') throw new Error("Excel library not loaded");
+
+    // Format Users Data
+    const usersData = (usersRes.users || []).map(u => ({
+      'ID': u._id,
+      'Name': `${u.firstName} ${u.lastName}`,
+      'Phone': u.phone,
+      'Role': u.userType,
+      'Vehicle No': u.vehicleNumber || '',
+      'UPI ID': u.upiId || '',
+      'Status': u.isBlocked ? 'Blocked' : 'Active',
+      'Joined Date': new Date(u.createdAt).toLocaleString('en-IN')
+    }));
+
+    // Format Rides Data
+    const ridesData = (ridesRes.rides || []).map(r => ({
+      'ID': r._id,
+      'Date': new Date(r.createdAt).toLocaleString('en-IN'),
+      'Status': r.rideStatus,
+      'Passenger': r.passengerId ? `${r.passengerId.firstName} ${r.passengerId.lastName} (${r.passengerId.phone})` : 'Unknown',
+      'Driver': r.driverId ? `${r.driverId.firstName} ${r.driverId.lastName} (${r.driverId.phone})` : 'Unknown',
+      'Pickup': r.pickupLocation ? r.pickupLocation.address : '',
+      'Dropoff': r.dropoffLocation ? r.dropoffLocation.address : '',
+      'Distance (km)': r.distance,
+      'Fare (₹)': r.fare
+    }));
+
+    // Format Routes Data
+    const routesData = (routesRes.routes || []).map(r => {
+      const villageNames = r.villages.map(vId => {
+        const loc = locationData.find(l => l.id === vId || l._id === vId);
+        return loc ? loc.nameBn : vId;
+      }).join(' ➔ ');
+      return {
+        'Route Name': r.name,
+        'Status': r.isActive ? 'Active' : 'Inactive',
+        'Villages': villageNames
+      };
+    });
+
+    // Build and Trigger Download
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(usersData), "Users");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ridesData), "Ride History");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(routesData), "Routes");
+    XLSX.writeFile(wb, `TotoBondhu_Backup_${new Date().toISOString().split('T')[0]}.xlsx`);
+    
+    showPopup('সফল', 'এক্সেল ফাইল ডাউনলোড সফল হয়েছে।', '✅');
+  } catch (e) { showPopup('ত্রুটি', 'ফাইল ডাউনলোড করতে সমস্যা হয়েছে।', '❌'); } 
+  finally { adminDownloadExcelBtn.disabled = false; adminDownloadExcelBtn.textContent = t('📥 এক্সেল ডাউনলোড (Download Backup)'); }
 });
 
 async function loadAdminUsers() {
