@@ -1195,6 +1195,7 @@ adminLocationsTabBtn?.addEventListener('click', () => {
   adminLocationsTabBtn.classList.add('active');
   adminUsersTabBtn.classList.remove('active');
   adminFeedbackTabBtn.classList.remove('active');
+  loadAdminRoutes();
 });
 
 adminFeedbackTabBtn?.addEventListener('click', () => {
@@ -2498,6 +2499,7 @@ addVillageBtn?.addEventListener('click', async () => {
       
       // This automatically updates all dropdowns in both Admin and Customer Dashboards!
       await loadLocations(); 
+      loadAdminRoutes();
     } else {
       showPopup('ত্রুটি', response.message || 'গ্রাম যোগ করতে সমস্যা হয়েছে।', '❌');
     }
