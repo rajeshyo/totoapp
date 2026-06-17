@@ -3,6 +3,13 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
 
+if (User && User.schema && !User.schema.path('isOnline')) {
+  User.schema.add({ isOnline: { type: Boolean, default: false } });
+}
+if (User && User.schema && !User.schema.path('activeRouteId')) {
+  User.schema.add({ activeRouteId: { type: String, default: null } });
+}
+
 const router = express.Router();
 
 // SIGNUP
@@ -156,9 +163,13 @@ router.get('/profile', authMiddleware, async (req, res) => {
 // UPDATE ONLINE STATUS
 router.put('/online-status', authMiddleware, async (req, res) => {
   try {
-    const { isOnline } = req.body;
-    // Update the isOnline flag in the database
-    await User.findByIdAndUpdate(req.userId, { isOnline: !!isOnline });
+    const { isOnline, routeId } = req.body;
+    // Update the isOnline flag and activeRouteId in the database
+    const updateData = { isOnline: !!isOnline };
+    if (routeId !== undefined) {
+      updateData.activeRouteId = routeId;
+    }
+    await User.findByIdAndUpdate(req.userId, { $set: updateData }, { strict: false });
     res.status(200).json({ success: true, message: 'Online status updated' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message || 'Failed to update online status' });

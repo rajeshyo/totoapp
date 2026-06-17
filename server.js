@@ -12,6 +12,8 @@ const locationsRoutes = require('./routes/locations');
 const adminRoutes = require('./routes/admin');
 const routesRoutes = require('./routes/routes');
 const { seedLocations } = require('./data/locations');
+const User = require('./models/User');
+const authMiddleware = require('./middleware/auth');
 
 const app = express();
 
@@ -74,6 +76,19 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
+app.get('/api/admin/stats', authMiddleware, async (req, res, next) => {
+  try {
+    if (req.userType !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+    // Calculate the real-time number of online drivers
+    const onlineDriversCount = await User.countDocuments({ userType: 'driver', isOnline: true });
+    res.json({ success: true, onlineDriversCount });
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/rides', ridesRoutes);
 app.use('/api/locations', locationsRoutes);
