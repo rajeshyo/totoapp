@@ -467,6 +467,22 @@ window.addEventListener('load', () => {
   }
 });
 
+let isForcedLoggedOut = false;
+function handleBlockedAccount() {
+  if (isForcedLoggedOut) return;
+  isForcedLoggedOut = true;
+  localStorage.removeItem('toto_active_user');
+  localStorage.removeItem('toto_token');
+  localStorage.removeItem('toto_active_ride_id');
+  currentUser = null;
+  activeRideId = null;
+  stopNotificationSound();
+  clearAllListeners();
+  renderApp();
+  showPopup('অ্যাকাউন্ট ব্লক করা হয়েছে', 'আপনার অ্যাকাউন্ট ব্লক করা হয়েছে। আপনাকে লগ আউট করা হচ্ছে।', '⛔');
+  setTimeout(() => { isForcedLoggedOut = false; }, 5000);
+}
+
 // Helper function to make API calls with authorization
 async function apiCall(endpoint, method = 'GET', body = null) {
   const token = localStorage.getItem('toto_token');
@@ -491,6 +507,9 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     const data = await response.json();
 
     if (!response.ok) {
+      if (data.message === 'ACCOUNT_BLOCKED') {
+        handleBlockedAccount();
+      }
       const err = new Error(data.message || 'API Error');
       err.data = data;
       throw err;
@@ -2604,7 +2623,11 @@ async function setupDriverDashboard() {
       currentUser = response.user;
       localStorage.setItem('toto_active_user', JSON.stringify(currentUser));
     }
-  } catch (err) {}
+    } catch (err) {
+      if (err.message === 'ACCOUNT_BLOCKED') return;
+    }
+  
+    if (!currentUser) return; // Stop loading if forced out
 
   await loadDriverRoutes();
 

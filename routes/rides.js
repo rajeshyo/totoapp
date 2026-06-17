@@ -53,6 +53,11 @@ async function buildLocationFromStoppage(stoppageId, landmark) {
 router.post('/request', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.userId);
+    
+    if (user && user.isBlocked) {
+      return res.status(403).json({ success: false, message: 'ACCOUNT_BLOCKED' });
+    }
+    
     // Block booking if user has an outstanding penalty
     if (user.activePenalty && user.activePenalty.amount > 0) {
       return res.status(403).json({
@@ -140,6 +145,11 @@ router.post('/request', authMiddleware, async (req, res) => {
 // GET PENDING RIDES (For Drivers)
 router.get('/pending', authMiddleware, async (req, res) => {
   try {
+    const user = await User.findById(req.userId);
+    if (user && user.isBlocked) {
+      return res.status(403).json({ success: false, message: 'ACCOUNT_BLOCKED' });
+    }
+    
     const rides = await Ride.find({ rideStatus: { $in: ['pending', 'driver_offered'] } })
       .populate('passengerId', 'firstName lastName phone profilePhoto')
       .sort({ createdAt: -1 })
@@ -413,6 +423,11 @@ router.post('/end/:rideId', authMiddleware, async (req, res) => {
 // GET RIDE DETAILS
 router.get('/:rideId', authMiddleware, async (req, res) => {
   try {
+    const user = await User.findById(req.userId);
+    if (user && user.isBlocked) {
+      return res.status(403).json({ success: false, message: 'ACCOUNT_BLOCKED' });
+    }
+    
     const ride = await Ride.findById(req.params.rideId)
       .populate('passengerId', 'firstName lastName phone profilePhoto')
       .populate('driverId', 'firstName lastName phone profilePhoto vehicleNumber')
