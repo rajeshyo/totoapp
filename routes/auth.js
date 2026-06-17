@@ -3,10 +3,6 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
 
-if (User && User.schema && !User.schema.path('isBlocked')) {
-  User.schema.add({ isBlocked: { type: Boolean, default: false } });
-}
-
 if (User && User.schema && !User.schema.path('isOnline')) {
   User.schema.add({ isOnline: { type: Boolean, default: false } });
 }
@@ -102,21 +98,26 @@ router.post('/login', async (req, res) => {
     }
 
     // Find user
-    const user = await User.findOne({ phone });
-    if (!user) {
+    // Use lean() to get a plain JS object to guarantee 'isBlocked' is present
+    const userObject = await User.findOne({ phone }).lean();
+    if (!userObject) {
       return res.status(401).json({
         success: false,
         message: 'Invalid phone or password'
       });
     }
 
-    // Check if user is blocked
-    if (user.isBlocked) {
+    // Check if user is blocked on the raw object
+    if (userObject.isBlocked) {
       return res.status(403).json({
         success: false,
         message: 'Your account has been blocked. Please contact support.'
       });
     }
+
+    // Hydrate the plain object into a full Mongoose document
+    // so we can use instance methods like `comparePassword()`
+    const user = User.hydrate(userObject);
 
     // Check password
     const isMatch = await user.comparePassword(password);

@@ -1169,12 +1169,6 @@ function setupAdminDashboard() {
   if (adminPollInterval) clearInterval(adminPollInterval);
   adminPollInterval = setInterval(() => {
     loadAdminStats();
-    if (document.getElementById('adminUsersPanel') && !document.getElementById('adminUsersPanel').classList.contains('hidden')) {
-      loadAdminUsers();
-    }
-    if (document.getElementById('adminFeedbackPanel') && !document.getElementById('adminFeedbackPanel').classList.contains('hidden')) {
-      loadAdminFeedback();
-    }
   }, 16000);
 }
 
