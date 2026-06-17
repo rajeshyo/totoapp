@@ -941,7 +941,15 @@ async function showProfilePage() {
       currentUser = response.user;
       localStorage.setItem('toto_active_user', JSON.stringify(currentUser));
     }
-  } catch (err) {}
+  } catch (err) {
+      // Handle blocked account
+      if (err.message === 'ACCOUNT_BLOCKED') {
+        showPopup('অ্যাকাউন্ট ব্লক করা হয়েছে', 'আপনার অ্যাকাউন্ট ব্লক করা হয়েছে। আপনাকে লগ আউট করা হচ্ছে।', '⛔', () => {
+          sidebarLogoutBtn.click(); // Use existing logout logic
+        });
+        return; // Stop further execution
+      }
+  }
   
   displayProfileInfo();
 }
@@ -1219,16 +1227,23 @@ async function loadAdminUsers() {
   try {
     const res = await apiCall('/admin/users');
     if (res.success && res.users.length > 0) {
-      list.innerHTML = res.users.map(u => `
-        <div class="request-item" style="margin-bottom: 10px;">
-          <p>👤 <strong>${u.firstName} ${u.lastName}</strong> <span class="badge" style="float:right;">${t(u.userType === 'driver' ? 'চালক' : u.userType === 'admin' ? 'অ্যাডমিন' : 'যাত্রী')}</span></p>
+      list.innerHTML = res.users.map(u => {
+        const isBlocked = u.isBlocked === true;
+        const blockButtonText = isBlocked ? t('আনব্লক করুন') : t('ব্লক করুন');
+        const blockButtonClass = isBlocked ? 'secondary' : 'danger';
+        const statusBadge = isBlocked ? `<span class="badge" style="background: var(--danger-color); color: white; float:right; margin-left: 5px;">${t('ব্লকড')}</span>` : '';
+
+        return `
+        <div class="request-item" style="margin-bottom: 10px; ${isBlocked ? 'background-color: #fff0f0; border-left: 4px solid var(--danger-color);' : ''}">
+          <p>👤 <strong>${u.firstName} ${u.lastName}</strong> <span class="badge" style="float:right;">${t(u.userType === 'driver' ? 'চালক' : u.userType === 'admin' ? 'অ্যাডমিন' : 'যাত্রী')}</span>${statusBadge}</p>
           <p>📱 ${u.phone}</p>
           ${u.vehicleNumber ? `<p>🔢 ${u.vehicleNumber}</p>` : ''}
-          <div style="text-align: right; margin-top: 8px;">
+          <div style="text-align: right; margin-top: 8px; display: flex; gap: 8px; justify-content: flex-end;">
+            <button class="button ${blockButtonClass}" style="padding: 6px 12px; font-size: 0.8rem;" onclick="toggleUserBlock('${u._id}', ${!isBlocked})">${blockButtonText}</button>
             <button class="button danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="deleteAdminUser('${u._id}')">🗑️ ${t('ডিলিট')}</button>
           </div>
         </div>
-      `).join('');
+      `}).join('');
     } else {
       list.innerHTML = `<p class="muted-text center-block">${t('কোনো ব্যবহারকারী পাওয়া যায়নি')}</p>`;
     }
@@ -1253,6 +1268,24 @@ window.deleteAdminUser = async function(userId) {
     showPopup('ত্রুটি', 'মুছে ফেলতে সমস্যা হয়েছে।', '❌');
   }
 };
+
+window.toggleUserBlock = async function(userId, blockStatus) {
+  const action = blockStatus ? t('ব্লক') : t('আনব্লক');
+  if (!confirm(`আপনি কি এই ব্যবহারকারীকে ${action} করতে নিশ্চিত?`)) return;
+
+  try {
+    const res = await apiCall(`/admin/users/${userId}/block`, 'PUT', { isBlocked: blockStatus });
+    if (res.success) {
+      showPopup('সফল', blockStatus ? t('ব্যবহারকারী ব্লক করা হয়েছে।') : t('ব্যবহারকারী আনব্লক করা হয়েছে।'), '✅');
+      loadAdminUsers();
+    } else {
+      showPopup('ত্রুটি', res.message || t('স্ট্যাটাস আপডেট করতে সমস্যা হয়েছে।'), '❌');
+    }
+  } catch (error) {
+    console.error("Toggle block error:", error);
+    showPopup('ত্রুটি', t('স্ট্যাটাস আপডেট করতে সমস্যা হয়েছে।'), '❌');
+  }
+}
 
 async function loadAdminFeedback() {
   const list = document.getElementById('adminFeedbackList');

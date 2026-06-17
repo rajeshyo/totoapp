@@ -106,6 +106,14 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // Check if user is blocked
+    if (user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been blocked. Please contact support.'
+      });
+    }
+
     // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
@@ -145,6 +153,14 @@ router.get('/profile', authMiddleware, async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'User not found'
+      });
+    }
+
+    // Check if user is blocked
+    if (user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: 'ACCOUNT_BLOCKED' // Special message for frontend to handle logout
       });
     }
 
