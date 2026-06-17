@@ -1184,6 +1184,8 @@ async function loadAdminStats() {
     if (res.success) {
       const countEl = document.getElementById('adminOnlineDriversCount');
       if (countEl) countEl.textContent = `🛺 ${res.onlineDriversCount}`;
+      const customerCountEl = document.getElementById('adminOnlineCustomersCount');
+      if (customerCountEl) customerCountEl.textContent = `👤 ${res.onlineCustomersCount}`;
     }
   } catch (error) {
     console.error('Failed to load admin stats:', error);
@@ -1547,7 +1549,7 @@ closeMenuBtn.addEventListener('click', closeSidebar);
 sideMenuOverlay.addEventListener('click', closeSidebar);
 
 sidebarLogoutBtn.addEventListener('click', () => {
-  if (currentUser?.userType === 'driver') updateOnlineStatus(false);
+  if (currentUser) updateOnlineStatus(false);
   localStorage.removeItem('toto_active_user');
   localStorage.removeItem('toto_token');
   localStorage.removeItem('toto_active_ride_id');
@@ -1614,7 +1616,7 @@ document.getElementById('navFavBtn')?.addEventListener('click', showFavoritesPag
 
 // Logout button in profile page
 document.getElementById('logoutProfileBtn')?.addEventListener('click', () => {
-  if (currentUser?.userType === 'driver') updateOnlineStatus(false);
+  if (currentUser) updateOnlineStatus(false);
   localStorage.removeItem('toto_active_user');
   localStorage.removeItem('toto_token');
   localStorage.removeItem('toto_active_ride_id');
@@ -1841,6 +1843,7 @@ showLoginBtn.addEventListener('click', () => {
 
 // --- Customer Logic ---
 function setupCustomerDashboard() {
+  if (currentUser?.userType === 'passenger') updateOnlineStatus(true);
   if (activeRideId) {
     // Start continuous polling - every 16 seconds
     if (pollInterval) clearInterval(pollInterval);
@@ -2590,7 +2593,7 @@ addStoppageBtn?.addEventListener('click', async () => {
 
 // --- Driver Logic ---
 async function updateOnlineStatus(isOnline) {
-  if (!currentUser || currentUser.userType !== 'driver') return;
+  if (!currentUser) return;
   try {
     const routeId = driverActiveRouteSelect ? driverActiveRouteSelect.value : null;
     await apiCall('/auth/online-status', 'PUT', { isOnline, routeId });
@@ -3219,6 +3222,16 @@ function startDriverPoll() {
 }
 
 // Initial boot
+window.addEventListener('visibilitychange', () => {
+  if (currentUser?.userType === 'passenger') {
+    if (document.visibilityState === 'hidden') {
+      updateOnlineStatus(false);
+    } else {
+      updateOnlineStatus(true);
+    }
+  }
+});
+
 window.addEventListener('load', () => {
   renderApp();
   if (currentUser?.userType === 'driver' && activeRideId) {

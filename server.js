@@ -81,9 +81,10 @@ app.get('/api/admin/stats', authMiddleware, async (req, res, next) => {
     if (req.userType !== 'admin') {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
-    // Calculate the real-time number of online drivers
+    // Calculate the real-time number of online drivers and customers
     const onlineDriversCount = await User.countDocuments({ userType: 'driver', isOnline: true });
-    res.json({ success: true, onlineDriversCount });
+    const onlineCustomersCount = await User.countDocuments({ userType: 'passenger', isOnline: true });
+    res.json({ success: true, onlineDriversCount, onlineCustomersCount });
   } catch (error) {
     next(error);
   }
