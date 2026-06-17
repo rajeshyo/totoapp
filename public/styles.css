@@ -184,24 +184,34 @@ body {
 /* Strictly Mobile-Only UI Frame */
 .app-shell {
   width: 100%;
-  max-width: 414px; /* iPhone Max Width */
   height: 100vh;
-  max-height: 896px;
   background-color: #ffffff;
   display: flex;
   flex-direction: column;
   position: relative;
   overflow-y: auto;
   overflow-x: hidden;
-  box-shadow: 0 0 50px rgba(0,0,0,0.15);
 }
 
 /* Adjust for desktop to look like a phone */
 @media (min-width: 420px) {
   .app-shell {
-    height: 90vh;
-    border-radius: 40px;
-    border: 8px solid #222;
+    max-width: 414px;
+    max-height: 896px;
+    border-radius: 24px;
+    box-shadow: 0 10px 60px rgba(0,0,0,0.1);
+    border: 1px solid #ddd;
+  }
+}
+
+/* Tablet and Desktop Layout */
+@media (min-width: 768px) {
+  .app-shell {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
   }
 }
 
@@ -288,6 +298,13 @@ body {
 .card { background: var(--surface); border-radius: var(--radius-xl); padding: 20px; border: 1px solid var(--border-light); box-shadow: var(--shadow-card); margin-bottom: 18px; transition: transform 0.3s ease, box-shadow 0.3s ease; }
 .card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08); }
 
+/* On larger screens, center the main content sections */
+.dashboard, .auth-container {
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+}
+
 /* Auth Views */
 .auth-container { padding: 24px 8px; text-align: center; }
 .brand-hero { margin-bottom: 32px; }
@@ -296,6 +313,11 @@ body {
 .brand-hero h1 span { color: var(--accent-gold); }
 .subtitle { margin: 12px 0 0; color: var(--text-muted); }
 .auth-tabs { display: flex; background: var(--surface-dim); padding: 6px; border-radius: var(--radius-lg); margin-bottom: 20px; }
+.auth-card {
+  max-width: 450px;
+  margin-left: auto;
+  margin-right: auto;
+}
 .auth-tabs .tab { flex: 1; border: none; padding: 12px; background: transparent; font-weight: 600; font-size: 0.95rem; color: var(--text-muted); border-radius: var(--radius-md); cursor: pointer; }
 .auth-tabs .tab.active { background: #ffffff; color: var(--primary-brand); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 .auth-message { min-height: 24px; color: var(--danger-color); font-size: 0.95rem; margin-bottom: 12px; }
@@ -443,6 +465,9 @@ body {
 .text-sm { font-size: 0.75rem; }
 .mb-10 { margin-bottom: 10px; }
 .grid-quick-stops { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (min-width: 600px) {
+  .grid-quick-stops { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+}
 .stop-chip { background: #ffffff; padding: 12px; font-size: 0.85rem; font-weight: 600; border-radius: var(--radius-md); border: 1px solid var(--border-light); cursor: pointer; text-align: center; }
 .stop-chip:hover, .stop-chip:active { background: var(--accent-soft); border-color: var(--primary-brand); transform: scale(0.98); }
 
