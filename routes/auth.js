@@ -3,6 +3,10 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
 
+if (User && User.schema && !User.schema.path('isBlocked')) {
+  User.schema.add({ isBlocked: { type: Boolean, default: false } });
+}
+
 if (User && User.schema && !User.schema.path('isOnline')) {
   User.schema.add({ isOnline: { type: Boolean, default: false } });
 }
