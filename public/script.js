@@ -310,7 +310,10 @@ const uiTranslations = {
   'রুট যোগ করা হয়েছে।': 'Route added.',
   'রুট আপডেট করা হয়েছে।': 'Route updated.',
   'আপনি কি নিশ্চিত যে আপনি এই রুটটি মুছে ফেলতে চান?': 'Are you sure you want to delete this route?',
-  'টিপে ধরে টেনে এনে সাজান (Drag to reorder)': 'Drag to reorder'
+  'টিপে ধরে টেনে এনে সাজান (Drag to reorder)': 'Drag to reorder',
+  'আজকের রুট (Today\'s Route)': 'Today\'s Route',
+  'রুট নির্বাচন করুন...': 'Select Route...',
+  'অনলাইন হওয়ার আগে আজকের রুট নির্বাচন করুন।': 'Please select today\'s route before going online.'
 };
 
 let currentLang = localStorage.getItem('toto_lang') || 'bn';
@@ -562,6 +565,7 @@ const addVillageBtn = document.getElementById('addVillageBtn');
 // Drivers workflow targets
 const availabilityToggleCheckbox = document.getElementById('availabilityToggleCheckbox');
 const toggleStatusLabel = document.getElementById('toggleStatusLabel');
+const driverActiveRouteSelect = document.getElementById('driverActiveRouteSelect');
 const rideRequestsContainer = document.getElementById('rideRequests');
 const requestCountBadge = document.getElementById('requestCountBadge');
 const driverAcceptedRideCard = document.getElementById('driverAcceptedRideCard');
@@ -2555,7 +2559,8 @@ addStoppageBtn?.addEventListener('click', async () => {
 async function updateOnlineStatus(isOnline) {
   if (!currentUser || currentUser.userType !== 'driver') return;
   try {
-    await apiCall('/auth/online-status', 'PUT', { isOnline });
+    const routeId = driverActiveRouteSelect ? driverActiveRouteSelect.value : null;
+    await apiCall('/auth/online-status', 'PUT', { isOnline, routeId });
   } catch (e) {
     console.error('Failed to update online status', e);
   }
@@ -2571,8 +2576,12 @@ async function setupDriverDashboard() {
     }
   } catch (err) {}
 
+  await loadDriverRoutes();
+
   const isAvailable = localStorage.getItem('toto_driver_online') === 'true';
   availabilityToggleCheckbox.checked = isAvailable;
+  if (driverActiveRouteSelect) driverActiveRouteSelect.disabled = isAvailable;
+  
   toggleDriverStatus(isAvailable);
   updateOnlineStatus(isAvailable);
   if (activeRideId) {
@@ -2582,14 +2591,46 @@ async function setupDriverDashboard() {
   updateStatsDisplay();
 }
 
-availabilityToggleCheckbox.addEventListener('change', () => {
+async function loadDriverRoutes() {
+  if (!driverActiveRouteSelect) return;
+  try {
+    const res = await apiCall('/routes');
+    if (res.success) {
+      driverActiveRouteSelect.innerHTML = `<option value="">${t('রুট নির্বাচন করুন...')}</option>` +
+        res.routes.map(r => `<option value="${r._id}">${r.name}</option>`).join('');
+
+      const savedRoute = localStorage.getItem('toto_driver_route');
+      if (savedRoute) driverActiveRouteSelect.value = savedRoute;
+    }
+  } catch (e) {
+    console.error('Failed to load driver routes', e);
+  }
+}
+
+driverActiveRouteSelect?.addEventListener('change', () => {
+  localStorage.setItem('toto_driver_route', driverActiveRouteSelect.value);
+});
+
+availabilityToggleCheckbox.addEventListener('change', (e) => {
   const isAvailable = availabilityToggleCheckbox.checked;
   
+  if (isAvailable && (!driverActiveRouteSelect || !driverActiveRouteSelect.value)) {
+    e.preventDefault();
+    availabilityToggleCheckbox.checked = false;
+    showPopup('ত্রুটি', 'অনলাইন হওয়ার আগে আজকের রুট নির্বাচন করুন।', '⚠️');
+    return;
+  }
+
   // Request native push notification permission when driver goes online
   if (isAvailable && "Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
     Notification.requestPermission();
   }
   
+  if (driverActiveRouteSelect) {
+    driverActiveRouteSelect.disabled = isAvailable;
+    localStorage.setItem('toto_driver_route', driverActiveRouteSelect.value);
+  }
+
   localStorage.setItem('toto_driver_online', isAvailable);
   toggleDriverStatus(isAvailable);
   updateOnlineStatus(isAvailable);

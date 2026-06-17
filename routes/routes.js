@@ -11,8 +11,8 @@ const adminOnly = (req, res, next) => {
     next();
 };
 
-// GET all active routes, populated with village names
-router.get('/', authMiddleware, adminOnly, async (req, res) => {
+// GET all active routes (accessible to Drivers and Admins)
+router.get('/', authMiddleware, async (req, res) => {
     try {
         const routes = await Route.find({ isActive: true }).sort({ name: 1 });
         res.json({ success: true, routes });

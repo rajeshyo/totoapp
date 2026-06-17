@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>TotoBondhu</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛺</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=3.29" />
+  <link rel="stylesheet" href="styles.css?v=3.30" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -413,6 +413,13 @@
             </label>
           </div>
         </div>
+        
+        <div class="route-selector" style="margin-top: 15px;">
+          <label class="field-label" style="color: var(--text-muted); font-size: 0.9rem;">আজকের রুট (Today's Route)</label>
+          <select id="driverActiveRouteSelect" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 1rem; margin-top: 5px; background: white;">
+            <option value="">রুট নির্বাচন করুন...</option>
+          </select>
+        </div>
 
         <div class="grid-stats-row">
           <div class="stat-box">
@@ -673,7 +680,7 @@
   </div>
 
   <!-- Note the type="module" here, which is required for Firebase -->
-  <script type="module" src="script.js?v=3.29"></script>
+  <script type="module" src="script.js?v=3.30"></script>
   
 </body>
 </html>
