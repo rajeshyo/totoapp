@@ -316,7 +316,19 @@ const uiTranslations = {
   'অনলাইন হওয়ার আগে আজকের রুট নির্বাচন করুন।': 'Please select today\'s route before going online.',
   '📥 এক্সেল ডাউনলোড (Download Backup)': '📥 Download Excel Backup',
   'এক্সেল ফাইল ডাউনলোড সফল হয়েছে।': 'Excel file downloaded successfully.',
-  'ফাইল ডাউনলোড করতে সমস্যা হয়েছে।': 'Failed to download file.'
+  'ফাইল ডাউনলোড করতে সমস্যা হয়েছে।': 'Failed to download file.',
+  'গোশালা মোড়': 'Goshala More',
+  'পুলগোড়া ট্যাক্সি স্ট্যান্ড': 'Pulgora Taxi Stand',
+  'আউশগ্রাম বাসস্ট্যান্ড': 'Ausgram Bus Stand',
+  'আউশগ্রাম হাসপাতাল': 'Ausgram Hospital',
+  'আউশগ্রাম থানা': 'Ausgram Police Station',
+  'করাটিয়া মোড়': 'Karatia More',
+  'করাটিয়া হাই স্কুল': 'Karatia High School',
+  'করাটিয়া বাজার': 'Karatia Bazar',
+  'করাটিয়া স্বাস্থ্যকেন্দ্র': 'Karatia Health Centre',
+  'গুসকরা': 'Guskara',
+  'আউশগ্রাম': 'Ausgram',
+  'করাটিয়া': 'Karatia'
 };
 
 let currentLang = localStorage.getItem('toto_lang') || 'bn';
@@ -334,13 +346,30 @@ const locationTranslations = {
   'বাজার ঘাট': 'Bazar Ghat',
   'স্কুল মোড়': 'School More',
   'করাপাড়া মোড়': 'Korapara More',
+  'গোশালা মোড়': 'Goshala More',
+  'পুলগোড়া ট্যাক্সি স্ট্যান্ড': 'Pulgora Taxi Stand',
+  'আউশগ্রাম বাসস্ট্যান্ড': 'Ausgram Bus Stand',
+  'আউশগ্রাম হাসপাতাল': 'Ausgram Hospital',
+  'আউশগ্রাম থানা': 'Ausgram Police Station',
+  'করাটিয়া মোড়': 'Karatia More',
+  'করাটিয়া হাই স্কুল': 'Karatia High School',
+  'করাটিয়া বাজার': 'Karatia Bazar',
+  'করাটিয়া স্বাস্থ্যকেন্দ্র': 'Karatia Health Centre',
   'করাটিয়া': 'Karatia',
   'গুসকরা': 'Guskara',
   'শিমুলগ্রাম': 'Shimulgram',
   'আউশগ্রাম': 'Ausgram',
   'বননবগ্রাম': 'Bonnabgram',
   'করটিয়া': 'Karatia',
-  'বননবগ্ৰাম': 'Bonnabgram'
+  'বননবগ্ৰাম': 'Bonnabgram',
+  'পোস্ট অফিস মোড়': 'Post Office More',
+  "গাড়ি খানা": "Gari Khana",
+  "পুলগোড়া": "Pulgora",
+  "ট্যাক্সি স্ট্যান্ড": "Taxi Stand",
+  "কোর্ট মোড়": "Court More",
+  "আলুটিয়া" : "Alutia",
+  "সোমাইপুর" : "Somaipur",
+  "আলেফনগর" : "Alefnagar",
 };
 
 function t(bengaliString) {
@@ -662,24 +691,24 @@ function buildSearchableLocations() {
     const bnName = village.nameBn;
     const enName = locationTranslations[bnName] || bnName;
     searchableLocations.push({
-      type: 'village',
+      type: 'village', // This is a village
       villageId: village.id,
       stoppageId: village.stoppages?.[0]?.id || village.id,
-      name: t(bnName),
+      name: bnName, // Always store the original Bengali name
       searchString: `${bnName} ${enName}`.toLowerCase(),
-      displayText: `📍 ${t(bnName)}`
+      displayText: `📍 ${bnName}` // Always display original Bengali name
     });
     if (village.stoppages) {
       village.stoppages.forEach(stoppage => {
         const sBnName = stoppage.nameBn;
         const sEnName = locationTranslations[sBnName] || sBnName;
         searchableLocations.push({
-          type: 'stoppage',
+          type: 'stoppage', // This is a stoppage
           villageId: village.id,
           stoppageId: stoppage.id,
           name: t(sBnName),
           searchString: `${sBnName} ${sEnName} ${bnName} ${enName}`.toLowerCase(),
-          displayText: `🚏 ${t(sBnName)} (${t(bnName)})`
+          displayText: `🚏 ${sBnName} (${bnName})` // Always display original Bengali name
         });
       });
     }
