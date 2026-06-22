@@ -111,7 +111,7 @@ router.post('/request', authMiddleware, async (req, res) => {
       const localTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000)); // Adjusted for IST/BST (UTC+5:30)
       const hour = localTime.getUTCHours();
       if (hour >= 18 || hour < 6) {
-        fare = Math.ceil(fare * 1.20);
+        fare = fare + 10;
       }
     }
 

@@ -282,7 +282,7 @@ const uiTranslations = {
   'আপনার টোটো বাইরে অপেক্ষা করছে!': 'Your Toto is waiting outside!',
   'আমি পৌঁছেছি': 'I Have Arrived',
   'আপডেট করতে সমস্যা হয়েছে।': 'Failed to update.',
-  'বেশি ভাড়া লাগবে সন্ধ্যা ৬টা থেকে সকাল ৬টা পর্যন্ত': 'Higher fares will apply from 6 PM to 6 AM.',
+  'সন্ধ্যা ৬টা থেকে সকাল ৬টা পর্যন্ত ₹10 অতিরিক্ত ভাড়া লাগবে।': '₹10 extra will be charged from 6 PM to 6 AM.',
   'নেভিগেট': 'Navigate',
   'লোকেশন চেক করা হচ্ছে...': 'Getting location...',
   'যোগ করা হয়নি': 'Not Added',
@@ -2569,7 +2569,7 @@ function updateRidePreview() {
   // Apply 20% night surge to preview based on user's local phone time
   const hour = new Date().getHours();
   if (hour >= 18 || hour < 6) {
-    fare = Math.ceil(fare * 1.20);
+    fare = fare + 10;
   }
   
   distanceInfoInput.value = `${distance} km`;
