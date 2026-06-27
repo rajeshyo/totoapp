@@ -2348,6 +2348,45 @@ function updateStatsDisplay() {
   }
 }
 
+async function recalculateDailyStats() {
+  if (!currentUser || currentUser.userType !== 'driver') {
+    return;
+  }
+
+  try {
+    const response = await apiCall('/rides/user/rides');
+    if (!response.success || !response.rides) {
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today in local timezone
+
+    let totalRides = 0;
+    let totalIncome = 0;
+
+    response.rides.forEach(ride => {
+      const rideCompletionDate = ride.endTime ? new Date(ride.endTime) : null;
+      if (ride.rideStatus === 'completed' && rideCompletionDate && rideCompletionDate >= today) {
+        totalRides++;
+        totalIncome += ride.fare || 0;
+      }
+    });
+
+    const stats = {
+      date: new Date().toDateString(),
+      totalRides: totalRides,
+      totalIncome: totalIncome
+    };
+
+    const userId = currentUser._id;
+    const statsKey = `toto_daily_stats_${userId}`;
+    localStorage.setItem(statsKey, JSON.stringify(stats));
+  } catch (error) {
+    console.error('Failed to recalculate daily stats:', error);
+  }
+}
+
 function resetCustomerUI() {
   if (arrivalTimerInterval) {
     clearInterval(arrivalTimerInterval);
@@ -2726,6 +2765,9 @@ async function setupDriverDashboard() {
     if (!currentUser) return; // Stop loading if forced out
 
   await loadDriverRoutes();
+
+  // Recalculate stats from the server every time the dashboard loads
+  await recalculateDailyStats();
 
   const isAvailable = localStorage.getItem('toto_driver_online') === 'true';
   availabilityToggleCheckbox.checked = isAvailable;
