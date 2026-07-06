@@ -776,6 +776,7 @@ function setupAutocomplete(inputId, resultsId, isPickup) {
       if (isPickup) selectedPickup = null;
       else selectedDropoff = null;
       updateRidePreview();
+      updateRideButtonState();
       return;
     }
 
@@ -790,20 +791,22 @@ function setupAutocomplete(inputId, resultsId, isPickup) {
           input.value = match.name;
           results.classList.add('hidden');
           if (isPickup) {
-            selectedPickup = match;
-            if (dropoffColumn) dropoffColumn.classList.remove('hidden');
-          } else {
-            selectedDropoff = match;
-          }
-          updateRidePreview();
-        });
-        results.appendChild(div);
+                    selectedPickup = match;
+          if (dropoffColumn) dropoffColumn.classList.remove('hidden');
+          updateRideButtonState();
+        } else {
+          selectedDropoff = match;
+          updateRideButtonState();
+        }
+        updateRidePreview();
       });
-      results.classList.remove('hidden');
-    } else {
-      results.classList.add('hidden');
-    }
-  });
+      results.appendChild(div);
+    });
+    results.classList.remove('hidden');
+  } else {
+    results.classList.add('hidden');
+  }
+});
 
   document.addEventListener('click', (e) => {
     if (e.target !== input && e.target !== results) {
@@ -1209,13 +1212,7 @@ window.bookFavorite = function(villageId, stoppageId, stopName) {
     dropoffColumn.classList.remove('hidden');
   }
   updateRidePreview();
-  
-  showPopup('গন্তব্য সেট হয়েছে', `${t(stopName)} গন্তব্য হিসেবে সেট করা হয়েছে। ভাড়া চেক করে টোটো খুঁজুন।`, '✅');
-}
-
-// --- Admin Logic ---
-function setupAdminDashboard() {
-  loadAdminUsers();
+      updateRideButtonState();
   loadAdminStats();
 
   if (adminPollInterval) clearInterval(adminPollInterval);
@@ -2417,6 +2414,7 @@ function resetCustomerUI() {
   
   selectedPickup = null;
   selectedDropoff = null;
+  updateRideButtonState();
   if (pickupSearch) pickupSearch.value = '';
   if (dropoffSearch) dropoffSearch.value = '';
   
@@ -2437,7 +2435,7 @@ rideRequestForm.addEventListener('submit', async event => {
   const landmark = landmarkInput?.value?.trim() || '';
 
   if (!pickupVillageId || !dropoffVillageId) {
-    showPopup('ত্রুটি', 'দয়া করে পিকআপ এবং গন্তব্য নির্বাচন করুন।', '❌');
+    // Prevent accidental submit when pickup/dropoff are not yet selected.
     return;
   }
 
@@ -2601,7 +2599,7 @@ cancelRideBtn?.addEventListener('click', async () => {
 
 // --- Preview & Calculation ---
 function updateRidePreview() {
-  if (!selectedPickup || !selectedDropoff) { pricePreviewCard.classList.add('hidden'); return; }
+  if (!selectedPickup || !selectedDropoff) { pricePreviewCard.classList.add('hidden'); updateRideButtonState(); return; }
   const distance = calculatePreviewDistance();
   let fare = Math.max(BASE_FARE, distance * FARE_PER_KM);
   
@@ -2614,6 +2612,14 @@ function updateRidePreview() {
   distanceInfoInput.value = `${distance} km`;
   fareInfoInput.value = `₹${fare}`;
   pricePreviewCard.classList.remove('hidden');
+  updateRideButtonState();
+}
+
+function updateRideButtonState() {
+  if (!rideSubmitBtn) return;
+  const canBook = !!selectedPickup && !!selectedDropoff;
+  rideSubmitBtn.disabled = !canBook;
+  rideSubmitBtn.style.opacity = canBook ? '1' : '0.6';
 }
 
 // Instant Booking (Popular Places)
@@ -2663,6 +2669,7 @@ function renderPopularPlaces() {
         dropoffColumn.classList.remove('hidden');
       }
       updateRidePreview();
+      updateRideButtonState();
     });
   });
 }
