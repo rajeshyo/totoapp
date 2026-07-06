@@ -658,6 +658,10 @@ const feedbackSubmitBtn = document.getElementById('feedbackSubmitBtn');
 
 const FARE_PER_KM = 10;
 const BASE_FARE = 10;
+const NIGHT_SURCHARGE = 10;
+const NIGHT_SURGE_START = 18; // 6 PM
+const NIGHT_SURGE_END = 6; // 6 AM
+
 let locationData = [];
 let searchableLocations = [];
 
@@ -2444,11 +2448,7 @@ rideRequestForm.addEventListener('submit', async event => {
   const distance = calculatePreviewDistance();
   
   // Calculate exact fare requested so it syncs perfectly with driver dashboard
-  let fare = Math.max(BASE_FARE, distance * FARE_PER_KM);
-  const hour = new Date().getHours();
-  if (hour >= 18 || hour < 6) {
-    fare = Math.ceil(fare * 1.20);
-  }
+  const fare = calculateFareFromDistance(distance);
   
   rideSubmitBtn.disabled = true;
   rideSubmitBtn.textContent = t('লোকেশন চেক করা হচ্ছে...');
@@ -2598,16 +2598,21 @@ cancelRideBtn?.addEventListener('click', async () => {
 });
 
 // --- Preview & Calculation ---
+function isNightTime() {
+  const hour = new Date().getHours();
+  return hour >= NIGHT_SURGE_START || hour < NIGHT_SURGE_END;
+}
+
+function calculateFareFromDistance(distance) {
+  let fare = Math.max(BASE_FARE, distance * FARE_PER_KM);
+  if (isNightTime()) fare += NIGHT_SURCHARGE;
+  return fare;
+}
+
 function updateRidePreview() {
   if (!selectedPickup || !selectedDropoff) { pricePreviewCard.classList.add('hidden'); updateRideButtonState(); return; }
   const distance = calculatePreviewDistance();
-  let fare = Math.max(BASE_FARE, distance * FARE_PER_KM);
-  
-  // Apply 20% night surge to preview based on user's local phone time
-  const hour = new Date().getHours();
-  if (hour >= 18 || hour < 6) {
-    fare = fare + 10;
-  }
+  const fare = calculateFareFromDistance(distance);
   
   distanceInfoInput.value = `${distance} km`;
   fareInfoInput.value = `₹${fare}`;

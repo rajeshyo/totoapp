@@ -26,6 +26,9 @@ const router = express.Router();
 
 const FARE_PER_KM = 10; // per km rate
 const BASE_FARE = 10; // minimum fare
+const NIGHT_SURCHARGE = 10; // fixed night increment
+const NIGHT_SURGE_START = 18; // 6 PM
+const NIGHT_SURGE_END = 6; // 6 AM
 
 async function buildLocationFromStoppage(stoppageId, landmark) {
   const found = await findStoppage(stoppageId);
@@ -106,12 +109,11 @@ router.post('/request', authMiddleware, async (req, res) => {
     let fare = requestedFare ? Number(requestedFare) : Math.max(BASE_FARE, distance * FARE_PER_KM);
 
     if (!requestedFare) {
-      // Apply 20% night surge (6 PM to 6 AM)
       const now = new Date();
       const localTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000)); // Adjusted for IST/BST (UTC+5:30)
       const hour = localTime.getUTCHours();
-      if (hour >= 18 || hour < 6) {
-        fare = fare + 10;
+      if (hour >= NIGHT_SURGE_START || hour < NIGHT_SURGE_END) {
+        fare = fare + NIGHT_SURCHARGE;
       }
     }
 
