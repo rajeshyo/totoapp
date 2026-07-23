@@ -604,6 +604,12 @@ const endRideBtn = document.getElementById('endRideBtn');
 const cancelRideBtn = document.getElementById('cancelRideBtn');
 const stopChips = document.querySelectorAll('.stop-chip');
 
+// New fare input elements
+const customerFareInputContainer = document.getElementById('customerFareInputContainer');
+const custNegFareInput = document.getElementById('custNegFareInput');
+const custNegMinusBtn = document.getElementById('custNegMinusBtn');
+const custNegPlusBtn = document.getElementById('custNegPlusBtn');
+
 // Add Stoppage UI
 const newStoppageVillageSelect = document.getElementById('newStoppageVillage');
 const newStoppageNameInput = document.getElementById('newStoppageName');
@@ -821,6 +827,22 @@ function setupAutocomplete(inputId, resultsId, isPickup) {
 
 setupAutocomplete('pickupSearch', 'pickupSearchResults', true);
 setupAutocomplete('dropoffSearch', 'dropoffSearchResults', false);
+
+custNegMinusBtn?.addEventListener('click', () => {
+    const currentFare = parseInt(custNegFareInput.value) || 0;
+    custNegFareInput.value = Math.max(10, currentFare - 10);
+    updateRideButtonState();
+});
+
+custNegPlusBtn?.addEventListener('click', () => {
+    const currentFare = parseInt(custNegFareInput.value) || 0;
+    custNegFareInput.value = currentFare + 10;
+    updateRideButtonState();
+});
+
+custNegFareInput?.addEventListener('input', () => {
+    updateRideButtonState();
+});
 
 // --- Global Notification Alert ---
 function showPopup(title, message, icon = '🔔', onClose = null) {
@@ -2428,6 +2450,8 @@ function resetCustomerUI() {
   
   if (landmarkInput) landmarkInput.value = '';
   pricePreviewCard.classList.add('hidden');
+  if (customerFareInputContainer) customerFareInputContainer.classList.add('hidden');
+  if (custNegFareInput) custNegFareInput.value = '';
 }
 
 rideRequestForm.addEventListener('submit', async event => {
@@ -2439,16 +2463,18 @@ rideRequestForm.addEventListener('submit', async event => {
   const landmark = landmarkInput?.value?.trim() || '';
 
   if (!pickupVillageId || !dropoffVillageId) {
-    // Prevent accidental submit when pickup/dropoff are not yet selected.
+    showPopup('ত্রুটি', 'দয়া করে পিকআপ এবং গন্তব্য নির্বাচন করুন।', '❌');
+    return;
+  }
+
+  const fare = parseInt(custNegFareInput.value);
+  if (!fare || fare < 10) {
+    showPopup('ত্রুটি', 'দয়া করে একটি বৈধ ভাড়া লিখুন (ন্যূনতম ₹10)।', '❌');
     return;
   }
 
   const pickupAddress = selectedPickup.name + (landmark ? ` (${landmark})` : '');
   const dropoffAddress = selectedDropoff.name;
-  const distance = calculatePreviewDistance();
-  
-  // Calculate exact fare requested so it syncs perfectly with driver dashboard
-  const fare = calculateFareFromDistance(distance);
   
   rideSubmitBtn.disabled = true;
   rideSubmitBtn.textContent = t('লোকেশন চেক করা হচ্ছে...');
@@ -2495,7 +2521,7 @@ rideRequestForm.addEventListener('submit', async event => {
         latitude: 0,
         longitude: 0
       },
-      distance: Number(distance.toFixed(1)),
+      distance: 0, // Distance is no longer calculated on the client
       fare: fare
     });
 
@@ -2610,19 +2636,24 @@ function calculateFareFromDistance(distance) {
 }
 
 function updateRidePreview() {
-  if (!selectedPickup || !selectedDropoff) { pricePreviewCard.classList.add('hidden'); updateRideButtonState(); return; }
-  const distance = calculatePreviewDistance();
-  const fare = calculateFareFromDistance(distance);
-  
-  distanceInfoInput.value = `${distance} km`;
-  fareInfoInput.value = `₹${fare}`;
-  pricePreviewCard.classList.remove('hidden');
+  if (!selectedPickup || !selectedDropoff) {
+    if (customerFareInputContainer) customerFareInputContainer.classList.add('hidden');
+    updateRideButtonState();
+    return;
+  }
+
+  // Show the fare input container but do not pre-fill it.
+  if (customerFareInputContainer) {
+    customerFareInputContainer.classList.remove('hidden');
+  }
+  pricePreviewCard.classList.add('hidden');
   updateRideButtonState();
 }
 
 function updateRideButtonState() {
   if (!rideSubmitBtn) return;
-  const canBook = !!selectedPickup && !!selectedDropoff;
+  const fare = custNegFareInput ? parseInt(custNegFareInput.value) : 0;
+  const canBook = !!selectedPickup && !!selectedDropoff && fare >= 10;
   rideSubmitBtn.disabled = !canBook;
   rideSubmitBtn.style.opacity = canBook ? '1' : '0.6';
 }
@@ -2940,7 +2971,7 @@ async function listenToPendingQueue() {
         <p>📍 ${t('পিকআপ:')} ${t(ride.pickupLocation.villageName)}</p>
         ${ride.pickupLocation.landmark ? `<p>${t('📌 স্থলচিহ্ন:')} ${ride.pickupLocation.landmark}</p>` : ''}
         <p>🏁 ${t('গন্তব্য:')} ${t(ride.dropoffLocation.villageName)}</p>
-        <p>💰 ${t('ভাড়া:')} <span class="text-green">₹${ride.fare}</span> (${ride.distance} km)</p>
+        <p>💰 ${t('ভাড়া:')} <span class="text-green">₹${ride.fare}</span></p>
         <div class="request-actions" style="flex-wrap: wrap;">
           <button class="button primary accept-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('গ্রহণ করুন')}</button>
           <button class="button secondary negotiate-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('ভাড়া বাড়ান')}</button>

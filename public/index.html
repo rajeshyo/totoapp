@@ -240,7 +240,16 @@
               </div>
             </div>
 
-            <div id="pricePreviewCard" class="price-preview-box hidden">
+            <div id="customerFareInputContainer" class="hidden" style="margin-bottom: 20px;">
+              <label class="field-label" style="text-align:center; display:block; margin-bottom:10px;">ভাড়া লিখুন / Recommended Fare</label>
+              <div style="display:flex;justify-content:center;align-items:center;gap:15px;">
+                  <button type="button" id="custNegMinusBtn" class="button secondary" style="width:50px;height:50px;font-size:1.5rem;border-radius:50%;padding:0;">-</button>
+                  <input type="number" id="custNegFareInput" style="width:100px;font-size:1.5rem;text-align:center;padding:10px;border:1px solid #ccc;border-radius:8px;" min="10" step="10">
+                  <button type="button" id="custNegPlusBtn" class="button secondary" style="width:50px;height:50px;font-size:1.5rem;border-radius:50%;padding:0;">+</button>
+              </div>
+            </div>
+
+            <!-- <div id="pricePreviewCard" class="price-preview-box hidden">
               <div class="preview-metric">
                 <span class="label">মোট দূরত্ব:</span>
                 <input type="text" id="distanceInfo" readonly />
@@ -249,7 +258,7 @@
                 <span class="label">ভাড়া উক্তি:</span>
                 <input type="text" id="fareInfo" readonly />
               </div>
-            </div>
+            </div> -->
 
             <div class="landmark-field">
               <label class="field-label" for="landmarkInput">কাছাকাছি স্থানের নাম লিখুন</label>
@@ -691,7 +700,6 @@
   <script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
   <!-- Note the type="module" here, which is required for Firebase -->
   <script type="module" src="script.js?v=3.37"></script>
-  <script type="module" src="script.js?v=3.38"></script>
   
 </body>
 </html>
