@@ -2816,13 +2816,6 @@ driverActiveRouteSelect?.addEventListener('change', () => {
 
 availabilityToggleCheckbox.addEventListener('change', (e) => {
   const isAvailable = availabilityToggleCheckbox.checked;
-  
-  if (isAvailable && (!driverActiveRouteSelect || !driverActiveRouteSelect.value)) {
-    e.preventDefault();
-    availabilityToggleCheckbox.checked = false;
-    showPopup('ত্রুটি', 'অনলাইন হওয়ার আগে আজকের রুট নির্বাচন করুন।', '⚠️');
-    return;
-  }
 
   // Request native push notification permission when driver goes online
   if (isAvailable && "Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
