@@ -416,6 +416,32 @@ const locationTranslations = {
 "দৌড়াডাঙা" : "Dauradanga",
 "মাহাতা" : "Mahata",
 "রামপুর" : "Rampur",
+"শিলুট" : "Silut",
+"নবগ্রাম" : "Nabagram",
+"বেলুটি" : "Beluti",
+"জয়কৃষ্ণপুর" : "Jaykrishnapur",
+"বেরান্দা" : "Beranda",
+"পুবার" : "Pubar",
+"উত্তর রামনগর" : "Uttar Ramnagar",
+"মোড়বাঁধ" : "Morbandh",
+"বাগরাই" : "Bagrai",
+"গেঁড়াই" : "Genrai",
+"বলরামবাটি" : "Balarambati",
+"ভাতকুন্দা" : "Bhatkunda",
+"বাহামানপুর" : "Bahamanpur",
+"প্রতাপপুর" : "Pratappur",
+"কুড়ুমবা" : "Kurumba",
+"পিচকুরি" : "Pichkuri",
+"বেরান্দা" : "Beranda",
+"উক্তা" : "Ukta",
+"বুদবুদ" : "Budbud",
+"মারো" : "Maro",
+"আদুড়িয়া" : "Aduria",
+"পড়িশা" : "Parisha",
+"দেবসালা" : "Debsala",
+"বসুধা" : "Basudha",
+"ইলামবাজার" : "Illambazar"
+
 
 };
 
