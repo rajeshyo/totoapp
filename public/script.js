@@ -33,7 +33,7 @@ function sendNotification(title, options = {}) {
     });
 
     // If they click the native push notification, focus the browser tab
-    notification.onclick = function() {
+    notification.onclick = function () {
       window.focus();
       this.close();
     };
@@ -57,7 +57,7 @@ function notifyCustomerRideAccepted(driverName, driverPhone) {
 }
 
 // ===== API Configuration =====
-const API_BASE_URL ='https://totoapp.onrender.com/api';
+const API_BASE_URL = 'https://totoapp.onrender.com/api';
 
 // ===== Localization =====
 const uiTranslations = {
@@ -367,31 +367,55 @@ const locationTranslations = {
   "পুলগোড়া": "Pulgora",
   "ট্যাক্সি স্ট্যান্ড": "Taxi Stand",
   "কোর্ট মোড়": "Court More",
-  "আলুটিয়া" : "Alutia",
-  "সোমাইপুর" : "Somaipur",
-  "আলেফনগর" : "Alefnagar",
-  "ওয়ারিশপুর"  : "Warishpur",
-  "দোখলগঞ্জ্" : "Dokhalganj ",
-  "আলেফনগর" : "Alefnagar",
-  "হাড়গোড়িয়াডাঙা" : "Hargoriadanga",
-  "রাধামোহনপুর" : "Radhamohanpur",
-  "গোপালপাোতা" : "Gopalpota",
-  "গোপীনাথপুর" : "Gopinathpur",
-  "সুকান্তপল্লী" :   "Sukantapally",
-  "শোকাডাঙা " : "Sokadanga",
-  "বসতপুর" : "Boshotpur",
-  "ধনকোরা" : "Dhonkora",
-  "ছোড়া" : "Chhora",
-  "ভুয়েরা" : "Bhuyera",
-  "পান্ডুক" : "Panduk",
-  "কুড়ুমবা" : "Kurumba",
-  "যাদবগঞ্জ" : "Jadabganj",
-  "কুমারগঞ্জ" : "Kumarganj",
-  "সামন্তপাড়া" : "Samantapara",
-  "সুয়াতা" : "Suata",
-  "অভিরামপুর" : "Abhirampur",
-  "আমরাগড়" : "Amrargar",
-"মানকার" : "Mankar",
+  "আলুটিয়া": "Alutia",
+  "সোমাইপুর": "Somaipur",
+  "আলেফনগর": "Alefnagar",
+  "ওয়ারিশপুর": "Warishpur",
+  "দোখলগঞ্জ্": "Dokhalganj ",
+  "আলেফনগর": "Alefnagar",
+  "হাড়গোড়িয়াডাঙা": "Hargoriadanga",
+  "রাধামোহনপুর": "Radhamohanpur",
+  "গোপালপাোতা": "Gopalpota",
+  "গোপীনাথপুর": "Gopinathpur",
+  "সুকান্তপল্লী": "Sukantapally",
+  "শোকাডাঙা ": "Sokadanga",
+  "বসতপুর": "Boshotpur",
+  "ধনকোরা": "Dhonkora",
+  "ছোড়া": "Chhora",
+  "ভুয়েরা": "Bhuyera",
+  "পান্ডুক": "Panduk",
+  "কুড়ুমবা": "Kurumba",
+  "যাদবগঞ্জ": "Jadabganj",
+  "কুমারগঞ্জ": "Kumarganj",
+  "সামন্তপাড়া": "Samantapara",
+  "সুয়াতা": "Suata",
+  "অভিরামপুর": "Abhirampur",
+  "আমরাগড়": "Amrargar",
+  "মানকার": "Mankar",
+  "রামনগর": "Ramnagar",
+  "দিঘা": "Digha",
+"গোবিন্দপুর": "Gobindapur",
+"পিচকুরি" : "Pichkuri",
+"বটগ্রাম " : "Batagram",
+"ফতেপুর" : "Fotepur",
+"ভেদিয়া" : "Bhedia",
+"সুপুর" : "Supur",
+"রায়পুর" : "Raipur",
+"বোলপুর" : "Bolpur",
+"সারঙ্গপুর" : "Sarongpur",
+"সরুলিয়া" : "Soruliya",
+"উজিরপুর" : "Ujirpur",
+"জলপাড়া" : "Jalpara",
+"চানাক" : "Chanak",
+"কাশেমনগর" : "kasemnagar",
+"দোনাইপুর" : "Donaipur",
+"শিবডা" : "Shibda",
+"ঝর্ণা" : "Jharna",
+"অর্গ্রাম" : "Orgram",
+"রামচন্দ্রপুর" : "Ramchandrapur",
+"দৌড়াডাঙা" : "Dauradanga",
+"মাহাতা" : "Mahata",
+"রামপুর" : "Rampur",
 
 };
 
@@ -419,11 +443,11 @@ function translateNode(node) {
     const trimmed = original.trim();
     if (trimmed) {
       if (!node._origText) node._origText = original;
-      
+
       let translated = trimmed;
       if (currentLang === 'en') {
         translated = uiTranslations[trimmed] || trimmed;
-        
+
         // Force exact English spelling regardless of HTML typos!
         const lower = trimmed.toLowerCase();
         if (lower === 'totobondhu' || lower === 'totobhandhu' || lower === 'toto bondhu' || lower === 'toto bhandhu' || trimmed === 'টোটোবন্ধু') {
@@ -436,7 +460,7 @@ function translateNode(node) {
       } else { // 'bn'
         const bnKey = Object.keys(uiTranslations).find(key => uiTranslations[key] === trimmed);
         translated = bnKey || trimmed;
-        
+
         // Special catch for all spelling variations of TotoBondhu in English!
         const lower = trimmed.toLowerCase();
         if (lower === 'totobondhu' || lower === 'totobhandhu' || lower === 'toto bondhu' || lower === 'toto bhandhu' || trimmed === 'টোটোবন্ধু') {
@@ -454,15 +478,15 @@ function translateNode(node) {
     }
   } else if (node.nodeType === 1) { // Element node
     if (node.tagName === 'SCRIPT' || node.tagName === 'STYLE') return;
-    
+
     if (node.hasAttribute('placeholder')) {
       const original = node.getAttribute('data-orig-ph') || node.getAttribute('placeholder');
       if (!node.getAttribute('data-orig-ph')) node.setAttribute('data-orig-ph', original);
-      
+
       let translated = original;
       if (currentLang === 'en') {
         translated = uiTranslations[original] || original;
-        
+
         // Force exact English spelling regardless of HTML typos!
         const lower = original.toLowerCase();
         if (lower === 'totobondhu' || lower === 'totobhandhu' || lower === 'toto bondhu' || lower === 'toto bhandhu' || original === 'টোটোবন্ধু') {
@@ -475,7 +499,7 @@ function translateNode(node) {
       } else { // 'bn'
         const bnKey = Object.keys(uiTranslations).find(key => uiTranslations[key] === original);
         translated = bnKey || original;
-        
+
         // Special catch for all spelling variations of TotoBondhu in placeholders!
         const lower = original.toLowerCase();
         if (lower === 'totobondhu' || lower === 'totobhandhu' || lower === 'toto bondhu' || lower === 'toto bhandhu' || original === 'টোটোবন্ধু') {
@@ -488,14 +512,14 @@ function translateNode(node) {
       }
       node.setAttribute('placeholder', translated);
     }
-    
+
     node.childNodes.forEach(translateNode);
   }
 }
 
 function applyTranslations() {
   translateNode(document.body);
-  
+
   // Also perfectly handle the Browser Tab Title!
   const titleLower = document.title.toLowerCase();
   if (currentLang === 'bn' && (titleLower.includes('totobondhu') || titleLower.includes('totobhandhu'))) {
@@ -510,7 +534,7 @@ window.addEventListener('load', () => {
   applyTranslations();
   const currentUser = localStorage.getItem('toto_active_user');
   const splashScreen = document.getElementById('splashScreen');
-  
+
   if (splashScreen && !currentUser) {
     // Show splash screen only if not logged in - 10 seconds
     setTimeout(() => {
@@ -541,7 +565,7 @@ function handleBlockedAccount() {
 // Helper function to make API calls with authorization
 async function apiCall(endpoint, method = 'GET', body = null) {
   const token = localStorage.getItem('toto_token');
-  
+
   const options = {
     method,
     headers: {
@@ -752,22 +776,22 @@ function calculatePreviewDistance() {
   const pickupId = selectedPickup?.villageId;
   const dropoffId = selectedDropoff?.villageId;
   if (!pickupId || !dropoffId) return 0;
-  
+
   if (pickupId === dropoffId) {
     return 3;
   }
-  
+
   const pickup = locationData.find(v => v.id === pickupId);
   const dropoff = locationData.find(v => v.id === dropoffId);
-  
+
   if (pickup && pickup.distances && pickup.distances[dropoffId]) {
     return pickup.distances[dropoffId];
   }
-  
+
   const villageIds = locationData.map(v => v.id);
   const pickupVillageIdx = villageIds.indexOf(pickupId);
   const dropoffVillageIdx = villageIds.indexOf(dropoffId);
-  
+
   const indexDiff = Math.abs(pickupVillageIdx - dropoffVillageIdx);
   return Number(Math.max(1, indexDiff * 3).toFixed(1));
 }
@@ -783,14 +807,14 @@ async function loadLocations() {
   } catch (error) {
     console.error('Failed to load locations from API:', error);
   }
-      
-      buildSearchableLocations();
-      populateVillageSelect(newStoppageVillageSelect, t('গ্রাম নির্বাচন করুন'));
-      
-      renderPopularPlaces();
-      if (typeof favoriteRidesPage !== 'undefined' && !favoriteRidesPage.classList.contains('hidden')) {
-        displayFavorites();
-      }
+
+  buildSearchableLocations();
+  populateVillageSelect(newStoppageVillageSelect, t('গ্রাম নির্বাচন করুন'));
+
+  renderPopularPlaces();
+  if (typeof favoriteRidesPage !== 'undefined' && !favoriteRidesPage.classList.contains('hidden')) {
+    displayFavorites();
+  }
 }
 
 loadLocations();
@@ -814,7 +838,7 @@ function setupAutocomplete(inputId, resultsId, isPickup) {
     }
 
     const matches = searchableLocations.filter(loc => loc.searchString.includes(val) || loc.displayText.toLowerCase().includes(val));
-    
+
     if (matches.length > 0) {
       matches.forEach(match => {
         const div = document.createElement('div');
@@ -824,22 +848,22 @@ function setupAutocomplete(inputId, resultsId, isPickup) {
           input.value = match.name;
           results.classList.add('hidden');
           if (isPickup) {
-                    selectedPickup = match;
-          if (dropoffColumn) dropoffColumn.classList.remove('hidden');
-          updateRideButtonState();
-        } else {
-          selectedDropoff = match;
-          updateRideButtonState();
-        }
-        updateRidePreview();
+            selectedPickup = match;
+            if (dropoffColumn) dropoffColumn.classList.remove('hidden');
+            updateRideButtonState();
+          } else {
+            selectedDropoff = match;
+            updateRideButtonState();
+          }
+          updateRidePreview();
+        });
+        results.appendChild(div);
       });
-      results.appendChild(div);
-    });
-    results.classList.remove('hidden');
-  } else {
-    results.classList.add('hidden');
-  }
-});
+      results.classList.remove('hidden');
+    } else {
+      results.classList.add('hidden');
+    }
+  });
 
   document.addEventListener('click', (e) => {
     if (e.target !== input && e.target !== results) {
@@ -852,19 +876,19 @@ setupAutocomplete('pickupSearch', 'pickupSearchResults', true);
 setupAutocomplete('dropoffSearch', 'dropoffSearchResults', false);
 
 custNegMinusBtn?.addEventListener('click', () => {
-    const currentFare = parseInt(custNegFareInput.value) || 0;
-    custNegFareInput.value = Math.max(10, currentFare - 10);
-    updateRideButtonState();
+  const currentFare = parseInt(custNegFareInput.value) || 0;
+  custNegFareInput.value = Math.max(10, currentFare - 10);
+  updateRideButtonState();
 });
 
 custNegPlusBtn?.addEventListener('click', () => {
-    const currentFare = parseInt(custNegFareInput.value) || 0;
-    custNegFareInput.value = currentFare + 10;
-    updateRideButtonState();
+  const currentFare = parseInt(custNegFareInput.value) || 0;
+  custNegFareInput.value = currentFare + 10;
+  updateRideButtonState();
 });
 
 custNegFareInput?.addEventListener('input', () => {
-    updateRideButtonState();
+  updateRideButtonState();
 });
 
 // --- Global Notification Alert ---
@@ -878,9 +902,9 @@ function showPopup(title, message, icon = '🔔', onClose = null) {
   popupCloseCallback = onClose;
 }
 
-function hidePopup() { 
-  popupOverlay.classList.add('hidden'); 
-  popupOverlay.setAttribute('aria-hidden', 'true'); 
+function hidePopup() {
+  popupOverlay.classList.add('hidden');
+  popupOverlay.setAttribute('aria-hidden', 'true');
   if (typeof popupCloseCallback === 'function') {
     const cb = popupCloseCallback;
     popupCloseCallback = null;
@@ -1037,7 +1061,7 @@ function showHomePage() {
 async function showProfilePage() {
   showSection(profilePage);
   updateNavButtons('profile');
-  
+
   // Fetch fresh profile data to get latest ratings
   try {
     const response = await apiCall('/auth/profile');
@@ -1046,15 +1070,15 @@ async function showProfilePage() {
       localStorage.setItem('toto_active_user', JSON.stringify(currentUser));
     }
   } catch (err) {
-      // Handle blocked account
-      if (err.message === 'ACCOUNT_BLOCKED') {
-        showPopup('অ্যাকাউন্ট ব্লক করা হয়েছে', 'আপনার অ্যাকাউন্ট ব্লক করা হয়েছে। আপনাকে লগ আউট করা হচ্ছে।', '⛔', () => {
-          sidebarLogoutBtn.click(); // Use existing logout logic
-        });
-        return; // Stop further execution
-      }
+    // Handle blocked account
+    if (err.message === 'ACCOUNT_BLOCKED') {
+      showPopup('অ্যাকাউন্ট ব্লক করা হয়েছে', 'আপনার অ্যাকাউন্ট ব্লক করা হয়েছে। আপনাকে লগ আউট করা হচ্ছে।', '⛔', () => {
+        sidebarLogoutBtn.click(); // Use existing logout logic
+      });
+      return; // Stop further execution
+    }
   }
-  
+
   displayProfileInfo();
 }
 
@@ -1066,7 +1090,7 @@ function showRideHistoryPage() {
     header.textContent = currentUser.userType === 'admin' ? t('সকল রাইড (Rides)') : t('রাইড হিস্টরি');
   }
   displayRideHistory();
-  
+
   if (currentUser.userType === 'admin') {
     adminPollInterval = setInterval(() => displayRideHistory(true), 16000);
   }
@@ -1109,21 +1133,21 @@ function displayProfileInfo() {
   document.getElementById('profilePagePhoneFull').textContent = currentUser.phone;
   document.getElementById('profilePageUpi').textContent = currentUser.upiId || t('যোগ করা হয়নি');
   document.getElementById('profilePageAvatar').src = `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.firstName}`;
-  
+
   if (currentUser.userType === 'driver') {
     document.getElementById('vehicleNumberDetail').classList.remove('hidden');
     document.getElementById('profilePageVehicle').textContent = currentUser.vehicleNumber || t('না আছে');
   } else {
     document.getElementById('vehicleNumberDetail').classList.add('hidden');
   }
-  
+
   const ratingDetail = document.getElementById('ratingDetail');
   if (currentUser.userType === 'driver') {
     if (ratingDetail) ratingDetail.classList.remove('hidden');
   } else {
     if (ratingDetail) ratingDetail.classList.add('hidden');
   }
-  
+
   const stats = getOrInitializeDailyStats();
   document.getElementById('profilePageTotalRides').textContent = stats.totalRides;
   const rating = currentUser.averageRating || 0;
@@ -1134,11 +1158,11 @@ function displayProfileInfo() {
 async function displayRideHistory(isPolling = false) {
   const historyList = document.getElementById('rideHistoryList');
   if (!historyList) return;
-  
+
   if (!isPolling) {
     historyList.innerHTML = `<p class="muted-text center-block">${t('লোড হচ্ছে...')}</p>`;
   }
-  
+
   try {
     if (currentUser.userType === 'admin') {
       const res = await apiCall('/admin/rides');
@@ -1161,7 +1185,7 @@ async function displayRideHistory(isPolling = false) {
     }
 
     const response = await apiCall('/rides/user/rides');
-    
+
     if (!response.success || !response.rides || response.rides.length === 0) {
       historyList.innerHTML = `<p class="muted-text center-block">${t('আপনার কোনো রাইড হিস্টরি নেই')}</p>`;
       return;
@@ -1173,7 +1197,7 @@ async function displayRideHistory(isPolling = false) {
       const otherUserName = otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : (isPassenger ? t('খোঁজা হচ্ছে...') : t('অজানা'));
       const dateLocale = currentLang === 'en' ? 'en-US' : 'bn-BD';
       const rideDate = new Date(ride.createdAt).toLocaleString(dateLocale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-      
+
       let statusText = t('⏳ চলমান');
       if (ride.rideStatus === 'completed') statusText = t('✅ সম্পূর্ণ');
       else if (ride.rideStatus === 'cancelled') statusText = t('❌ বাতিল');
@@ -1201,20 +1225,20 @@ async function displayRideHistory(isPolling = false) {
 
 function displayFavorites() {
   const favoritesList = document.getElementById('favoritesList');
-  
+
   let popularPlaces = [];
   if (locationData && locationData.length > 0) {
     const guskara = locationData.find(v => v.nameBn.includes('গুসকরা'));
     const ausgram = locationData.find(v => v.nameBn.includes('আউশগ্রাম'));
     const bonnabgram = locationData.find(v => v.nameBn.includes('বননবগ্রাম') || v.nameBn.includes('বননবগ্ৰাম'));
     const karatia = locationData.find(v => v.nameBn.includes('করাটিয়া') || v.nameBn.includes('করটিয়া'));
-    
+
     if (guskara) popularPlaces.push({ name: '🏪 গুসকরা', villageId: guskara.id, stoppageId: guskara.stoppages?.[0]?.id || guskara.id });
     if (ausgram) popularPlaces.push({ name: '🎓 আউশগ্রাম', villageId: ausgram.id, stoppageId: ausgram.stoppages?.[0]?.id || ausgram.id });
     if (bonnabgram) popularPlaces.push({ name: '🛣️ বননবগ্রাম', villageId: bonnabgram.id, stoppageId: bonnabgram.stoppages?.[0]?.id || bonnabgram.id });
     if (karatia) popularPlaces.push({ name: '🚌 করটিয়া', villageId: karatia.id, stoppageId: karatia.stoppages?.[0]?.id || karatia.id });
   }
-  
+
   if (popularPlaces.length === 0) {
     popularPlaces = [
       { name: '🏪 গুসকরা', villageId: 'guskara', stoppageId: 'guskara-clg' },
@@ -1223,7 +1247,7 @@ function displayFavorites() {
       { name: '🚌 করটিয়া', villageId: 'karatia', stoppageId: 'karatia-bazar' },
     ];
   }
-  
+
   if (popularPlaces.length === 0) {
     favoritesList.innerHTML = `<p class="muted-text center-block">${t('কোনো প্রিয় স্থান নেই')}</p>`;
   } else {
@@ -1240,12 +1264,12 @@ function displayFavorites() {
   }
 }
 
-window.bookFavorite = function(villageId, stoppageId, stopName) {
+window.bookFavorite = function (villageId, stoppageId, stopName) {
   if (activeRideId) {
     showPopup('অপেক্ষা করুন', 'আপনার একটি রাইড ইতিমধ্যে খোঁজা হচ্ছে।', '⏳');
     return;
   }
-  
+
   if (!selectedPickup) {
     showHomePage();
     showPopup('শুরুর স্থান প্রয়োজন', 'দয়া করে প্রথমে আপনার শুরুর স্থান (পিকআপ) নির্বাচন করুন।', '📍');
@@ -1253,7 +1277,7 @@ window.bookFavorite = function(villageId, stoppageId, stopName) {
   }
 
   showHomePage();
-  
+
   selectedDropoff = { type: 'favorite', villageId: villageId, stoppageId: stoppageId, name: t(stopName) };
   if (dropoffSearch) dropoffSearch.value = t(stopName);
 
@@ -1261,7 +1285,7 @@ window.bookFavorite = function(villageId, stoppageId, stopName) {
     dropoffColumn.classList.remove('hidden');
   }
   updateRidePreview();
-      updateRideButtonState();
+  updateRideButtonState();
   loadAdminStats();
 
   if (adminPollInterval) clearInterval(adminPollInterval);
@@ -1371,9 +1395,9 @@ adminDownloadExcelBtn?.addEventListener('click', async () => {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ridesData), "Ride History");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(routesData), "Routes");
     XLSX.writeFile(wb, `TotoBondhu_Backup_${new Date().toISOString().split('T')[0]}.xlsx`);
-    
+
     showPopup('সফল', 'এক্সেল ফাইল ডাউনলোড সফল হয়েছে।', '✅');
-  } catch (e) { showPopup('ত্রুটি', 'ফাইল ডাউনলোড করতে সমস্যা হয়েছে।', '❌'); } 
+  } catch (e) { showPopup('ত্রুটি', 'ফাইল ডাউনলোড করতে সমস্যা হয়েছে।', '❌'); }
   finally { adminDownloadExcelBtn.disabled = false; adminDownloadExcelBtn.textContent = t('📥 এক্সেল ডাউনলোড (Download Backup)'); }
 });
 
@@ -1409,9 +1433,9 @@ async function loadAdminUsers() {
   }
 }
 
-window.deleteAdminUser = async function(userId) {
+window.deleteAdminUser = async function (userId) {
   if (!confirm(t('আপনি কি নিশ্চিত যে আপনি এই ব্যবহারকারীকে মুছে ফেলতে চান?'))) return;
-  
+
   try {
     const res = await apiCall(`/admin/users/${userId}`, 'DELETE');
     if (res.success) {
@@ -1426,7 +1450,7 @@ window.deleteAdminUser = async function(userId) {
   }
 };
 
-window.toggleUserBlock = async function(userId, blockStatus) {
+window.toggleUserBlock = async function (userId, blockStatus) {
   const action = blockStatus ? t('ব্লক') : t('আনব্লক');
   if (!confirm(`আপনি কি এই ব্যবহারকারীকে ${action} করতে নিশ্চিত?`)) return;
 
@@ -1489,9 +1513,9 @@ function renderRoutesList(routes) {
     <div class="request-item" style="margin-bottom: 10px;">
       <p><strong>${route.name}</strong></p>
       <p class="muted-text text-sm">${route.villages.map(vId => {
-        const loc = locationData.find(l => l.id === vId || l._id === vId);
-        return loc ? t(loc.nameBn) : vId;
-      }).join(' ➔ ')}</p>
+    const loc = locationData.find(l => l.id === vId || l._id === vId);
+    return loc ? t(loc.nameBn) : vId;
+  }).join(' ➔ ')}</p>
       <div style="text-align: right; margin-top: 8px; display: flex; gap: 8px; justify-content: flex-end;">
         <button class="button secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick='editRoute(${JSON.stringify(route)})'>✏️ ${t('এডিট')}</button>
         <button class="button danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="deleteRoute('${route._id}')">🗑️ ${t('ডিলিট')}</button>
@@ -1520,7 +1544,7 @@ function populateVillageChecklist(villages) {
   document.querySelectorAll('.route-village-item').forEach(li => {
     const cb = li.querySelector('.route-checkbox');
     const clickableArea = li.querySelector('.clickable-area');
-    
+
     const updateBg = () => {
       li.style.background = cb.checked ? '#e8f5e9' : 'white';
       li.style.borderLeft = cb.checked ? '4px solid var(--primary-brand, #09663e)' : 'none';
@@ -1539,8 +1563,8 @@ function populateVillageChecklist(villages) {
     clickableArea.addEventListener('mousedown', () => li.setAttribute('draggable', 'false'));
     clickableArea.addEventListener('mouseup', () => li.setAttribute('draggable', 'true'));
     clickableArea.addEventListener('mouseleave', () => li.setAttribute('draggable', 'true'));
-    clickableArea.addEventListener('touchstart', () => li.setAttribute('draggable', 'false'), {passive: true});
-    clickableArea.addEventListener('touchend', () => li.setAttribute('draggable', 'true'), {passive: true});
+    clickableArea.addEventListener('touchstart', () => li.setAttribute('draggable', 'false'), { passive: true });
+    clickableArea.addEventListener('touchend', () => li.setAttribute('draggable', 'true'), { passive: true });
   });
 }
 
@@ -1599,7 +1623,7 @@ addRouteForm?.addEventListener('submit', async (e) => {
     const res = id
       ? await apiCall(`/routes/${id}`, 'PUT', payload)
       : await apiCall('/routes', 'POST', payload);
-    
+
     if (res.success) {
       showPopup('সফল', id ? t('রুট আপডেট করা হয়েছে।') : t('রুট যোগ করা হয়েছে।'), '✅');
       resetRouteForm();
@@ -1613,7 +1637,7 @@ addRouteForm?.addEventListener('submit', async (e) => {
   }
 });
 
-window.editRoute = function(route) {
+window.editRoute = function (route) {
   resetRouteForm();
   routeFormTitle.textContent = t('রুট এডিট করুন');
   addRouteBtn.textContent = t('রুট আপডেট করুন');
@@ -1630,7 +1654,7 @@ window.editRoute = function(route) {
     li.style.background = 'white';
     li.style.borderLeft = 'none';
   });
-  
+
   villageIds.reverse().forEach(id => {
     const li = villageItems.find(item => item.dataset.id === id);
     if (li) {
@@ -1644,7 +1668,7 @@ window.editRoute = function(route) {
   window.scrollTo({ top: document.getElementById('addRouteForm').offsetTop, behavior: 'smooth' });
 }
 
-window.deleteRoute = async function(routeId) {
+window.deleteRoute = async function (routeId) {
   if (!confirm(t('আপনি কি নিশ্চিত যে আপনি এই রুটটি মুছে ফেলতে চান?'))) return;
   try {
     const res = await apiCall(`/routes/${routeId}`, 'DELETE');
@@ -1676,7 +1700,7 @@ feedbackForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const message = feedbackText?.value?.trim();
   if (!message) return;
-  
+
   feedbackSubmitBtn.disabled = true;
   feedbackSubmitBtn.textContent = t('অপেক্ষা করুন...');
   try {
@@ -1739,9 +1763,9 @@ document.getElementById('saveSettingsBtn')?.addEventListener('click', () => {
   localStorage.setItem('toto_lang', currentLang);
   applyTranslations();
   buildSearchableLocations();
-  if(newStoppageVillageSelect) populateVillageSelect(newStoppageVillageSelect, 'গ্রাম নির্বাচন করুন');
+  if (newStoppageVillageSelect) populateVillageSelect(newStoppageVillageSelect, 'গ্রাম নির্বাচন করুন');
   document.getElementById('settingsModal').classList.add('hidden');
-  
+
   // Keeps user on their current page instead of returning to Home!
   if (currentUser) {
     if (!rideHistoryPage.classList.contains('hidden')) displayRideHistory();
@@ -1785,7 +1809,7 @@ document.getElementById('logoutProfileBtn')?.addEventListener('click', () => {
 // Edit profile button
 document.getElementById('editProfileBtn')?.addEventListener('click', () => {
   let modal = document.getElementById('editProfileModal');
-  
+
   // Create the modal dynamically if it doesn't exist yet
   if (!modal) {
     modal = document.createElement('div');
@@ -1837,12 +1861,12 @@ document.getElementById('editProfileBtn')?.addEventListener('click', () => {
       currentUser.lastName = document.getElementById('editLastName').value.trim();
       currentUser.upiId = document.getElementById('editUpiId').value.trim();
       localStorage.setItem('toto_active_user', JSON.stringify(currentUser));
-      
+
       try { await apiCall('/auth/profile', 'PUT', { firstName: currentUser.firstName, lastName: currentUser.lastName, upiId: currentUser.upiId }); } catch (err) { /* Optional fallback */ }
 
       displayProfileInfo();
       renderApp();
-      
+
       modal.style.display = 'none';
       submitBtn.textContent = 'সেভ করুন';
       submitBtn.disabled = false;
@@ -1868,7 +1892,7 @@ document.querySelectorAll('.type-option').forEach(btn => {
     btn.classList.add('active');
     const userType = btn.dataset.type;
     document.getElementById('userType').value = userType;
-    
+
     // Show/hide vehicle number field
     const vehicleWrapper = document.getElementById('vehicleNumberWrapper');
     if (userType === 'driver') {
@@ -1901,17 +1925,17 @@ signupForm.addEventListener('submit', async event => {
   const password = document.getElementById('password').value;
   const userType = document.getElementById('userType').value || 'passenger';
   const vehicleNumber = document.getElementById('vehicleNumber').value.trim();
-  
+
   // Validate phone number - must be 10 digits
   if (!/^\d{10}$/.test(phone)) {
     authMessage.style.color = 'var(--danger-color)';
     authMessage.textContent = 'ফোন নম্বর ১০ অঙ্কের হতে হবে।';
     return;
   }
-  
+
   authMessage.textContent = t('অ্যাকাউন্ট তৈরি হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...');
   authMessage.style.color = '#09663e';
-  
+
   try {
     const response = await apiCall('/auth/signup', 'POST', {
       phone,
@@ -1940,17 +1964,17 @@ loginForm.addEventListener('submit', async event => {
   event.preventDefault();
   const phone = document.getElementById('loginPhone').value.trim();
   const password = document.getElementById('loginPassword').value;
-  
+
   // Validate phone number - must be 10 digits
   if (!/^\d{10}$/.test(phone)) {
     authMessage.style.color = 'var(--danger-color)';
     authMessage.textContent = 'ফোন নম্বর ১০ অঙ্কের হতে হবে।';
     return;
   }
-  
+
   authMessage.textContent = t('লগইন করা হচ্ছে...');
   authMessage.style.color = '#09663e';
-  
+
   try {
     const response = await apiCall('/auth/login', 'POST', {
       phone,
@@ -1980,19 +2004,19 @@ userTypeSelect?.addEventListener('change', () => {
   }
 });
 
-showSignupBtn.addEventListener('click', () => { 
-  signupPanel.classList.remove('hidden'); 
-  loginPanel.classList.add('hidden'); 
-  showSignupBtn.classList.add('active'); 
-  showLoginBtn.classList.remove('active'); 
+showSignupBtn.addEventListener('click', () => {
+  signupPanel.classList.remove('hidden');
+  loginPanel.classList.add('hidden');
+  showSignupBtn.classList.add('active');
+  showLoginBtn.classList.remove('active');
   authMessage.textContent = '';
 });
 
-showLoginBtn.addEventListener('click', () => { 
-  loginPanel.classList.remove('hidden'); 
-  signupPanel.classList.add('hidden'); 
-  showLoginBtn.classList.add('active'); 
-  showSignupBtn.classList.remove('active'); 
+showLoginBtn.addEventListener('click', () => {
+  loginPanel.classList.remove('hidden');
+  signupPanel.classList.add('hidden');
+  showLoginBtn.classList.add('active');
+  showSignupBtn.classList.remove('active');
   authMessage.textContent = '';
 });
 
@@ -2015,22 +2039,22 @@ function setupCustomerDashboard() {
 
 function appendCustomerFooter() {
   if (document.getElementById('totoBondhuFooter')) return;
-  
+
   const footer = document.createElement('div');
   footer.id = 'totoBondhuFooter';
-  
-  
+
+
   // Gradient overlay so text is highly readable over the image
   const overlay = document.createElement('div');
-  
+
   footer.appendChild(overlay);
 
   const content = document.createElement('div');
-  
+
   content.innerHTML = `
     <img src="image/footer.png" alt="Footer Image" class="footer-image" />
   `;
-  
+
   footer.appendChild(content);
   customerDashboard.appendChild(footer);
 }
@@ -2058,11 +2082,11 @@ async function pollCustomerRide() {
     if (ride.rideStatus === 'completed') {
       const driverName = ride.driverId ? `${ride.driverId.firstName} ${ride.driverId.lastName}` : 'চালক';
       const rideIdToRate = activeRideId;
-      
+
       localStorage.removeItem('toto_active_ride_id');
       activeRideId = null;
       resetCustomerUI();
-      
+
       showRatingPopup(rideIdToRate, driverName);
       return;
     } else if (ride.rideStatus === 'cancelled') {
@@ -2070,7 +2094,7 @@ async function pollCustomerRide() {
       localStorage.removeItem('toto_active_ride_id');
       activeRideId = null;
       resetCustomerUI();
-      
+
       if (wasPenalized) {
         try {
           const userRes = await apiCall('/auth/profile');
@@ -2102,20 +2126,20 @@ async function pollCustomerRide() {
       const findingCard = document.getElementById('findingRideCard');
       if (findingCard) findingCard.classList.add('hidden');
       acceptedRideCard.classList.add('hidden');
-      
+
       const offerCard = document.getElementById('customerOfferCard') || createCustomerOfferCard();
       offerCard.classList.remove('hidden');
-      
+
       const offers = ride.offers || [];
       if (offers.length > 0) {
         offerCard.innerHTML = `<h3 style="margin-bottom: 15px;">${t('চালকদের প্রস্তাবসমূহ')}</h3>`;
-        
+
         offers.forEach(offer => {
           if (!offer.driverId) return;
           const driver = offer.driverId;
           const offerDiv = document.createElement('div');
           offerDiv.style.cssText = "border: 1px solid var(--border-light); padding: 12px; border-radius: 8px; margin-bottom: 12px; background: var(--surface-dim);";
-          
+
           offerDiv.innerHTML = `
             <p style="margin: 0 0 5px 0;">👤 <strong>${driver.firstName} ${driver.lastName}</strong></p>
             <p style="margin: 0 0 5px 0; color: var(--text-muted); font-size: 0.9rem;">🔢 ${driver.vehicleNumber || ''} &nbsp;|&nbsp; ⭐ ${driver.averageRating || '0'}</p>
@@ -2142,7 +2166,7 @@ async function pollCustomerRide() {
       const findingCard = document.getElementById('findingRideCard');
       if (findingCard) findingCard.classList.add('hidden');
       document.getElementById('customerOfferCard')?.classList.add('hidden');
-      
+
       acceptedRideCard.classList.remove('hidden');
       document.getElementById('acceptedDriverName').textContent = ride.driverId ? `${ride.driverId.firstName} ${ride.driverId.lastName}` : t('নিযুক্ত হচ্ছে...');
       document.getElementById('acceptedStart').textContent = t(ride.pickupLocation.villageName);
@@ -2161,7 +2185,7 @@ async function pollCustomerRide() {
           document.getElementById('acceptedVehicleNumber').textContent = `🔢 ${ride.driverId.vehicleNumber}`;
         }
       }
-      
+
       // Set Customer Navigation link
       const custNavigateBtn = document.getElementById('customerNavigateBtn');
       if (custNavigateBtn) {
@@ -2200,7 +2224,7 @@ async function pollCustomerRide() {
         customerWaitMsg.textContent = t('চালকের ট্রিপ শুরু করার অপেক্ষায়...');
         customerWaitMsg.classList.remove('hidden');
         if (cancelRideBtn) cancelRideBtn.classList.remove('hidden');
-        
+
         const otpContainer = document.getElementById('passengerOtpContainer');
         const otpValue = document.getElementById('passengerOtpValue');
         if (otpContainer && otpValue && ride.otp) {
@@ -2209,7 +2233,7 @@ async function pollCustomerRide() {
         }
       } else if (ride.rideStatus === 'arrived') {
         endRideBtn.classList.add('hidden');
-        
+
         if (ride.arriveTime) {
           if (!arrivalTimerInterval) {
             const updateTimer = () => {
@@ -2217,7 +2241,7 @@ async function pollCustomerRide() {
               const cancelTime = arriveDate + 5 * 60 * 1000;
               const now = new Date().getTime();
               const distance = cancelTime - now;
-              
+
               if (distance < 0) {
                 customerWaitMsg.innerHTML = `${t('আপনার টোটো বাইরে অপেক্ষা করছে!')}<br><span style="color: var(--danger-color); font-size: 1.1rem; font-weight: 800;">⏳ 0:00</span>`;
                 if (arrivalTimerInterval) clearInterval(arrivalTimerInterval);
@@ -2236,9 +2260,9 @@ async function pollCustomerRide() {
           customerWaitMsg.textContent = t('আপনার টোটো বাইরে অপেক্ষা করছে!');
           if (cancelRideBtn) cancelRideBtn.classList.remove('hidden');
         }
-        
+
         customerWaitMsg.classList.remove('hidden');
-        
+
         const otpContainer = document.getElementById('passengerOtpContainer');
         const otpValue = document.getElementById('passengerOtpValue');
         if (otpContainer && otpValue && ride.otp) {
@@ -2254,7 +2278,7 @@ async function pollCustomerRide() {
         customerWaitMsg.textContent = t('আপনার ট্রিপ চলছে...');
         customerWaitMsg.classList.remove('hidden');
         if (cancelRideBtn) cancelRideBtn.classList.add('hidden');
-        
+
         const otpContainer = document.getElementById('passengerOtpContainer');
         if (otpContainer) otpContainer.classList.add('hidden');
       }
@@ -2298,8 +2322,8 @@ async function acceptDriverOffer(rideId, driverId, fare, btn) {
 
     const res = await apiCall(`/rides/accept-offer/${rideId}`, 'POST', payload);
     if (res.success) pollCustomerRide();
-  } catch (e) { 
-    showPopup('ত্রুটি', 'গ্রহণ করতে সমস্যা হয়েছে।', '❌'); 
+  } catch (e) {
+    showPopup('ত্রুটি', 'গ্রহণ করতে সমস্যা হয়েছে।', '❌');
     if (btn) {
       btn.disabled = false;
       btn.textContent = t('গ্রহণ করুন');
@@ -2328,7 +2352,7 @@ function createFindingCard() {
       <p style="font-size: 2rem; margin: 20px 0;">🔍</p>
     </div>
   `;
-  
+
   const acceptedCard = document.getElementById('acceptedRideCard');
   if (acceptedCard) {
     acceptedCard.parentNode.insertBefore(findingCard, acceptedCard);
@@ -2339,13 +2363,13 @@ function createFindingCard() {
 }
 
 // Call functions
-window.callDriver = function() {
+window.callDriver = function () {
   const btn = document.getElementById('driverCallBtn');
   const phone = btn.href.replace('tel:', '');
   window.location.href = `tel:${phone}`;
 };
 
-window.callCustomer = function() {
+window.callCustomer = function () {
   const btn = document.getElementById('customerCallBtn');
   const phone = btn.href.replace('tel:', '');
   window.location.href = `tel:${phone}`;
@@ -2358,14 +2382,14 @@ function getOrInitializeDailyStats() {
   const userId = currentUser ? currentUser._id : 'guest';
   const statsKey = `toto_daily_stats_${userId}`;
   const stats = JSON.parse(localStorage.getItem(statsKey)) || {};
-  
+
   if (stats.date !== today) {
     // New day, reset stats
     stats.date = today;
     stats.totalRides = 0;
     stats.totalIncome = 0;
   }
-  
+
   return stats;
 }
 
@@ -2373,7 +2397,7 @@ function updateDailyStats(fareAmount) {
   const stats = getOrInitializeDailyStats();
   const userId = currentUser ? currentUser._id : 'guest';
   const statsKey = `toto_daily_stats_${userId}`;
-  
+
   stats.totalRides = (stats.totalRides || 0) + 1;
   stats.totalIncome = (stats.totalIncome || 0) + fareAmount;
   localStorage.setItem(statsKey, JSON.stringify(stats));
@@ -2385,7 +2409,7 @@ function updateStatsDisplay() {
   const ridesEl = document.getElementById('todayRidesCount');
   const incomeEl = document.getElementById('todayIncomeAmount');
   const ratingEl = document.getElementById('driverRatingVal');
-  
+
   if (ridesEl) ridesEl.textContent = stats.totalRides || '0';
   if (incomeEl) incomeEl.textContent = `₹${stats.totalIncome || 0}`;
   if (ratingEl && currentUser) {
@@ -2442,35 +2466,35 @@ function resetCustomerUI() {
   // Show booking form and popular section
   document.querySelector('.ride-booking-card').classList.remove('hidden');
   document.querySelector('.popular-section').classList.remove('hidden');
-  
+
   // Hide ride status cards
   acceptedRideCard.classList.add('hidden');
   const findingCard = document.getElementById('findingRideCard');
   if (findingCard) findingCard.classList.add('hidden');
   document.getElementById('customerOfferCard')?.classList.add('hidden');
-  
+
   if (endRideBtn) endRideBtn.classList.remove('hidden');
   if (cancelRideBtn) cancelRideBtn.classList.add('hidden');
   const customerWaitMsg = document.getElementById('customerWaitMsg');
   if (customerWaitMsg) customerWaitMsg.classList.add('hidden');
   const otpContainer = document.getElementById('passengerOtpContainer');
   if (otpContainer) otpContainer.classList.add('hidden');
-  
+
   // Reset form
   rideSubmitBtn.disabled = false;
   rideSubmitBtn.textContent = t('টোটো খুঁজুন');
   rideSubmitBtn.style.opacity = "1";
-  
+
   selectedPickup = null;
   selectedDropoff = null;
   updateRideButtonState();
   if (pickupSearch) pickupSearch.value = '';
   if (dropoffSearch) dropoffSearch.value = '';
-  
+
   if (pickupColumn) pickupColumn.classList.remove('hidden');
   if (pickupSummary) pickupSummary.classList.add('hidden');
   if (dropoffColumn) dropoffColumn.classList.add('hidden');
-  
+
   if (landmarkInput) landmarkInput.value = '';
   pricePreviewCard.classList.add('hidden');
   if (customerFareInputContainer) customerFareInputContainer.classList.add('hidden');
@@ -2498,7 +2522,7 @@ rideRequestForm.addEventListener('submit', async event => {
 
   const pickupAddress = selectedPickup.name + (landmark ? ` (${landmark})` : '');
   const dropoffAddress = selectedDropoff.name;
-  
+
   rideSubmitBtn.disabled = true;
   rideSubmitBtn.textContent = t('লোকেশন চেক করা হচ্ছে...');
 
@@ -2515,7 +2539,7 @@ rideRequestForm.addEventListener('submit', async event => {
       console.warn("Could not get exact location", err);
     }
   }
-  
+
   rideSubmitBtn.textContent = t('অপেক্ষা করুন...');
 
   // Provide valid stoppage IDs for the live backend fallback
@@ -2532,7 +2556,7 @@ rideRequestForm.addEventListener('submit', async event => {
       fare,               // Pass explicit calculated fare
       pickupLat,          // Explicit exact location
       pickupLng,          // Explicit exact location
-      
+
       // Fallback for your current live Render backend:
       pickupLocation: {
         address: pickupAddress,
@@ -2551,17 +2575,17 @@ rideRequestForm.addEventListener('submit', async event => {
     if (response.success) {
       activeRideId = response.ride._id;
       localStorage.setItem('toto_active_ride_id', activeRideId);
-      
+
       if (cancelRideBtn) cancelRideBtn.classList.remove('hidden');
-      
+
       // Start polling - every 16 seconds for real-time updates
       if (pollInterval) clearInterval(pollInterval);
       pollCustomerRide(); // Initial call
       pollInterval = setInterval(pollCustomerRide, 16000);
-      
+
       // Notify all drivers of new ride request
       notifyDriversOfRide(activeRideId, pickupAddress, response.ride.fare);
-      
+
       showPopup('অনুরোধ পাঠানো হয়েছে', 'আপনার টোটো বুকিং অনুরোধটি চালকদের পাঠানো হয়েছে।', '✅');
     }
   } catch (error) {
@@ -2570,7 +2594,7 @@ rideRequestForm.addEventListener('submit', async event => {
       if (error.data && error.data.penalty) {
         showPenaltyModal(error.data.penalty);
       } else {
-          showPopup('পেনাল্টি বাকি আছে', 'Penalty Due: আপনার আগের একটি বাতিল রাইডের জন্য ₹30 ফি বাকি আছে।', '⛔');
+        showPopup('পেনাল্টি বাকি আছে', 'Penalty Due: আপনার আগের একটি বাতিল রাইডের জন্য ₹30 ফি বাকি আছে।', '⛔');
       }
     } else {
       showPopup('ত্রুটি', error.message || 'বুকিং করতে সমস্যা হচ্ছে, আবার চেষ্টা করুন।', '❌');
@@ -2584,10 +2608,10 @@ endRideBtn?.addEventListener('click', async () => {
     const currentRideId = activeRideId;
     const driverNameEl = document.getElementById('acceptedDriverName');
     const driverName = driverNameEl ? driverNameEl.textContent : 'চালক';
-    
+
     endRideBtn.disabled = true;
     endRideBtn.textContent = t('অপেক্ষা করুন...');
-    
+
     // Pause polling during the request so it doesn't interrupt the popup flow
     if (pollInterval) {
       clearInterval(pollInterval);
@@ -2596,11 +2620,11 @@ endRideBtn?.addEventListener('click', async () => {
 
     try {
       await apiCall(`/rides/end/${activeRideId}`, 'POST');
-      
+
       localStorage.removeItem('toto_active_ride_id');
       activeRideId = null;
       resetCustomerUI();
-      
+
       showPopup('সফলতা', 'রাইড শেষ করা হয়েছে।', '✅', () => {
         showRatingPopup(currentRideId, driverName);
       });
@@ -2620,7 +2644,7 @@ cancelRideBtn?.addEventListener('click', async () => {
 
   cancelRideBtn.disabled = true;
   cancelRideBtn.textContent = t('অপেক্ষা করুন...');
-  
+
   try {
     const res = await apiCall(`/rides/cancel/${activeRideId}`, 'POST');
     localStorage.removeItem('toto_active_ride_id');
@@ -2632,8 +2656,8 @@ cancelRideBtn?.addEventListener('click', async () => {
         if (userRes.success && userRes.user.activePenalty && userRes.user.activePenalty.amount > 0) {
           showPenaltyModal(userRes.user.activePenalty);
         }
-      } catch(e) {
-          showPopup('পেনাল্টি বাকি আছে', 'Penalty Due: আপনার আগের একটি বাতিল রাইডের জন্য ₹30 ফি বাকি আছে।', '⛔');
+      } catch (e) {
+        showPopup('পেনাল্টি বাকি আছে', 'Penalty Due: আপনার আগের একটি বাতিল রাইডের জন্য ₹30 ফি বাকি আছে।', '⛔');
       }
     } else {
       showPopup('সফল', 'ট্রিপ বাতিল করা হয়েছে।', '✅');
@@ -2685,14 +2709,14 @@ function updateRideButtonState() {
 function renderPopularPlaces() {
   const grid = document.querySelector('.grid-quick-stops');
   if (!grid) return;
-  
+
   let popularPlaces = [];
   if (locationData && locationData.length > 0) {
     const guskara = locationData.find(v => v.nameBn.includes('গুসকরা'));
     const ausgram = locationData.find(v => v.nameBn.includes('আউশগ্রাম'));
     const bonnabgram = locationData.find(v => v.nameBn.includes('বননবগ্রাম') || v.nameBn.includes('বননবগ্ৰাম'));
     const karatia = locationData.find(v => v.nameBn.includes('করাটিয়া') || v.nameBn.includes('করটিয়া'));
-    
+
     if (guskara) popularPlaces.push({ name: 'গুসকরা', villageId: guskara.id, stoppageId: guskara.stoppages?.[0]?.id || guskara.id });
     if (ausgram) popularPlaces.push({ name: 'আউশগ্রাম', villageId: ausgram.id, stoppageId: ausgram.stoppages?.[0]?.id || ausgram.id });
     if (bonnabgram) popularPlaces.push({ name: 'বননবগ্রাম', villageId: bonnabgram.id, stoppageId: bonnabgram.stoppages?.[0]?.id || bonnabgram.id });
@@ -2708,7 +2732,7 @@ function renderPopularPlaces() {
     ];
   }
 
-  grid.innerHTML = popularPlaces.map(place => 
+  grid.innerHTML = popularPlaces.map(place =>
     `<div class="stop-chip" data-village-id="${place.villageId}" data-stoppage-id="${place.stoppageId}">${t(place.name)}</div>`
   ).join('');
 
@@ -2723,7 +2747,7 @@ function renderPopularPlaces() {
 
       selectedDropoff = { type: 'popular', villageId: villageId, stoppageId: stoppageId, name: name };
       if (dropoffSearch) dropoffSearch.value = name;
-      
+
       if (dropoffColumn) {
         dropoffColumn.classList.remove('hidden');
       }
@@ -2750,9 +2774,9 @@ addVillageBtn?.addEventListener('click', async () => {
     if (response.success) {
       showPopup('সফল', 'নতুন গ্রাম যোগ করা হয়েছে।', '✅');
       newVillageNameInput.value = '';
-      
+
       // This automatically updates all dropdowns in both Admin and Customer Dashboards!
-      await loadLocations(); 
+      await loadLocations();
       loadAdminRoutes();
     } else {
       showPopup('ত্রুটি', response.message || 'গ্রাম যোগ করতে সমস্যা হয়েছে।', '❌');
@@ -2794,7 +2818,7 @@ addStoppageBtn?.addEventListener('click', async () => {
   } finally {
     addStoppageBtn.disabled = false;
     addStoppageBtn.textContent = t('যোগ করুন');
-    
+
     // Keep existing selected values and refresh stoppages
     const pV = pickupVillageSelect.value;
     const dV = dropoffVillageSelect.value;
@@ -2824,11 +2848,11 @@ async function setupDriverDashboard() {
       currentUser = response.user;
       localStorage.setItem('toto_active_user', JSON.stringify(currentUser));
     }
-    } catch (err) {
-      if (err.message === 'ACCOUNT_BLOCKED') return;
-    }
-  
-    if (!currentUser) return; // Stop loading if forced out
+  } catch (err) {
+    if (err.message === 'ACCOUNT_BLOCKED') return;
+  }
+
+  if (!currentUser) return; // Stop loading if forced out
 
   await loadDriverRoutes();
 
@@ -2838,7 +2862,7 @@ async function setupDriverDashboard() {
   const isAvailable = localStorage.getItem('toto_driver_online') === 'true';
   availabilityToggleCheckbox.checked = isAvailable;
   if (driverActiveRouteSelect) driverActiveRouteSelect.disabled = isAvailable;
-  
+
   toggleDriverStatus(isAvailable);
   updateOnlineStatus(isAvailable);
   if (activeRideId) {
@@ -2875,7 +2899,7 @@ availabilityToggleCheckbox.addEventListener('change', (e) => {
   if (isAvailable && "Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
     Notification.requestPermission();
   }
-  
+
   if (driverActiveRouteSelect) {
     driverActiveRouteSelect.disabled = isAvailable;
     localStorage.setItem('toto_driver_route', driverActiveRouteSelect.value);
@@ -2926,7 +2950,7 @@ async function fetchPendingPenalties() {
   }
 }
 
-window.confirmPenaltyPayment = async function(passengerId) {
+window.confirmPenaltyPayment = async function (passengerId) {
   try {
     const res = await apiCall(`/rides/driver/confirm-penalty/${passengerId}`, 'POST');
     if (res.success) { showPopup('সফল', 'পেনাল্টি পেমেন্ট নিশ্চিত করা হয়েছে!', '✅'); fetchPendingPenalties(); }
@@ -2952,7 +2976,7 @@ async function listenToPendingQueue() {
       if (rejectedRides[ride._id] && rejectedRides[ride._id] <= now) {
         delete rejectedRides[ride._id];
       }
-      
+
       if (ride.offers && ride.offers.length > 0) {
         const myOffer = ride.offers.find(o => (o.driverId && o.driverId._id === currentUser._id) || o.driverId === currentUser._id);
         if (myOffer) return false;
@@ -2964,21 +2988,21 @@ async function listenToPendingQueue() {
     // Check for newly arrived rides to trigger the sound alert
     let hasNewRide = false;
     const currentIds = new Set();
-    
+
     rides.forEach(ride => {
       currentIds.add(ride._id);
       if (!knownPendingRideIds.has(ride._id)) {
         hasNewRide = true;
       }
     });
-    
+
     if (hasNewRide && rides.length > 0) {
       playNotificationSound();
     }
     knownPendingRideIds = currentIds; // Update the known list for the next poll
 
     requestCountBadge.textContent = rides.length.toString();
-    
+
     if (rides.length === 0) {
       rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('এই মুহূর্তে কোনো বুকিং অনুরোধ নেই।')}</p>`;
       stopNotificationSound();
@@ -3011,7 +3035,7 @@ async function listenToPendingQueue() {
     document.querySelectorAll('.negotiate-btn').forEach(btn => {
       btn.addEventListener('click', (e) => showNegotiatePopup(e.target.dataset.id, e.target.dataset.fare));
     });
-    
+
     document.querySelectorAll('.reject-pending-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const rideId = e.target.dataset.id;
@@ -3100,10 +3124,10 @@ async function submitOffer(rideId, fare) {
     if (response.success) {
       activeRideId = rideId;
       localStorage.setItem('toto_active_ride_id', activeRideId);
-      
+
       rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('যাত্রীর অনুমোদনের জন্য অপেক্ষা করা হচ্ছে...')}</p>`;
       requestCountBadge.textContent = '0';
-      
+
       if (pollInterval) clearInterval(pollInterval);
       listenToDriverActiveRide(); // Initial call
       pollInterval = setInterval(listenToDriverActiveRide, 16000);
@@ -3126,7 +3150,7 @@ async function listenToDriverActiveRide() {
       localStorage.removeItem('toto_active_ride_id');
       activeRideId = null;
       driverAcceptedRideCard.classList.add('hidden');
-      
+
       if (ride.rideStatus === 'completed') {
         updateDailyStats(ride.fare);
         showPopup('ট্রিপ শেষ', 'যাত্রী ট্রিপটি সমাপ্ত করেছেন।', '✅');
@@ -3137,11 +3161,11 @@ async function listenToDriverActiveRide() {
           showPopup('ট্রিপ শেষ', 'ট্রিপটি বাতিল হয়েছে।', '⚠️');
         }
       }
-      
+
       if (availabilityToggleCheckbox.checked) {
         rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('উপলব্ধ রাইড খুঁজছি...')}</p>`;
         requestCountBadge.textContent = '0';
-        
+
         // Immediately restart polling for new rides - updates every 16 seconds
         if (pollInterval) clearInterval(pollInterval);
         listenToPendingQueue(); // Initial call
@@ -3157,14 +3181,14 @@ async function listenToDriverActiveRide() {
         activeRideId = null;
         driverAcceptedRideCard.classList.add('hidden');
         showPopup('প্রত্যাখ্যাত', 'যাত্রী আপনার প্রস্তাব প্রত্যাখ্যান করেছেন।', '❌');
-        
+
         rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('উপলব্ধ রাইড খুঁজছি...')}</p>`;
         if (pollInterval) clearInterval(pollInterval);
         listenToPendingQueue();
         pollInterval = setInterval(listenToPendingQueue, 16000);
         return;
       }
-      
+
       rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('যাত্রীর অনুমোদনের জন্য অপেক্ষা করা হচ্ছে...')}</p>`;
       requestCountBadge.textContent = '0';
       driverAcceptedRideCard.classList.add('hidden');
@@ -3176,7 +3200,7 @@ async function listenToDriverActiveRide() {
       activeRideId = null;
       driverAcceptedRideCard.classList.add('hidden');
       showPopup('প্রত্যাখ্যাত', 'যাত্রী আপনার প্রস্তাব প্রত্যাখ্যান করেছেন।', '❌');
-      
+
       rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('উপলব্ধ রাইড খুঁজছি...')}</p>`;
       if (pollInterval) clearInterval(pollInterval);
       listenToPendingQueue();
@@ -3190,7 +3214,7 @@ async function listenToDriverActiveRide() {
         activeRideId = null;
         driverAcceptedRideCard.classList.add('hidden');
         showPopup('প্রত্যাখ্যাত', 'রাইডটি ইতিমধ্যে অন্য কেউ নিয়ে নিয়েছে।', '⚠️');
-        
+
         rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('উপলব্ধ রাইড খুঁজছি...')}</p>`;
         if (pollInterval) clearInterval(pollInterval);
         listenToPendingQueue();
@@ -3202,24 +3226,24 @@ async function listenToDriverActiveRide() {
     rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('আপনার একটি ট্রিপ চলমান রয়েছে।')}</p>`;
     requestCountBadge.textContent = '0';
     driverAcceptedRideCard.classList.remove('hidden');
-    
+
     document.getElementById('driverAcceptedCustomerName').textContent = `${ride.passengerId.firstName} ${ride.passengerId.lastName}`;
     const customerPhone = ride.passengerId.phone;
     document.getElementById('driverAcceptedCustomerPhone').textContent = `****${customerPhone.slice(-4)}`;
     document.getElementById('customerCallBtn').href = `tel:${customerPhone}`;
-    
+
     document.getElementById('driverAcceptedStart').textContent = t(ride.pickupLocation.villageName);
     document.getElementById('driverAcceptedEnd').textContent = t(ride.dropoffLocation.villageName);
     document.getElementById('driverAcceptedDistance').textContent = `${ride.distance} km`;
     document.getElementById('driverAcceptedFare').textContent = `₹${ride.fare}`;
-    
+
     // Dynamically set Navigation Link
     const navigateBtn = document.getElementById('driverNavigateBtn');
-    
+
     // Add district and state to avoid random locations in Google Maps
     const pickupFullAddress = `${ride.pickupLocation.address}, Purba Bardhaman, West Bengal`;
     const dropoffFullAddress = `${ride.dropoffLocation.address}, Purba Bardhaman, West Bengal`;
-    
+
     if (ride.rideStatus === 'in_progress') {
       // Once ride starts, show route from Pickup to Dropoff
       navigateBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickupFullAddress)}&destination=${encodeURIComponent(dropoffFullAddress)}`;
@@ -3235,61 +3259,61 @@ async function listenToDriverActiveRide() {
     let otpInputContainer = document.getElementById('driverOtpContainer');
     let actionBtn = document.getElementById('driverActionBtn');
     let otpInput = document.getElementById('driverOtpInput');
-    
-    if (!otpInputContainer) {
-        const oldEndBtn = document.getElementById('driverEndTripBtn');
-        if (oldEndBtn) oldEndBtn.remove();
-        if (actionBtn) actionBtn.remove();
 
-        otpInputContainer = document.createElement('div');
-        otpInputContainer.id = 'driverOtpContainer';
-        otpInputContainer.style.marginTop = '15px';
-        
-        otpInput = document.createElement('input');
-        otpInput.id = 'driverOtpInput';
-        otpInput.type = 'number';
-        otpInput.placeholder = t('পিন (PIN)');
-        otpInput.style.width = '100%';
-        otpInput.style.padding = '12px';
-        otpInput.style.borderRadius = '8px';
-        otpInput.style.border = '1px solid #ddd';
-        otpInput.style.fontSize = '1.2rem';
-        otpInput.style.textAlign = 'center';
-        otpInput.style.letterSpacing = '5px';
-        otpInput.style.marginBottom = '10px';
-        otpInput.style.boxSizing = 'border-box';
-        
-        actionBtn = document.createElement('button');
-        actionBtn.id = 'driverActionBtn';
-        actionBtn.className = 'button primary full-width';
-        
-        otpInputContainer.appendChild(otpInput);
-        otpInputContainer.appendChild(actionBtn);
-        
-        driverAcceptedRideCard.appendChild(otpInputContainer);
+    if (!otpInputContainer) {
+      const oldEndBtn = document.getElementById('driverEndTripBtn');
+      if (oldEndBtn) oldEndBtn.remove();
+      if (actionBtn) actionBtn.remove();
+
+      otpInputContainer = document.createElement('div');
+      otpInputContainer.id = 'driverOtpContainer';
+      otpInputContainer.style.marginTop = '15px';
+
+      otpInput = document.createElement('input');
+      otpInput.id = 'driverOtpInput';
+      otpInput.type = 'number';
+      otpInput.placeholder = t('পিন (PIN)');
+      otpInput.style.width = '100%';
+      otpInput.style.padding = '12px';
+      otpInput.style.borderRadius = '8px';
+      otpInput.style.border = '1px solid #ddd';
+      otpInput.style.fontSize = '1.2rem';
+      otpInput.style.textAlign = 'center';
+      otpInput.style.letterSpacing = '5px';
+      otpInput.style.marginBottom = '10px';
+      otpInput.style.boxSizing = 'border-box';
+
+      actionBtn = document.createElement('button');
+      actionBtn.id = 'driverActionBtn';
+      actionBtn.className = 'button primary full-width';
+
+      otpInputContainer.appendChild(otpInput);
+      otpInputContainer.appendChild(actionBtn);
+
+      driverAcceptedRideCard.appendChild(otpInputContainer);
     }
 
     if (ride.rideStatus === 'accepted') {
-        otpInput.style.display = 'none';
-        actionBtn.className = 'button primary full-width';
-        actionBtn.textContent = t('আমি পৌঁছেগেছি');
-        actionBtn.disabled = false;
-        if (driverCancelRideBtn) driverCancelRideBtn.classList.remove('hidden');
-        actionBtn.onclick = () => arriveDriverActiveRide();
+      otpInput.style.display = 'none';
+      actionBtn.className = 'button primary full-width';
+      actionBtn.textContent = t('আমি পৌঁছেগেছি');
+      actionBtn.disabled = false;
+      if (driverCancelRideBtn) driverCancelRideBtn.classList.remove('hidden');
+      actionBtn.onclick = () => arriveDriverActiveRide();
     } else if (ride.rideStatus === 'arrived') {
-        otpInput.style.display = 'block';
-        actionBtn.className = 'button primary full-width';
-        actionBtn.textContent = t('টোটোটি চালু করুন');
-        actionBtn.disabled = false;
-        if (driverCancelRideBtn) driverCancelRideBtn.classList.remove('hidden');
-        actionBtn.onclick = () => startDriverActiveRide();
+      otpInput.style.display = 'block';
+      actionBtn.className = 'button primary full-width';
+      actionBtn.textContent = t('টোটোটি চালু করুন');
+      actionBtn.disabled = false;
+      if (driverCancelRideBtn) driverCancelRideBtn.classList.remove('hidden');
+      actionBtn.onclick = () => startDriverActiveRide();
     } else if (ride.rideStatus === 'in_progress') {
-        otpInput.style.display = 'none';
-        actionBtn.className = 'button danger full-width';
-        actionBtn.textContent = t('ট্রিপ সমাপ্ত করুন');
-        actionBtn.disabled = false;
-        if (driverCancelRideBtn) driverCancelRideBtn.classList.add('hidden');
-        actionBtn.onclick = () => endDriverActiveRide();
+      otpInput.style.display = 'none';
+      actionBtn.className = 'button danger full-width';
+      actionBtn.textContent = t('ট্রিপ সমাপ্ত করুন');
+      actionBtn.disabled = false;
+      if (driverCancelRideBtn) driverCancelRideBtn.classList.add('hidden');
+      actionBtn.onclick = () => endDriverActiveRide();
     }
   } catch (error) {
     console.error("Error getting active ride:", error);
@@ -3299,7 +3323,7 @@ async function listenToDriverActiveRide() {
 async function arriveDriverActiveRide() {
   if (!activeRideId) return;
   const actionBtn = document.getElementById('driverActionBtn');
-  
+
   if (actionBtn) {
     actionBtn.disabled = true;
     actionBtn.textContent = t('অপেক্ষা করুন...');
@@ -3308,7 +3332,7 @@ async function arriveDriverActiveRide() {
   try {
     const res = await apiCall(`/rides/arrive/${activeRideId}`, 'POST');
     if (res.success) {
-      listenToDriverActiveRide(); 
+      listenToDriverActiveRide();
     }
   } catch (error) {
     showPopup('ত্রুটি', error.message || 'আপডেট করতে সমস্যা হয়েছে।', '❌');
@@ -3342,7 +3366,7 @@ async function startDriverActiveRide() {
         otpInput.value = '';
         otpInput.style.display = 'none';
       }
-      listenToDriverActiveRide(); 
+      listenToDriverActiveRide();
     }
   } catch (error) {
     showPopup('ত্রুটি', error.message || 'ট্রিপ শুরু করতে সমস্যা হয়েছে।', '❌');
@@ -3368,16 +3392,16 @@ async function endDriverActiveRide() {
 
   try {
     const res = await apiCall(`/rides/end/${activeRideId}`, 'POST');
-    
+
     // Update driver's daily stats using the final fare from the completed ride
     if (res.success && res.ride) {
       updateDailyStats(res.ride.fare);
     }
-    
+
     localStorage.removeItem('toto_active_ride_id');
     activeRideId = null;
     driverAcceptedRideCard.classList.add('hidden');
-    
+
     showPopup('সফলতা', 'ট্রিপ সম্পন্ন হয়েছে! 🎉', '✅', () => {
       if (availabilityToggleCheckbox.checked) {
         rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('উপলব্ধ রাইড খুঁজছি...')}</p>`;
@@ -3402,13 +3426,13 @@ driverCancelRideBtn?.addEventListener('click', async () => {
 
   driverCancelRideBtn.disabled = true;
   driverCancelRideBtn.textContent = t('অপেক্ষা করুন...');
-  
+
   try {
     const res = await apiCall(`/rides/cancel/${activeRideId}`, 'POST');
     localStorage.removeItem('toto_active_ride_id');
     activeRideId = null;
     document.getElementById('driverAcceptedRideCard').classList.add('hidden');
-    
+
     if (res.penaltyApplied) {
       showPopup('সফল', '৫ মিনিট পার হওয়ায় ট্রিপ বাতিল হয়েছে এবং যাত্রীকে ₹30 পেনাল্টি দেওয়া হয়েছে।', '✅');
     } else {
@@ -3456,7 +3480,7 @@ window.addEventListener('load', () => {
 // --- Rating Popup UI ---
 function showRatingPopup(rideId, driverName) {
   let modal = document.getElementById('ratingModal');
-  
+
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'ratingModal';
@@ -3485,7 +3509,7 @@ function showRatingPopup(rideId, driverName) {
       star.addEventListener('click', (e) => {
         selectedRating = parseInt(e.target.dataset.val);
         stars.forEach(s => {
-          if (parseInt(s.dataset.val) <= selectedRating) { s.textContent = '★'; s.style.color = '#f5b041'; } 
+          if (parseInt(s.dataset.val) <= selectedRating) { s.textContent = '★'; s.style.color = '#f5b041'; }
           else { s.textContent = '☆'; s.style.color = '#ccc'; }
         });
       });
@@ -3496,7 +3520,7 @@ function showRatingPopup(rideId, driverName) {
         const btn = document.getElementById('submitRatingBtn');
         const feedback = document.getElementById('ratingFeedback').value.trim();
         btn.textContent = 'অপেক্ষা করুন...';
-        try { await apiCall(`/rides/rate/${modal.dataset.rideId}`, 'POST', { rating: selectedRating, feedback }); } catch(e) {}
+        try { await apiCall(`/rides/rate/${modal.dataset.rideId}`, 'POST', { rating: selectedRating, feedback }); } catch (e) { }
         btn.textContent = 'সাবমিট';
       }
       modal.style.display = 'none';
