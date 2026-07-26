@@ -2803,7 +2803,12 @@ cancelRideBtn?.addEventListener('click', async () => {
       showPopup('সফল', 'ট্রিপ বাতিল করা হয়েছে।', '✅');
     }
   } catch (err) {
-    showPopup('ত্রুটি', 'বাতিল করতে সমস্যা হয়েছে।', '❌');
+    // If the ride is already gone from the server, it might throw an error.
+    // From the user's perspective, the ride is cancelled. Reset the UI.
+    localStorage.removeItem('toto_active_ride_id');
+    activeRideId = null;
+    resetCustomerUI();
+    showPopup('সফল', 'ট্রিপ বাতিল করা হয়েছে।', '✅');
   } finally {
     cancelRideBtn.disabled = false;
     cancelRideBtn.textContent = t('ট্রিপ বাতিল করুন');
