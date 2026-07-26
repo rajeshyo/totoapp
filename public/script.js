@@ -232,7 +232,7 @@ const uiTranslations = {
   'হিস্টরি লোড করতে সমস্যা হয়েছে।': 'Error loading history.',
   'নতুন রাইড অনুরোধ': 'New Ride Request',
   'চালক গ্রহণ করেছেন': 'Driver Accepted',
-  '📌 স্থলচিহ্ন:': '📌 Landmark:',
+  '📌 নিকটবর্তী জায়গা :': '📌 Landmark:',
   'অ্যাডমিন': 'Admin',
   'অ্যাডমিন (Admin)': 'Admin',
   'অ্যাডমিন প্যানেল (Admin Panel)': 'Admin Panel',
@@ -3005,9 +3005,6 @@ async function setupDriverDashboard() {
 
   toggleDriverStatus(isAvailable);
   updateOnlineStatus(isAvailable);
-  if (activeRideId) {
-    listenToDriverActiveRide();
-  }
   // Update daily stats display
   updateStatsDisplay();
 }
@@ -3054,13 +3051,24 @@ function toggleDriverStatus(isAvailable) {
   toggleStatusLabel.textContent = isAvailable ? t('অনলাইন') : t('অফলাইন');
   toggleStatusLabel.style.color = isAvailable ? 'var(--primary-brand)' : 'var(--text-muted)';
 
+  // Always clear any previously running poll
+  if (pollInterval) clearInterval(pollInterval);
+
   if (isAvailable) {
-    // Start polling when going online - every 16 seconds
-    if (pollInterval) clearInterval(pollInterval);
-    listenToPendingQueue(); // Initial call
-    pollInterval = setInterval(listenToPendingQueue, 16000);
+    if (activeRideId) {
+      // If the driver is online but has an active ride, poll that ride's status.
+      // This handles cases where the page is reloaded during a trip.
+      rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('আপনার একটি ট্রিপ চলমান রয়েছে।')}</p>`;
+      requestCountBadge.textContent = '0';
+      listenToDriverActiveRide();
+      pollInterval = setInterval(listenToDriverActiveRide, 16000);
+    } else {
+      // If the driver is online and free, poll for new ride requests.
+      listenToPendingQueue();
+      pollInterval = setInterval(listenToPendingQueue, 16000);
+    }
   } else {
-    if (pollInterval) clearInterval(pollInterval);
+    // If the driver goes offline, clear the UI and stop any sounds.
     rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('আপনি অফলাইনে আছেন। রাইড পেতে অনলাইন মোড চালু করুন।')}</p>`;
     requestCountBadge.textContent = '0';
     stopNotificationSound();
@@ -3156,7 +3164,7 @@ async function listenToPendingQueue() {
       item.innerHTML = `
         <p>👤 <strong>${ride.passengerId.firstName} ${ride.passengerId.lastName}</strong></p>
         <p>📍 ${t('পিকআপ:')} ${t(ride.pickupLocation.villageName)}</p>
-        ${ride.pickupLocation.landmark ? `<p>${t('📌 স্থলচিহ্ন:')} ${ride.pickupLocation.landmark}</p>` : ''}
+        ${ride.pickupLocation.landmark ? `<p>${t('📌 নিকটবর্তী জায়গা:')} ${ride.pickupLocation.landmark}</p>` : ''}
         <p>🏁 ${t('গন্তব্য:')} ${t(ride.dropoffLocation.villageName)}</p>
         <p>💰 ${t('ভাড়া:')} <span class="text-green">₹${ride.fare}</span></p>
         <div class="request-actions" style="flex-wrap: wrap;">
