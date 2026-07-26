@@ -1083,6 +1083,80 @@ function showHomePage() {
   updateNavButtons('home');
 }
 
+function addAdminStyles() {
+    if (document.getElementById('admin-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'admin-styles';
+    style.innerHTML = `
+        @keyframes item-fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .admin-user-card {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: var(--surface-color, #fff);
+            border: 1px solid var(--border-light, #eee);
+            margin-bottom: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+            animation: item-fade-in 0.4s ease-out forwards;
+            opacity: 0;
+        }
+
+        .admin-user-card.is-blocked {
+            background-color: #fff0f0;
+            border-left: 4px solid var(--danger-color, #ff3b30);
+        }
+
+        .admin-user-info { display: flex; align-items: center; gap: 12px; flex-grow: 1; min-width: 200px; }
+        .admin-user-avatar { width: 40px; height: 40px; border-radius: 50%; background-color: var(--surface-dim); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; color: var(--text-main); }
+        .admin-user-details p, .admin-user-details div { margin: 0; line-height: 1.3; }
+        .admin-user-name { font-weight: 600; font-size: 1rem; color: var(--text-main); }
+        .admin-user-meta { font-size: 0.8rem; color: var(--text-muted); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 2px; }
+        .admin-user-meta .badge { font-size: 0.7rem; padding: 2px 7px; border-radius: 10px; font-weight: 600; }
+        .admin-user-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+        @media (max-width: 600px) {
+            .admin-user-card { flex-direction: column; align-items: flex-start; }
+            .admin-user-actions { width: 100%; justify-content: flex-end; margin-top: 10px; }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+async function setupAdminDashboard() {
+  showSection(adminDashboard);
+  updateNavButtons('home');
+  loadAdminStats(); // Initial load
+  addAdminStyles(); // Inject styles for the user list
+
+  if (adminPollInterval) clearInterval(adminPollInterval);
+  adminPollInterval = setInterval(() => {
+    loadAdminStats();
+  }, 16000); // Poll every 16 seconds
+
+  // Replace the admin tabs container for better responsiveness. This finds the
+  // container with the rigid, centered layout and replaces it with a flexible,
+  // wrapping layout that works better on all screen sizes.
+  const adminTabsContainer = adminUsersTabBtn?.parentElement;
+  if (adminTabsContainer && adminTabsContainer.style.justifyContent === 'center') {
+    const newContainer = document.createElement('div');
+    newContainer.style.cssText = 'display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;';
+    while (adminTabsContainer.firstChild) {
+      newContainer.appendChild(adminTabsContainer.firstChild);
+    }
+    adminTabsContainer.parentNode.replaceChild(newContainer, adminTabsContainer);
+  }
+
+  // Load initial tab by default
+  if (adminUsersTabBtn) adminUsersTabBtn.click();
+}
 
 async function showProfilePage() {
   showSection(profilePage);
@@ -1312,25 +1386,54 @@ window.bookFavorite = function (villageId, stoppageId, stopName) {
   }
   updateRidePreview();
   updateRideButtonState();
-  loadAdminStats();
-
-  if (adminPollInterval) clearInterval(adminPollInterval);
-  adminPollInterval = setInterval(() => {
-    loadAdminStats();
-  }, 16000);
 }
 
 async function loadAdminStats() {
   try {
     const res = await apiCall('/admin/stats');
     if (res.success) {
-      const countEl = document.getElementById('adminOnlineDriversCount');
-      if (countEl) countEl.textContent = `🛺 ${res.onlineDriversCount}`;
-      const customerCountEl = document.getElementById('adminOnlineCustomersCount');
-      if (customerCountEl) customerCountEl.textContent = `👤 ${res.onlineCustomersCount}`;
+      let statsContainer = document.getElementById('adminStatsContainer');
+      if (!statsContainer && adminDashboard) {
+        statsContainer = document.createElement('div');
+        statsContainer.id = 'adminStatsContainer';
+        statsContainer.style.cssText = 'display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem;';
+        adminDashboard.prepend(statsContainer);
+      }
+
+      if (statsContainer) {
+        const cardsWrapper = document.createElement('div');
+        cardsWrapper.style.cssText = 'display: flex; gap: 1rem; flex-wrap: wrap;';
+        cardsWrapper.innerHTML = `
+          <div class="card info-card" style="flex: 1; min-width: 150px; text-align: center;">
+            <h4 style="margin: 0 0 10px 0;">${t('অনলাইন চালক')}</h4>
+            <p id="adminOnlineDriversCount" style="font-size: 2rem; font-weight: bold; margin: 0;">
+              🛺 ${res.onlineDriversCount}
+            </p>
+          </div>
+          <div class="card info-card" style="flex: 1; min-width: 150px; text-align: center;">
+            <h4 style="margin: 0 0 10px 0;">${t('অনলাইন যাত্রী')}</h4>
+            <p id="adminOnlineCustomersCount" style="font-size: 2rem; font-weight: bold; margin: 0;">
+              👤 ${res.onlineCustomersCount}
+            </p>
+          </div>
+        `;
+        statsContainer.innerHTML = '';
+        statsContainer.appendChild(cardsWrapper);
+
+        // Find the download button and move it into the new stats container
+        const downloadBtn = document.getElementById('adminDownloadExcelBtn');
+        if (downloadBtn) {
+          statsContainer.appendChild(downloadBtn);
+        }
+      }
     }
   } catch (error) {
     console.error('Failed to load admin stats:', error);
+    // Optional: show an error in the stats container
+    let statsContainer = document.getElementById('adminStatsContainer');
+    if (statsContainer) {
+      statsContainer.innerHTML = `<p class="muted-text">${t('স্ট্যাটাস লোড করতে সমস্যা হয়েছে।')}</p>`;
+    }
   }
 }
 
@@ -1434,20 +1537,31 @@ async function loadAdminUsers() {
   try {
     const res = await apiCall('/admin/users');
     if (res.success && res.users.length > 0) {
-      list.innerHTML = res.users.map(u => {
+      list.innerHTML = res.users.map((u, index) => {
         const isBlocked = u.isBlocked === true;
         const blockButtonText = isBlocked ? t('আনব্লক করুন') : t('ব্লক করুন');
         const blockButtonClass = isBlocked ? 'secondary' : 'danger';
-        const statusBadge = isBlocked ? `<span class="badge" style="background: var(--danger-color); color: white; float:right; margin-left: 5px;">${t('ব্লকড')}</span>` : '';
+        const userTypeKey = u.userType === 'driver' ? 'চালক' : u.userType === 'admin' ? 'অ্যাডমিন' : 'যাত্রী';
+        const userTypeText = t(userTypeKey);
+        const avatarIcon = u.userType === 'driver' ? '🚗' : (u.userType === 'admin' ? '🛡️' : '👤');
 
         return `
-        <div class="request-item" style="margin-bottom: 10px; ${isBlocked ? 'background-color: #fff0f0; border-left: 4px solid var(--danger-color);' : ''}">
-          <p>👤 <strong>${u.firstName} ${u.lastName}</strong> <span class="badge" style="float:right;">${t(u.userType === 'driver' ? 'চালক' : u.userType === 'admin' ? 'অ্যাডমিন' : 'যাত্রী')}</span>${statusBadge}</p>
-          <p>📱 ${u.phone}</p>
-          ${u.vehicleNumber ? `<p>🔢 ${u.vehicleNumber}</p>` : ''}
-          <div style="text-align: right; margin-top: 8px; display: flex; gap: 8px; justify-content: flex-end;">
-            <button class="button ${blockButtonClass}" style="padding: 6px 12px; font-size: 0.8rem;" onclick="toggleUserBlock('${u._id}', ${!isBlocked})">${blockButtonText}</button>
-            <button class="button danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="deleteAdminUser('${u._id}')">🗑️ ${t('ডিলিট')}</button>
+        <div class="admin-user-card ${isBlocked ? 'is-blocked' : ''}" style="animation-delay: ${index * 50}ms;">
+          <div class="admin-user-info">
+            <div class="admin-user-avatar">${avatarIcon}</div>
+            <div class="admin-user-details">
+              <p class="admin-user-name">${u.firstName} ${u.lastName}</p>
+              <div class="admin-user-meta">
+                <span>📱 ${u.phone}</span>
+                ${u.vehicleNumber ? `<span>🔢 ${u.vehicleNumber}</span>` : ''}
+                <span class="badge">${userTypeText}</span>
+                ${isBlocked ? `<span class="badge" style="background: var(--danger-color); color: white;">${t('ব্লকড')}</span>` : ''}
+              </div>
+            </div>
+          </div>
+          <div class="admin-user-actions">
+            <button class="button ${blockButtonClass}" style="padding: 5px 10px; font-size: 0.75rem;" onclick="toggleUserBlock('${u._id}', ${!isBlocked})">${blockButtonText}</button>
+            <button class="button danger" style="padding: 5px 10px; font-size: 0.75rem;" onclick="deleteAdminUser('${u._id}')">🗑️ ${t('ডিলিট')}</button>
           </div>
         </div>
       `}).join('');
