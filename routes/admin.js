@@ -6,10 +6,6 @@ const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
 
-if (User && User.schema && !User.schema.path('isBlocked')) {
-  User.schema.add({ isBlocked: { type: Boolean, default: false } });
-}
-
 // Get admin stats (online drivers count)
 router.get('/stats', authMiddleware, async (req, res) => {
   try {

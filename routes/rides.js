@@ -10,18 +10,6 @@ const {
   calculateDistanceKmByVillage
 } = require('../data/locations');
 
-if (Ride && Ride.schema && !Ride.schema.path('otp')) {
-  Ride.schema.add({ otp: { type: String } });
-}
-
-if (Ride && Ride.schema && !Ride.schema.path('arriveTime')) {
-  Ride.schema.add({ arriveTime: { type: Date } });
-}
-
-if (Ride && Ride.schema && !Ride.schema.path('penaltyApplied')) {
-  Ride.schema.add({ penaltyApplied: { type: Boolean, default: false } });
-}
-
 const router = express.Router();
 
 const FARE_PER_KM = 10; // per km rate

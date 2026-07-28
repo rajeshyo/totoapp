@@ -1,4 +1,11 @@
+
+// At the top of script.js
+import { apiCall } from './api.js'; // Assuming you create api.js
+
 // ===== Notification Helpers =====
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging.js";
+
 let currentNotificationAudio = null;
 
 function playNotificationSound() {
@@ -23,16 +30,20 @@ function stopNotificationSound() {
   }
 }
 
-function sendNotification(title, options = {}) {
+function sendNotification(title, options = {}, playSound = true) {
   if (!("Notification" in window)) return;
 
   if (Notification.permission === "granted") {
     const notification = new Notification(title, {
       icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛺</text></svg>',
+      // Fallback icon if the SVG data URI is not supported or preferred
+      // icon: '/image/toto_icon.png',
       ...options
     });
 
-    // If they click the native push notification, focus the browser tab
+    if (playSound) playNotificationSound();
+
+    // If they click the native push notification, focus the browser tab (optional)
     notification.onclick = function () {
       window.focus();
       this.close();
@@ -40,21 +51,98 @@ function sendNotification(title, options = {}) {
   }
 }
 
-function notifyDriversOfRide(rideId, pickupLocation, fare) {
+function notifyDriversOfRide(rideId, pickupLocation, fare) { // This function is for Socket.IO, FCM is handled by backend
   sendNotification('নতুন রাইড অনুরোধ', {
     body: `${pickupLocation} থেকে - ₹${fare} ভাড়া`,
     tag: `ride-${rideId}`,
     requireInteraction: true
-  });
+  }, true); // Play sound for new ride requests
 }
 
 function notifyCustomerRideAccepted(driverName, driverPhone) {
   sendNotification('চালক গ্রহণ করেছেন', {
     body: `${driverName} আপনার রাইড গ্রহণ করেছেন`,
     tag: 'ride-accepted',
-    requireInteraction: false
+    requireInteraction: false // No sound for accepted ride, just a visual notification
   });
 }
+
+// ===== FCM Integration =====
+// Your Firebase project configuration (from Firebase Console -> Project settings -> Your apps -> Web app -> Config)
+const firebaseConfig = {
+  apiKey: "AIzaSyCR2UerdaLcrpE_HYYdHCb0Blrh42pnUKA",
+  authDomain: "totobhandhu.firebaseapp.com",
+  projectId: "totobhandhu",
+  storageBucket: "totobhandhu.firebasestorage.app",
+  messagingSenderId: "410190429747",
+  appId: "1:410190429747:web:d877b934d1d56bd26c2d46",
+  measurementId: "G-RT1WQ9SMHF"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
+
+async function registerFCMToken() {
+  if (!currentUser || currentUser.userType !== 'driver') return;
+  if (!("Notification" in window)) {
+    showPopup('ত্রুটি', 'এই ব্রাউজারে পুশ নোটিফিকেশন সাপোর্ট করে না।', '❌');
+    return;
+  }
+
+  // Explicitly register the service worker first
+  let serviceWorkerRegistration;
+  try {
+    serviceWorkerRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    console.log('Service Worker registered:', serviceWorkerRegistration);
+  } catch (swError) {
+    console.error('Service Worker registration failed:', swError);
+    showPopup('ত্রুটি', 'নোটিফিকেশন সার্ভিস চালু করতে সমস্যা হয়েছে।', '❌');
+    return;
+  }
+
+  // Check if permission is already denied and show a helpful message.
+  if (Notification.permission === 'denied') {
+    showPopup(
+      'নোটিফিকেশন ব্লক করা আছে',
+      'আপনি নোটিফিকেশন ব্লক করে রেখেছেন। রাইডের অ্যালার্ট পেতে, অনুগ্রহ করে আপনার ব্রাউজার সেটিংসে গিয়ে এই সাইটের জন্য নোটিফিকেশন চালু করুন।',
+      '🔕'
+    );
+    return;
+  }
+
+  try {
+    // This will prompt the user if permission is 'default', or resolve immediately if 'granted'.
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      // IMPORTANT: Replace 'YOUR_VAPID_KEY_FROM_FIREBASE_CONSOLE' with your actual VAPID key!
+      const currentToken = await getToken(messaging, { vapidKey: 'BNgpoA0CaBulxjWb3WvTS0TTzGs1lg9bzuzIrwojtn1AXvcfLwtEIxACPntQ-BHen8K3yxfT_kGKEpan4cpoH4w', serviceWorkerRegistration });
+      if (currentToken) {
+        console.log('FCM registration token:', currentToken);
+        // Send the token to your backend to associate it with the driver
+        await apiCall('/drivers/register-fcm-token', 'POST', { fcmToken: currentToken });
+      } else {
+        // This can happen if the service worker isn't registered correctly.
+        console.warn('No FCM registration token available. Check service worker registration.');
+        showPopup('ত্রুটি', 'নোটিফিকেশন সেট আপ করতে সমস্যা হয়েছে।', '❌');
+      }
+    } else {
+      console.warn('Notification permission denied.');
+      // User either denied or dismissed the prompt. No action needed, they will be prompted again next time.
+      console.warn('Notification permission was not granted.');
+    }
+  } catch (error) {
+    console.error('An error occurred while retrieving FCM token:', error);
+    showPopup('ত্রুটি', 'নোটিফিকেশন সেট আপ করতে একটি ত্রুটি হয়েছে।', '❌');
+  }
+}
+
+// Handle incoming messages when app is in foreground
+onMessage(messaging, (payload) => {
+  console.log('Foreground message received:', payload);
+  // You can display a custom in-app notification here if needed
+  sendNotification(payload.notification.title, { body: payload.notification.body }, true);
+});
 
 // ===== API Configuration =====
 const API_BASE_URL = 'https://totoapp.onrender.com/api';
@@ -324,6 +412,13 @@ const uiTranslations = {
   'আউশগ্রাম থানা': 'Ausgram Police Station',
   'করাটিয়া মোড়': 'Karatia More',
   'করাটিয়া হাই স্কুল': 'Karatia High School',
+  'নোটিফিকেশন ব্লক করা আছে': 'Notifications Blocked',
+  'আপনি নোটিফিকেশন ব্লক করে রেখেছেন। রাইডের অ্যালার্ট পেতে, অনুগ্রহ করে আপনার ব্রাউজার সেটিংসে গিয়ে এই সাইটের জন্য নোটিফিকেশন চালু করুন।': 'You have blocked notifications. To receive ride alerts, please enable notifications for this site in your browser settings.',
+  'এই ব্রাউজারে পুশ নোটিফিকেশন সাপোর্ট করে না।': 'Push notifications are not supported in this browser.',
+  'নোটিফিকেশন সেট আপ করতে সমস্যা হয়েছে।': 'Problem setting up notifications.',
+  'নোটিফিকেশন সেট আপ করতে একটি ত্রুটি হয়েছে।': 'An error occurred while setting up notifications.',
+  'নোটিফিকেশন সার্ভিস চালু করতে সমস্যা হয়েছে।': 'Problem starting notification service.',
+    'করাটিয়া হাই স্কুল': 'Karatia High School',
   'করাটিয়া বাজার': 'Karatia Bazar',
   'করাটিয়া স্বাস্থ্যকেন্দ্র': 'Karatia Health Centre',
   'গুসকরা': 'Guskara',
@@ -588,44 +683,8 @@ function handleBlockedAccount() {
   setTimeout(() => { isForcedLoggedOut = false; }, 5000);
 }
 
-// Helper function to make API calls with authorization
-async function apiCall(endpoint, method = 'GET', body = null) {
-  const token = localStorage.getItem('toto_token');
-
-  const options = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-    }
-  };
-
-  if (token) {
-    options.headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  if (body) {
-    options.body = JSON.stringify(body);
-  }
-
-  try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
-    const data = await response.json();
-
-    if (!response.ok) {
-      if (data.message === 'ACCOUNT_BLOCKED') {
-        handleBlockedAccount();
-      }
-      const err = new Error(data.message || 'API Error');
-      err.data = data;
-      throw err;
-    }
-
-    return data;
-  } catch (error) {
-    console.error('API Error:', error);
-    throw error;
-  }
-}
+// Listen for the custom event dispatched from api.js when an account is blocked
+document.addEventListener('account-blocked', handleBlockedAccount);
 
 // --- DOM Core Declarations ---
 const authView = document.getElementById('authView');
@@ -3009,6 +3068,10 @@ async function setupDriverDashboard() {
   if (driverActiveRouteSelect) driverActiveRouteSelect.disabled = isAvailable;
 
   toggleDriverStatus(isAvailable);
+  // When driver goes online, register FCM token
+  if (isAvailable) {
+    registerFCMToken();
+  }
   updateOnlineStatus(isAvailable);
   // Update daily stats display
   updateStatsDisplay();
@@ -3033,7 +3096,7 @@ async function loadDriverRoutes() {
 driverActiveRouteSelect?.addEventListener('change', () => {
   localStorage.setItem('toto_driver_route', driverActiveRouteSelect.value);
 });
-
+// FCM: Request native push notification permission when driver goes online
 availabilityToggleCheckbox.addEventListener('change', (e) => {
   const isAvailable = availabilityToggleCheckbox.checked;
 
@@ -3048,6 +3111,10 @@ availabilityToggleCheckbox.addEventListener('change', (e) => {
   }
 
   localStorage.setItem('toto_driver_online', isAvailable);
+  // FCM: Register token when driver goes online
+  if (isAvailable) {
+    registerFCMToken();
+  }
   toggleDriverStatus(isAvailable);
   updateOnlineStatus(isAvailable);
 });

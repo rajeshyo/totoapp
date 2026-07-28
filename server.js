@@ -2,20 +2,27 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 const connectDB = require('./config/db');
+const admin = require('firebase-admin');
 
 // Import routes
 const authRoutes = require('./routes/auth');
 const ridesRoutes = require('./routes/rides');
 const locationsRoutes = require('./routes/locations');
 const adminRoutes = require('./routes/admin');
+const driverRoutes = require('./routes/drivers');
 const routesRoutes = require('./routes/routes');
 const { seedLocations } = require('./data/locations');
 const User = require('./models/User');
 const authMiddleware = require('./middleware/auth');
+const serviceAccount = require('./firebase-admin-config.json');
 
 const app = express();
+
+// Initialize Firebase Admin SDK
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
 
 // Allowed Origins for CORS
 const allowedOrigins = [
@@ -53,8 +60,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Serve Frontend Files
 app.use(
@@ -75,25 +82,13 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes
-app.get('/api/admin/stats', authMiddleware, async (req, res, next) => {
-  try {
-    if (req.userType !== 'admin') {
-      return res.status(403).json({ success: false, message: 'Access denied' });
-    }
-    // Calculate the real-time number of online drivers and customers
-    const onlineDriversCount = await User.countDocuments({ userType: 'driver', isOnline: true });
-    const onlineCustomersCount = await User.countDocuments({ userType: 'passenger', isOnline: true });
-    res.json({ success: true, onlineDriversCount, onlineCustomersCount });
-  } catch (error) {
-    next(error);
-  }
-});
+// API Routes (Note: The '/api/admin/stats' route has been moved to 'routes/admin.js' for better organization)
 
 app.use('/api/auth', authRoutes);
 app.use('/api/rides', ridesRoutes);
 app.use('/api/locations', locationsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/drivers', driverRoutes);
 app.use('/api/routes', routesRoutes);
 
 // 404 handler

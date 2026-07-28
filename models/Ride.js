@@ -66,6 +66,18 @@ const rideSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  otp: {
+    type: String,
+    default: null
+  },
+  arriveTime: {
+    type: Date,
+    default: null
+  },
+  penaltyApplied: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now

@@ -3,13 +3,6 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
 
-if (User && User.schema && !User.schema.path('isOnline')) {
-  User.schema.add({ isOnline: { type: Boolean, default: false } });
-}
-if (User && User.schema && !User.schema.path('activeRouteId')) {
-  User.schema.add({ activeRouteId: { type: String, default: null } });
-}
-
 const router = express.Router();
 
 // SIGNUP

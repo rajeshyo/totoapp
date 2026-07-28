@@ -45,6 +45,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  fcmTokens: {
+    type: [String],
+    default: []
+  },
+  isOnline: {
+    type: Boolean,
+    default: false
+  },
   activePenalty: {
     amount: { type: Number, default: 0 },
     driverId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
@@ -64,6 +72,14 @@ const userSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  isBlocked: {
+    type: Boolean,
+    default: false
+  },
+  activeRouteId: {
+    type: String,
+    default: null
   },
   createdAt: {
     type: Date,
