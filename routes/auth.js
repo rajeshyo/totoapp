@@ -183,7 +183,7 @@ router.put('/online-status', authMiddleware, async (req, res) => {
     if (routeId !== undefined) {
       updateData.activeRouteId = routeId;
     }
-    const user = await User.findByIdAndUpdate(req.userId, { $set: updateData }, { new: true, strict: false });
+    const user = await User.findByIdAndUpdate(req.userId, { $set: updateData }, { new: true });
     if (user && user.isBlocked) {
       return res.status(403).json({ success: false, message: 'ACCOUNT_BLOCKED' });
     }

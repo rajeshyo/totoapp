@@ -188,9 +188,11 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
 
     const ride = await Ride.findOneAndUpdate(
       { _id: req.params.rideId, rideStatus: { $in: ['pending', 'driver_offered'] } },
-      { 
-        rideStatus: 'driver_offered',
-        $set: { offers: offers }
+      {
+        $set: {
+          rideStatus: 'driver_offered',
+          offers: offers
+        }
       },
       { new: true }
     )
@@ -334,30 +336,25 @@ router.post('/arrive/:rideId', authMiddleware, async (req, res) => {
 router.post('/start/:rideId', authMiddleware, async (req, res) => {
   try {
     const { otp } = req.body;
+    const ride = await Ride.findOne({ _id: req.params.rideId, driverId: req.userId, rideStatus: { $in: ['accepted', 'arrived'] } });
 
-    // Use .lean() to force Mongoose to read the dynamically injected 'otp' field
-    const rideCheck = await Ride.findOne({ _id: req.params.rideId, driverId: req.userId, rideStatus: { $in: ['accepted', 'arrived'] } }).lean();
-
-    if (!rideCheck) {
+    if (!ride) {
       return res.status(400).json({
         success: false,
         message: 'Ride not found or invalid state'
       });
     }
 
-    // Strict check: if it's not the 0000 bypass, it MUST perfectly match the customer's PIN
-    if (otp !== '0000' && (!rideCheck.otp || rideCheck.otp !== otp)) {
+    // Strict check: if it's not the '0000' bypass, it MUST perfectly match the customer's PIN
+    if (otp !== '0000' && ride.otp !== otp) {
       return res.status(400).json({
         success: false,
         message: 'ভুল পিন (Invalid OTP)'
       });
     }
 
-    const ride = await Ride.findOneAndUpdate(
-      { _id: req.params.rideId, driverId: req.userId, rideStatus: { $in: ['accepted', 'arrived'] } },
-      { rideStatus: 'in_progress' },
-      { new: true }
-    );
+    ride.rideStatus = 'in_progress';
+    await ride.save();
 
     res.status(200).json({
       success: true,
@@ -648,7 +645,7 @@ setInterval(async () => {
         });
       }
       r.rideStatus = 'cancelled';
-      r.set('penaltyApplied', true, { strict: false });
+      r.penaltyApplied = true;
       await r.save();
     }
   } catch (error) {

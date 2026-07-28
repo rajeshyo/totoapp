@@ -31,8 +31,6 @@ const allowedOrigins = [
   'http://127.0.0.1:5000',      // Local IP
   'http://127.0.0.1:3000',      // Local IP fallback
   'https://totoapp.onrender.com', // Production
-  'https://totobooking.vercel.app', // Alternative production
-  'https://totobooking.netlify.app' // Alternative production
 ];
 
 // CORS Configuration
@@ -45,8 +43,9 @@ const corsOptions = {
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      // For development, allow all localhost
-      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      // Allow localhost and local network IPs for development and mobile testing
+      const isDevelopment = origin.includes('localhost') || origin.includes('127.0.0.1') || origin.startsWith('http://192.168.') || origin.startsWith('http://10.');
+      if (isDevelopment) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));

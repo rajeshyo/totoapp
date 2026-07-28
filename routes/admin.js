@@ -14,8 +14,11 @@ router.get('/stats', authMiddleware, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Unauthorized access' });
     }
     // Count drivers who have turned their dashboard status to "online"
-    const onlineDriversCount = await User.countDocuments({ userType: 'driver', isOnline: true });
-    res.status(200).json({ success: true, onlineDriversCount });
+    const [onlineDriversCount, onlineCustomersCount] = await Promise.all([
+      User.countDocuments({ userType: 'driver', isOnline: true }),
+      User.countDocuments({ userType: 'passenger', isOnline: true })
+    ]);
+    res.status(200).json({ success: true, onlineDriversCount, onlineCustomersCount });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message || 'Failed to fetch stats' });
   }
