@@ -48,6 +48,25 @@ const rideSchema = new mongoose.Schema({
     enum: ['pending', 'paid', 'failed'],
     default: 'pending'
   },
+  offers: [{
+    driverId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    fare: Number,
+    location: {
+      lat: Number,
+      lng: Number
+    }
+  }],
+  driverLocation: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point'
+    },
+    coordinates: {
+      type: [Number], // [longitude, latitude]
+      default: [0, 0]
+    }
+  },
   rating: {
     type: Number,
     min: 1,
@@ -87,5 +106,7 @@ const rideSchema = new mongoose.Schema({
     default: Date.now
   }
 }, { timestamps: true });
+
+rideSchema.index({ driverLocation: '2dsphere' });
 
 module.exports = mongoose.model('Ride', rideSchema);

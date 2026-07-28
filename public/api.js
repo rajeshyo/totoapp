@@ -1,5 +1,7 @@
 // public/api.js
-const API_BASE_URL = 'https://totoapp.onrender.com/api';
+// Use a relative URL for the API base. This makes the frontend
+// automatically adapt to the backend it's served from (local or production).
+const API_BASE_URL = '/api';
 
 // Helper function to make API calls with authorization
 export async function apiCall(endpoint, method = 'GET', body = null) {

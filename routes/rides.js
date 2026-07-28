@@ -111,10 +111,9 @@ router.post('/request', authMiddleware, async (req, res) => {
       dropoffLocation,
       distance,
       fare,
-      rideStatus: 'pending'
+      rideStatus: 'pending',
+      otp: Math.floor(1000 + Math.random() * 9000).toString()
     });
-
-    ride.set('otp', Math.floor(1000 + Math.random() * 9000).toString(), { strict: false });
 
     await ride.save();
 
@@ -193,7 +192,7 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
         rideStatus: 'driver_offered',
         $set: { offers: offers }
       },
-      { new: true, strict: false }
+      { new: true }
     )
     .populate('passengerId', 'firstName lastName phone profilePhoto')
     .populate({ path: 'offers.driverId', model: 'User', select: 'firstName lastName phone profilePhoto vehicleNumber averageRating', strictPopulate: false });
@@ -250,7 +249,7 @@ router.post('/accept-offer/:rideId', authMiddleware, async (req, res) => {
     const ride = await Ride.findOneAndUpdate(
       { _id: req.params.rideId, passengerId: req.userId, rideStatus: 'driver_offered' },
       { $set: updatePayload },
-      { new: true, strict: false }
+      { new: true }
     ).populate('driverId', 'firstName lastName phone profilePhoto vehicleNumber').lean();
 
     if (!ride) {
@@ -286,7 +285,7 @@ router.post('/reject-offer/:rideId', authMiddleware, async (req, res) => {
           rideStatus: status
         }
       },
-      { new: true, strict: false }
+      { new: true }
     ).lean();
 
     if (!ride) {
@@ -525,7 +524,7 @@ router.post('/cancel/:rideId', authMiddleware, async (req, res) => {
     }
 
     ride.rideStatus = 'cancelled';
-    ride.set('penaltyApplied', applyPenalty, { strict: false });
+    ride.penaltyApplied = applyPenalty;
     await ride.save();
 
     res.status(200).json({
