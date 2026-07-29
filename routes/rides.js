@@ -145,20 +145,27 @@ for (const driver of drivers) {
 
 const response = await admin.messaging().send({
     token,
+
+    
     notification: {
-        title: "🛺 New Toto Booking",
-        body: `${pickupLocation.stoppageName} ➜ ${dropoffLocation.stoppageName} | ₹${fare}`
+        title: "🔥 TEST NOTIFICATION",
+        body: "If you see this, FCM works!"
     },
+
     webpush: {
+        headers: {
+            Urgency: "high"
+        },
         notification: {
-            title: "🛺 New Toto Booking",
-            body: `${pickupLocation.stoppageName} ➜ ${dropoffLocation.stoppageName} | ₹${fare}`,
+            title: "🔥 TEST NOTIFICATION",
+            body: "If you see this, FCM works!",
             icon: "/image/toto_icon.png",
             requireInteraction: true
         }
     }
 });
 
+console.log("Message ID:", response);
 console.log(response);
 }
       for (const driver of drivers) {
