@@ -16,13 +16,13 @@ const { seedLocations } = require('./data/locations');
 const User = require('./models/User');
 const authMiddleware = require('./middleware/auth');
 let serviceAccount;
-
+console.log("🔥 SERVER VERSION 30-JULY-2026-001");
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     console.log("Using ENV Firebase");
     serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 } else {
     console.log("Using Local Firebase JSON");
-    // serviceAccount = require("./firebase-admin-config.json");
+    serviceAccount = require("./firebase-admin-config.json");
 }
 
 if (!admin.apps.length) {
@@ -37,13 +37,7 @@ console.log("🔥 Firebase initialized successfully");
 
 const app = express();
 
-// Initialize Firebase Admin SDK
-// admin.initializeApp({
-//   credential: admin.credential.cert(serviceAccount)
-// });
-// admin.initializeApp({
-//   credential: admin.credential.cert(serviceAccount),
-// });
+
 
 // Allowed Origins for CORS
 const allowedOrigins = [
