@@ -17,16 +17,22 @@ const User = require('./models/User');
 const authMiddleware = require('./middleware/auth');
 let serviceAccount;
 
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    console.log("✅ Using Firebase from Environment Variable");
 
-if (process.env.NODE_ENV === "production") {
     serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+
 } else {
+    console.log("✅ Using Local Firebase JSON");
+
     serviceAccount = require("./firebase-admin-config.json");
 }
 
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-});
+if (!admin.apps.length) {
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+    });
+}
 
 console.log("🔥 Firebase initialized successfully");
 
