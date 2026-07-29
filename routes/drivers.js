@@ -24,7 +24,7 @@ router.post('/register-fcm-token', authMiddleware, async (req, res) => {
 
         // Add the token only if it's not already there
         if (!driver.fcmTokens.includes(fcmToken)) {
-            driver.fcmTokens.push(fcmToken);
+            driver.fcmTokens = [fcmToken];
             await driver.save();
         }
 

@@ -96,6 +96,17 @@ async function registerFCMToken() {
     // serviceWorkerRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
      serviceWorkerRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
     console.log('Service Worker registered:', serviceWorkerRegistration);
+    await navigator.serviceWorker.ready;
+
+console.log("Service Worker Ready:", serviceWorkerRegistration);
+console.log("Controller:", navigator.serviceWorker.controller);
+
+if (!navigator.serviceWorker.controller) {
+    console.log("Reloading page because SW is not controlling...");
+    location.reload();
+    return;
+}
+
   } catch (swError) {
     console.error('Service Worker registration failed:', swError);
     showPopup('ত্রুটি', 'নোটিফিকেশন সার্ভিস চালু করতে সমস্যা হয়েছে।', '❌');
@@ -154,6 +165,7 @@ onMessage(messaging, (payload) => {
             icon: "/image/toto_icon.png"
         }
     );
+      playNotificationSound();
 });
 // ===== API Configuration =====
 const API_BASE_URL = 'https://totoapp.onrender.com/api';

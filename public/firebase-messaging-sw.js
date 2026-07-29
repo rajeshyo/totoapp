@@ -1,5 +1,16 @@
 /* eslint-disable no-restricted-globals */
+self.addEventListener("install", (event) => {
+    console.log("SW Installed");
+    self.skipWaiting();
+});
 
+self.addEventListener("activate", (event) => {
+    console.log("SW Activated");
+
+    event.waitUntil(
+        self.clients.claim()
+    );
+});
 // Import and initialize the Firebase SDK
 // These are the "compat" libraries that are designed to work with importScripts.
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
@@ -35,20 +46,35 @@ const messaging = firebase.messaging();
 //   self.registration.showNotification(notificationTitle, notificationOptions);
 // });
 messaging.onBackgroundMessage((payload) => {
-  self.registration.showNotification(
-    payload.notification.title,
-    {
-      body: payload.notification.body,
+
+  console.log("Background Message:", payload);
+
+  const title =
+      payload.notification?.title ||
+      payload.data?.title ||
+      "🛺 Toto Booking";
+
+  const body =
+      payload.notification?.body ||
+      payload.data?.body ||
+      "New Ride";
+
+  self.registration.showNotification(title, {
+      body: body,
       icon: "/image/toto_icon.png",
-      badge: "/badge.png"
-    }
-  );
+      badge: "/badge.png",
+      requireInteraction: true,
+      data: {
+          url: "https://totoapp.onrender.com/"
+      }
+  });
+
 });
 // Handle notification clicks (merged from sw.js)
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const urlToOpen = '/';
+  const urlToOpen = 'https://totoapp.onrender.com/';
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {

@@ -141,24 +141,25 @@ for (const driver of drivers) {
 
     console.log("Token count:", driver.fcmTokens.length);
 
-    for (const token of driver.fcmTokens) {
-        console.log("About to send notification");
+   const token = driver.fcmTokens[0];
 
-        try {
-            const response = await admin.messaging().send({
-                token,
-                notification: {
-                    title: "Test",
-                    body: "Test Notification"
-                }
-            });
-
-            console.log("Firebase Message ID:", response);
-
-        } catch (e) {
-            console.error("Firebase Error:", e);
+const response = await admin.messaging().send({
+    token,
+    notification: {
+        title: "🛺 New Toto Booking",
+        body: `${pickupLocation.stoppageName} ➜ ${dropoffLocation.stoppageName} | ₹${fare}`
+    },
+    webpush: {
+        notification: {
+            title: "🛺 New Toto Booking",
+            body: `${pickupLocation.stoppageName} ➜ ${dropoffLocation.stoppageName} | ₹${fare}`,
+            icon: "/image/toto_icon.png",
+            requireInteraction: true
         }
     }
+});
+
+console.log(response);
 }
       for (const driver of drivers) {
 
