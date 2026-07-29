@@ -91,21 +91,29 @@ async function registerFCMToken() {
   }
 
   // Explicitly register the service worker first
-  let serviceWorkerRegistration;
-  try {
-    // serviceWorkerRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-     serviceWorkerRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-    console.log('Service Worker registered:', serviceWorkerRegistration);
-    await navigator.serviceWorker.ready;
+let serviceWorkerRegistration;
 
-console.log("Service Worker Ready:", serviceWorkerRegistration);
-console.log("Controller:", navigator.serviceWorker.controller);
+try {
 
-if (!navigator.serviceWorker.controller) {
-    console.log("Reloading page because SW is not controlling...");
-    location.reload();
-    return;
-}
+    // Register Service Worker
+    await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+
+    // Wait until it becomes ACTIVE
+    serviceWorkerRegistration = await navigator.serviceWorker.ready;
+
+    console.log("✅ Service Worker Ready:", serviceWorkerRegistration);
+    console.log("Controller:", navigator.serviceWorker.controller);
+
+    // If still no controller, reload once
+    if (!navigator.serviceWorker.controller) {
+
+        console.log("Reloading page because SW is not controlling...");
+
+        window.location.reload();
+
+        return;
+
+    }
 
   } catch (swError) {
     console.error('Service Worker registration failed:', swError);
