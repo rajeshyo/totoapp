@@ -22,7 +22,7 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 } else {
     console.log("Using Local Firebase JSON");
-    serviceAccount = require("./firebase-admin-config.json");
+    // serviceAccount = require("./firebase-admin-config.json");
 }
 
 if (!admin.apps.length) {
