@@ -16,7 +16,9 @@ const { seedLocations } = require('./data/locations');
 const User = require('./models/User');
 const authMiddleware = require('./middleware/auth');
 let serviceAccount;
-
+console.log("NODE_ENV =", process.env.NODE_ENV);
+console.log("FIREBASE_SERVICE_ACCOUNT exists =", !!process.env.FIREBASE_SERVICE_ACCOUNT);
+console.log("Length =", process.env.FIREBASE_SERVICE_ACCOUNT?.length);
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     console.log("✅ Using Firebase from Environment Variable");
 
