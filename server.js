@@ -15,13 +15,19 @@ const routesRoutes = require('./routes/routes');
 const { seedLocations } = require('./data/locations');
 const User = require('./models/User');
 const authMiddleware = require('./middleware/auth');
-const serviceAccount = require('./firebase-admin-config.json');
+// const serviceAccount = require('./firebase-admin-config.json');
+const admin = require("firebase-admin");
+
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 const app = express();
 
 // Initialize Firebase Admin SDK
+// admin.initializeApp({
+//   credential: admin.credential.cert(serviceAccount)
+// });
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+  credential: admin.credential.cert(serviceAccount),
 });
 
 // Allowed Origins for CORS
