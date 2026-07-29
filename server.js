@@ -15,9 +15,20 @@ const routesRoutes = require('./routes/routes');
 const { seedLocations } = require('./data/locations');
 const User = require('./models/User');
 const authMiddleware = require('./middleware/auth');
-// const serviceAccount = require('./firebase-admin-config.json');
+let serviceAccount;
 
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+
+if (process.env.NODE_ENV === "production") {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+} else {
+    serviceAccount = require("./firebase-admin-config.json");
+}
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+
+console.log("🔥 Firebase initialized successfully");
 
 const app = express();
 
@@ -25,9 +36,9 @@ const app = express();
 // admin.initializeApp({
 //   credential: admin.credential.cert(serviceAccount)
 // });
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+// admin.initializeApp({
+//   credential: admin.credential.cert(serviceAccount),
+// });
 
 // Allowed Origins for CORS
 const allowedOrigins = [
