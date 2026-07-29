@@ -129,7 +129,37 @@ router.post('/request', authMiddleware, async (req, res) => {
       });
 
       console.log("Online Drivers:", drivers.length);
+console.log("Online Drivers:", drivers.length);
 
+for (const driver of drivers) {
+    console.log("Driver:", driver.phone);
+
+    if (!driver.fcmTokens || driver.fcmTokens.length === 0) {
+        console.log("No tokens for driver");
+        continue;
+    }
+
+    console.log("Token count:", driver.fcmTokens.length);
+
+    for (const token of driver.fcmTokens) {
+        console.log("About to send notification");
+
+        try {
+            const response = await admin.messaging().send({
+                token,
+                notification: {
+                    title: "Test",
+                    body: "Test Notification"
+                }
+            });
+
+            console.log("Firebase Message ID:", response);
+
+        } catch (e) {
+            console.error("Firebase Error:", e);
+        }
+    }
+}
       for (const driver of drivers) {
 
         if (!driver.fcmTokens || driver.fcmTokens.length === 0)
