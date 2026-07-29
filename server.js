@@ -16,30 +16,22 @@ const { seedLocations } = require('./data/locations');
 const User = require('./models/User');
 const authMiddleware = require('./middleware/auth');
 let serviceAccount;
-console.log("NODE_ENV =", process.env.NODE_ENV);
-console.log("FIREBASE_SERVICE_ACCOUNT exists =", !!process.env.FIREBASE_SERVICE_ACCOUNT);
-console.log("Length =", process.env.FIREBASE_SERVICE_ACCOUNT?.length);
-
-console.log("NODE_ENV:", process.env.NODE_ENV);
-console.log("ENV Exists:", !!process.env.FIREBASE_SERVICE_ACCOUNT);
-console.log("ENV Length:", process.env.FIREBASE_SERVICE_ACCOUNT?.length);
-
 
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     console.log("Using ENV Firebase");
     serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 } else {
-    console.log("Using Local JSON");
+    console.log("Using Local Firebase JSON");
     serviceAccount = require("./firebase-admin-config.json");
 }
 
-admin.initializeApp({
-  credential: admin.credential.cert({
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-  }),
-});
+if (!admin.apps.length) {
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+    });
+}
+
+console.log("Firebase Initialized");
 
 console.log("🔥 Firebase initialized successfully");
 
