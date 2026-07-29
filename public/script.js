@@ -93,7 +93,8 @@ async function registerFCMToken() {
   // Explicitly register the service worker first
   let serviceWorkerRegistration;
   try {
-    serviceWorkerRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    // serviceWorkerRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+     serviceWorkerRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
     console.log('Service Worker registered:', serviceWorkerRegistration);
   } catch (swError) {
     console.error('Service Worker registration failed:', swError);
@@ -138,12 +139,22 @@ async function registerFCMToken() {
 }
 
 // Handle incoming messages when app is in foreground
+// onMessage(messaging, (payload) => {
+//   console.log('Foreground message received:', payload);
+//   // You can display a custom in-app notification here if needed
+//   sendNotification(payload.notification.title, { body: payload.notification.body }, true);
+// });
 onMessage(messaging, (payload) => {
-  console.log('Foreground message received:', payload);
-  // You can display a custom in-app notification here if needed
-  sendNotification(payload.notification.title, { body: payload.notification.body }, true);
-});
+    console.log("Foreground Payload:", payload);
 
+    new Notification(
+        payload.notification.title,
+        {
+            body: payload.notification.body,
+            icon: "/image/toto_icon.png"
+        }
+    );
+});
 // ===== API Configuration =====
 const API_BASE_URL = 'https://totoapp.onrender.com/api';
 

@@ -23,18 +23,27 @@ firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
 // Handle background messages
+// messaging.onBackgroundMessage((payload) => {
+//   console.log('[firebase-messaging-sw.js] Received background message ', payload);
+
+//   const notificationTitle = payload.notification.title;
+//   const notificationOptions = {
+//     body: payload.notification.body,
+//     icon: '/image/toto_icon.png' // Use a proper icon path
+//   };
+
+//   self.registration.showNotification(notificationTitle, notificationOptions);
+// });
 messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw.js] Received background message ', payload);
-
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-    body: payload.notification.body,
-    icon: '/image/toto_icon.png' // Use a proper icon path
-  };
-
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  self.registration.showNotification(
+    payload.notification.title,
+    {
+      body: payload.notification.body,
+      icon: "/image/toto_icon.png",
+      badge: "/badge.png"
+    }
+  );
 });
-
 // Handle notification clicks (merged from sw.js)
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();

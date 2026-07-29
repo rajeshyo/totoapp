@@ -2,6 +2,8 @@ const express = require('express');
 const Ride = require('../models/Ride');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
+const admin = require("firebase-admin");
+
 const {
   findStoppage,
   formatLocationAddress,
@@ -44,11 +46,11 @@ async function buildLocationFromStoppage(stoppageId, landmark) {
 router.post('/request', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.userId);
-    
+
     if (user && user.isBlocked) {
       return res.status(403).json({ success: false, message: 'ACCOUNT_BLOCKED' });
     }
-    
+
     // Block booking if user has an outstanding penalty
     if (user.activePenalty && user.activePenalty.amount > 0) {
       return res.status(403).json({
@@ -70,8 +72,8 @@ router.post('/request', authMiddleware, async (req, res) => {
       });
     }
 
-    const pickupLocation = pickupVillageId 
-      ? await buildLocationFromVillage(pickupVillageId, landmark) 
+    const pickupLocation = pickupVillageId
+      ? await buildLocationFromVillage(pickupVillageId, landmark)
       : await buildLocationFromStoppage(pickupStoppageId, landmark);
 
     if (pickupLat && pickupLng) {
@@ -79,8 +81,8 @@ router.post('/request', authMiddleware, async (req, res) => {
       pickupLocation.longitude = Number(pickupLng);
     }
 
-    const dropoffLocation = dropoffVillageId 
-      ? await buildLocationFromVillage(dropoffVillageId) 
+    const dropoffLocation = dropoffVillageId
+      ? await buildLocationFromVillage(dropoffVillageId)
       : await buildLocationFromStoppage(dropoffStoppageId);
 
     if (!pickupLocation || !dropoffLocation) {
@@ -116,7 +118,102 @@ router.post('/request', authMiddleware, async (req, res) => {
     });
 
     await ride.save();
+    // ================= SEND PUSH NOTIFICATION =================
 
+    try {
+
+      const drivers = await User.find({
+        userType: "driver",
+        isOnline: true,
+        fcmTokens: { $exists: true, $ne: [] }
+      });
+
+      console.log("Online Drivers:", drivers.length);
+
+      for (const driver of drivers) {
+
+        if (!driver.fcmTokens || driver.fcmTokens.length === 0)
+          continue;
+
+        for (const token of driver.fcmTokens) {
+
+          try {
+const pickupName = pickupLocation.stoppageName || pickupLocation.villageName;
+const dropName = dropoffLocation.stoppageName || dropoffLocation.villageName;
+            const response = await admin.messaging().send({
+
+              token: token,
+
+              notification: {
+                title: "🛺 New Toto Booking",
+               body: `${pickupLocation.stoppageName} ➜ ${dropoffLocation.stoppageName} | ₹${fare}`
+              },
+
+              webpush: {
+
+                notification: {
+                  title: "🛺 New Toto Booking",
+                 body: `${pickupLocation.stoppageName} ➜ ${dropoffLocation.stoppageName} | ₹${fare}`,
+                  icon: "/image/toto_icon.png",
+                  badge: "/badge.png",
+                  requireInteraction: true
+                },
+
+                fcmOptions: {
+                  link: "https://totoapp.onrender.com/"
+                }
+
+              },
+
+              data: {
+                rideId: ride._id.toString(),
+                type: "NEW_RIDE"
+              }
+
+            });
+
+            console.log("Firebase Message ID:", response);
+
+          } catch (err) {
+
+            console.error(err);
+
+            if (err.code === "messaging/registration-token-not-registered") {
+
+              driver.fcmTokens = driver.fcmTokens.filter(t => t !== token);
+
+              await driver.save();
+
+              console.log("Old token removed.");
+
+            }
+
+          }
+
+        }
+
+      }
+
+    } catch (err) {
+
+      if (err.code === "messaging/registration-token-not-registered") {
+
+        driver.fcmTokens =
+          driver.fcmTokens.filter(t => t !== token);
+
+        await driver.save();
+
+        console.log("Old token removed");
+
+      }
+
+    }
+
+
+
+
+
+    // ================= END PUSH NOTIFICATION =================
     res.status(201).json({
       success: true,
       message: 'Ride requested successfully',
@@ -138,7 +235,7 @@ router.get('/pending', authMiddleware, async (req, res) => {
     if (user && user.isBlocked) {
       return res.status(403).json({ success: false, message: 'ACCOUNT_BLOCKED' });
     }
-    
+
     const rides = await Ride.find({ rideStatus: { $in: ['pending', 'driver_offered'] } })
       .populate('passengerId', 'firstName lastName phone profilePhoto')
       .sort({ createdAt: -1 })
@@ -196,8 +293,8 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
       },
       { new: true }
     )
-    .populate('passengerId', 'firstName lastName phone profilePhoto')
-    .populate({ path: 'offers.driverId', model: 'User', select: 'firstName lastName phone profilePhoto vehicleNumber averageRating', strictPopulate: false });
+      .populate('passengerId', 'firstName lastName phone profilePhoto')
+      .populate({ path: 'offers.driverId', model: 'User', select: 'firstName lastName phone profilePhoto vehicleNumber averageRating', strictPopulate: false });
 
     res.status(200).json({
       success: true,
@@ -281,9 +378,9 @@ router.post('/reject-offer/:rideId', authMiddleware, async (req, res) => {
 
     const ride = await Ride.findOneAndUpdate(
       { _id: req.params.rideId, passengerId: req.userId, rideStatus: 'driver_offered' },
-      { 
-        $set: { 
-          offers: offers, 
+      {
+        $set: {
+          offers: offers,
           rideStatus: status
         }
       },
@@ -305,7 +402,7 @@ router.post('/arrive/:rideId', authMiddleware, async (req, res) => {
   try {
     const ride = await Ride.findOneAndUpdate(
       { _id: req.params.rideId, driverId: req.userId, rideStatus: 'accepted' },
-      { 
+      {
         rideStatus: 'arrived',
         arriveTime: new Date()
       },
@@ -373,12 +470,12 @@ router.post('/start/:rideId', authMiddleware, async (req, res) => {
 router.post('/end/:rideId', authMiddleware, async (req, res) => {
   try {
     const ride = await Ride.findOneAndUpdate(
-      { 
-        _id: req.params.rideId, 
+      {
+        _id: req.params.rideId,
         $or: [{ driverId: req.userId }, { passengerId: req.userId }],
-        rideStatus: { $in: ['accepted', 'arrived', 'in_progress'] } 
+        rideStatus: { $in: ['accepted', 'arrived', 'in_progress'] }
       },
-      { 
+      {
         rideStatus: 'completed',
         endTime: new Date(),
         paymentStatus: 'paid'
@@ -413,7 +510,7 @@ router.get('/:rideId', authMiddleware, async (req, res) => {
     if (user && user.isBlocked) {
       return res.status(403).json({ success: false, message: 'ACCOUNT_BLOCKED' });
     }
-    
+
     const ride = await Ride.findById(req.params.rideId)
       .populate('passengerId', 'firstName lastName phone profilePhoto')
       .populate('driverId', 'firstName lastName phone profilePhoto vehicleNumber')
@@ -497,7 +594,7 @@ router.post('/cancel/:rideId', authMiddleware, async (req, res) => {
     }
 
     let applyPenalty = false;
-    
+
     // Penalty ONLY applies if the driver has arrived and 4 minutes 50 seconds (290,000 ms) have passed
     if (ride.rideStatus === 'arrived' && ride.arriveTime) {
       const arriveDate = new Date(ride.arriveTime).getTime();
@@ -589,15 +686,15 @@ router.post('/rate/:rideId', authMiddleware, async (req, res) => {
     // Update driver's overall rating
     if (ride.driverId) {
       const allDriverRides = await Ride.find({ driverId: ride.driverId, rating: { $ne: null } });
-      
+
       // Filter out invalid ratings and ensure they are numbers to prevent NaN crash
       const validRides = allDriverRides.filter(r => r.rating !== null && r.rating !== undefined && !isNaN(Number(r.rating)));
       const totalReviews = validRides.length;
       const sumRating = validRides.reduce((sum, r) => sum + Number(r.rating), 0);
-      
+
       // Convert .toFixed(1) result back to Number so Mongoose doesn't complain about strings
       const averageRating = totalReviews > 0 ? Number((sumRating / totalReviews).toFixed(1)) : 0;
-      
+
       await User.findByIdAndUpdate(ride.driverId, { averageRating, totalReviews });
     }
 
