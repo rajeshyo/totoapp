@@ -129,45 +129,8 @@ router.post('/request', authMiddleware, async (req, res) => {
       });
 
       console.log("Online Drivers:", drivers.length);
-console.log("Online Drivers:", drivers.length);
+      console.log("Online Drivers:", drivers.length);
 
-for (const driver of drivers) {
-    console.log("Driver:", driver.phone);
-
-    if (!driver.fcmTokens || driver.fcmTokens.length === 0) {
-        console.log("No tokens for driver");
-        continue;
-    }
-
-    console.log("Token count:", driver.fcmTokens.length);
-
-   const token = driver.fcmTokens[0];
-
-const response = await admin.messaging().send({
-    token,
-
-    
-    notification: {
-        title: "🔥 TEST NOTIFICATION",
-        body: "If you see this, FCM works!"
-    },
-
-    webpush: {
-        headers: {
-            Urgency: "high"
-        },
-        notification: {
-            title: "🔥 TEST NOTIFICATION",
-            body: "If you see this, FCM works!",
-            icon: "/image/toto_icon.png",
-            requireInteraction: true
-        }
-    }
-});
-
-console.log("Message ID:", response);
-console.log(response);
-}
       for (const driver of drivers) {
 
         if (!driver.fcmTokens || driver.fcmTokens.length === 0)
@@ -176,24 +139,31 @@ console.log(response);
         for (const token of driver.fcmTokens) {
 
           try {
-const pickupName = pickupLocation.stoppageName || pickupLocation.villageName;
-const dropName = dropoffLocation.stoppageName || dropoffLocation.villageName;
+            console.log("--------------");
+console.log(driver.phone);
+console.log(driver.isOnline);
+console.log(driver.fcmTokens);
+            const pickupName = pickupLocation.stoppageName || pickupLocation.villageName;
+            const dropName = dropoffLocation.stoppageName || dropoffLocation.villageName;
             const response = await admin.messaging().send({
 
               token: token,
 
               notification: {
                 title: "🛺 New Toto Booking",
-               body: `${pickupLocation.stoppageName} ➜ ${dropoffLocation.stoppageName} | ₹${fare}`
+                body: `${pickupLocation.stoppageName} ➜ ${dropoffLocation.stoppageName} | ₹${fare}`
               },
 
               webpush: {
-
+                headers: {
+                  Urgency: "high",
+                  TTL: "86400"
+                },
                 notification: {
                   title: "🛺 New Toto Booking",
-                 body: `${pickupLocation.stoppageName} ➜ ${dropoffLocation.stoppageName} | ₹${fare}`,
-                  icon: "/image/toto_icon.png",
-                  badge: "/badge.png",
+                  body: `${pickupLocation.stoppageName} ➜ ${dropoffLocation.stoppageName} | ₹${fare}`,
+                  icon: "https://totoapp.onrender.com/image/toto_icon.png",
+                  badge: "https://totoapp.onrender.com/badge.png",
                   requireInteraction: true
                 },
 
@@ -234,16 +204,16 @@ const dropName = dropoffLocation.stoppageName || dropoffLocation.villageName;
 
     } catch (err) {
 
-      if (err.code === "messaging/registration-token-not-registered") {
+      // if (err.code === "messaging/registration-token-not-registered") {
 
-        driver.fcmTokens =
-          driver.fcmTokens.filter(t => t !== token);
+      //   driver.fcmTokens =
+      //     driver.fcmTokens.filter(t => t !== token);
 
-        await driver.save();
+      //   await driver.save();
 
-        console.log("Old token removed");
+      console.log("Old token removed");
 
-      }
+      // }
 
     }
 

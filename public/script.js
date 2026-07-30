@@ -138,6 +138,10 @@ try {
       // IMPORTANT: Replace 'YOUR_VAPID_KEY_FROM_FIREBASE_CONSOLE' with your actual VAPID key!
       const currentToken = await getToken(messaging, { vapidKey: 'BNgpoA0CaBulxjWb3WvTS0TTzGs1lg9bzuzIrwojtn1AXvcfLwtEIxACPntQ-BHen8K3yxfT_kGKEpan4cpoH4w', serviceWorkerRegistration });
       if (currentToken) {
+        console.log(
+    "SW Controller:",
+    navigator.serviceWorker.controller
+);
         console.log('FCM registration token:', currentToken);
         // Send the token to your backend to associate it with the driver
         await apiCall('/drivers/register-fcm-token', 'POST', { fcmToken: currentToken });

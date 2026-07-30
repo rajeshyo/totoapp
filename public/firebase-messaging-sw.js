@@ -71,21 +71,61 @@ messaging.onBackgroundMessage((payload) => {
 
 });
 // Handle notification clicks (merged from sw.js)
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
+self.addEventListener("push", event => {
 
-  const urlToOpen = 'https://totoapp.onrender.com/';
+    if (!event.data) return;
 
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Check if there's already a window/tab open with the target URL
-      for (const client of clientList) {
-        if (client.url.endsWith(urlToOpen) && 'focus' in client) {
-          return client.focus();
-        }
-      }
-      // If not, open a new window/tab with the target URL
-      if (clients.openWindow) return clients.openWindow(urlToOpen);
-    })
-  );
+    const payload = event.data.json();
+
+    console.log(payload);
+
+    const title =
+        payload.notification?.title ||
+        payload.data?.title ||
+        "🛺 Toto Booking";
+
+    const body =
+        payload.notification?.body ||
+        payload.data?.body ||
+        "New Ride";
+
+    event.waitUntil(
+
+        self.registration.showNotification(title,{
+
+            body,
+
+            icon:"/image/toto_icon.png",
+
+            badge:"/badge.png",
+
+            requireInteraction:true,
+
+            data:{
+                url:"https://totoapp.onrender.com/"
+            }
+
+        })
+
+    );
+
 });
+
+// self.addEventListener('notificationclick', (event) => {
+//   event.notification.close();
+
+//   const urlToOpen = 'https://totoapp.onrender.com/';
+
+//   event.waitUntil(
+//     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+//       // Check if there's already a window/tab open with the target URL
+//       for (const client of clientList) {
+//         if (client.url.endsWith(urlToOpen) && 'focus' in client) {
+//           return client.focus();
+//         }
+//       }
+//       // If not, open a new window/tab with the target URL
+//       if (clients.openWindow) return clients.openWindow(urlToOpen);
+//     })
+//   );
+// });
