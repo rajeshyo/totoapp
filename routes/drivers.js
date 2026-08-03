@@ -26,7 +26,14 @@ router.post('/register-fcm-token', authMiddleware, async (req, res) => {
         driver.fcmTokens = [];
         driver.fcmTokens.push(fcmToken);
 
-        await driver.save();
+        await User.updateOne(
+            { _id: driver._id },
+            {
+                $set: {
+                    fcmTokens: [fcmToken]
+                }
+            }
+        );
 
         console.log("✅ Saved NEW token:", fcmToken);
 
