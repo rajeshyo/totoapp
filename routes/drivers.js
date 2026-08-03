@@ -23,10 +23,12 @@ router.post('/register-fcm-token', authMiddleware, async (req, res) => {
         }
 
         // Add the token only if it's not already there
-        if (!driver.fcmTokens.includes(fcmToken)) {
-            driver.fcmTokens = [fcmToken];
-            await driver.save();
-        }
+        driver.fcmTokens = [];
+        driver.fcmTokens.push(fcmToken);
+
+        await driver.save();
+
+        console.log("✅ Saved NEW token:", fcmToken);
 
         res.json({ success: true, msg: 'FCM token registered successfully' });
     } catch (err) {

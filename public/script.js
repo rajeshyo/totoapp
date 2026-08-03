@@ -4,7 +4,7 @@ import { apiCall } from './api.js'; // Assuming you create api.js
 
 // ===== Notification Helpers =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
-import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging.js";
+import { getMessaging, getToken, deleteToken, onMessage } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging.js";
 
 let currentNotificationAudio = null;
 
@@ -135,6 +135,7 @@ try {
     // This will prompt the user if permission is 'default', or resolve immediately if 'granted'.
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
+      await deleteToken(messaging);
       // IMPORTANT: Replace 'YOUR_VAPID_KEY_FROM_FIREBASE_CONSOLE' with your actual VAPID key!
       const currentToken = await getToken(messaging, { vapidKey: 'BNgpoA0CaBulxjWb3WvTS0TTzGs1lg9bzuzIrwojtn1AXvcfLwtEIxACPntQ-BHen8K3yxfT_kGKEpan4cpoH4w', serviceWorkerRegistration });
       if (currentToken) {
