@@ -17,18 +17,37 @@ const User = require('./models/User');
 const authMiddleware = require('./middleware/auth');
 let serviceAccount;
 console.log("🔥 SERVER VERSION 30-JULY-2026-001");
-if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    console.log("Using ENV Firebase");
-    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-} else {
-    console.log("Using Local Firebase JSON");
-    serviceAccount = require("./firebase-admin-config.json");
-}
+// if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+//     console.log("Using ENV Firebase");
+//     serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+// } else {
+//     console.log("Using Local Firebase JSON");
+//     serviceAccount = require("./firebase-admin-config.json");
+// }
 
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-    });
+// if (!admin.apps.length) {
+//     admin.initializeApp({
+//         credential: admin.credential.cert(serviceAccount)
+//     });
+// }
+// const admin = require('firebase-admin');
+
+// Render-compatible Firebase initialization
+try {
+  // In production (on Render), the credentials are a JSON string in an env var
+  const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+  console.log("Firebase initialized successfully from environment variable.");
+} catch (error) {
+  // In local development, it will fall back to using the local file
+  console.log("Initializing Firebase with local service account file...");
+  const serviceAccount = require('./firebase-admin-config.json'); // Make sure this path is correct
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+  console.log("Firebase initialized successfully from local file.");
 }
 
 console.log("Firebase Initialized");
