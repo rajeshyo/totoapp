@@ -30,10 +30,10 @@ if (process.env.FIREBASE_CREDENTIALS) {
     }
 } else {
     try {
-        console.log(`Initializing Firebase with local '${FIREBASE_CONFIG_FILE}' file...`);
-        serviceAccount = require(FIREBASE_CONFIG_FILE);
+        // console.log(`Initializing Firebase with local '${FIREBASE_CONFIG_FILE}' file...`);
+        // serviceAccount = require(FIREBASE_CONFIG_FILE);
     } catch (e) {
-        console.error(`❌ Could not find '${FIREBASE_CONFIG_FILE}'.`);
+        // console.error(`❌ Could not find '${FIREBASE_CONFIG_FILE}'.`);
         console.error("Ensure the file exists for local development OR set the FIREBASE_CREDENTIALS environment variable for production.");
         process.exit(1); // Exit if no credentials can be found
     }
