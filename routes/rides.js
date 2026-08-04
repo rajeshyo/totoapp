@@ -120,103 +120,103 @@ router.post('/request', authMiddleware, async (req, res) => {
 
     await ride.save();
     // ================= SEND PUSH NOTIFICATION =================
+    // FCM functionality removed as per request.
+    // try {
 
-    try {
+    //   const drivers = await User.find({
+    //     userType: "driver",
+    //     isOnline: true,
+    //     fcmTokens: { $exists: true, $ne: [] }
+    //   });
 
-      const drivers = await User.find({
-        userType: "driver",
-        isOnline: true,
-        fcmTokens: { $exists: true, $ne: [] }
-      });
+    //   console.log("Online Drivers:", drivers.length);
+    //   console.log("Online Drivers:", drivers.length);
 
-      console.log("Online Drivers:", drivers.length);
-      console.log("Online Drivers:", drivers.length);
+    //   for (const driver of drivers) {
 
-      for (const driver of drivers) {
+    //     if (!driver.fcmTokens || driver.fcmTokens.length === 0)
+    //       continue;
 
-        if (!driver.fcmTokens || driver.fcmTokens.length === 0)
-          continue;
+    //     for (const token of driver.fcmTokens) {
 
-        for (const token of driver.fcmTokens) {
+    //       try {
+    //         console.log("--------------");
+    //         console.log(driver.phone);
+    //         console.log(driver.isOnline);
+    //         console.log(driver.fcmTokens);
+    //         const pickupName = pickupLocation.stoppageName || pickupLocation.villageName;
+    //         const dropName = dropoffLocation.stoppageName || dropoffLocation.villageName;
+    //         const response = await admin.messaging().send({
 
-          try {
-            console.log("--------------");
-console.log(driver.phone);
-console.log(driver.isOnline);
-console.log(driver.fcmTokens);
-            const pickupName = pickupLocation.stoppageName || pickupLocation.villageName;
-            const dropName = dropoffLocation.stoppageName || dropoffLocation.villageName;
-            const response = await admin.messaging().send({
+    //           token: token,
 
-              token: token,
+    //           notification: {
+    //             title: "🛺 New Toto Booking",
+    //             body: `${pickupLocation.stoppageName} ➜ ${dropoffLocation.stoppageName} | ₹${fare}`
+    //           },
 
-              notification: {
-                title: "🛺 New Toto Booking",
-                body: `${pickupLocation.stoppageName} ➜ ${dropoffLocation.stoppageName} | ₹${fare}`
-              },
+    //           webpush: {
+    //             headers: {
+    //               Urgency: "high",
+    //               TTL: "86400"
+    //             },
+    //             notification: {
+    //               title: "🛺 New Toto Booking",
+    //               body: `${pickupLocation.stoppageName} ➜ ${dropoffLocation.stoppageName} | ₹${fare}`,
+    //               icon: "https://totoapp.onrender.com/image/toto_icon.png",
+    //               badge: "https://totoapp.onrender.com/badge.png",
+    //               requireInteraction: true
+    //             },
 
-              webpush: {
-                headers: {
-                  Urgency: "high",
-                  TTL: "86400"
-                },
-                notification: {
-                  title: "🛺 New Toto Booking",
-                  body: `${pickupLocation.stoppageName} ➜ ${dropoffLocation.stoppageName} | ₹${fare}`,
-                  icon: "https://totoapp.onrender.com/image/toto_icon.png",
-                  badge: "https://totoapp.onrender.com/badge.png",
-                  requireInteraction: true
-                },
+    //             fcmOptions: {
+    //               link: "https://totoapp.onrender.com/"
+    //             }
 
-                fcmOptions: {
-                  link: "https://totoapp.onrender.com/"
-                }
+    //           },
 
-              },
+    //           data: {
+    //             rideId: ride._id.toString(),
+    //             type: "NEW_RIDE"
+    //           }
 
-              data: {
-                rideId: ride._id.toString(),
-                type: "NEW_RIDE"
-              }
+    //         });
 
-            });
+    //         console.log("Firebase Message ID:", response);
 
-            console.log("Firebase Message ID:", response);
+    //       } catch (err) {
 
-          } catch (err) {
+    //         console.error(err);
 
-            console.error(err);
+    //         if (err.code === "messaging/registration-token-not-registered") {
 
-            if (err.code === "messaging/registration-token-not-registered") {
+    //           driver.fcmTokens = driver.fcmTokens.filter(t => t !== token);
 
-              driver.fcmTokens = driver.fcmTokens.filter(t => t !== token);
+    //           await driver.save();
 
-              await driver.save();
+    //           console.log("Old token removed.");
 
-              console.log("Old token removed.");
+    //         }
 
-            }
+    //       }
 
-          }
+    //     }
 
-        }
+    //   }
 
-      }
+    // } catch (err) {
 
-    } catch (err) {
+    //   // if (err.code === "messaging/registration-token-not-registered") {
 
-      // if (err.code === "messaging/registration-token-not-registered") {
+    //   //   driver.fcmTokens =
+    //   //     driver.fcmTokens.filter(t => t !== token);
 
-      //   driver.fcmTokens =
-      //     driver.fcmTokens.filter(t => t !== token);
+    //   //   await driver.save();
 
-      //   await driver.save();
+    //   console.log("Old token removed");
 
-      console.log("Old token removed");
+    //   // }
 
-      // }
-
-    }
+    // }
 
 
 
