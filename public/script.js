@@ -2790,6 +2790,7 @@ rideRequestForm.addEventListener('submit', async event => {
       fare,               // Pass explicit calculated fare
       pickupLat,          // Explicit exact location
       pickupLng,          // Explicit exact location
+      rideType: document.getElementById('rideTypeSelect')?.value || null,
 
       // Fallback for your current live Render backend:
       pickupLocation: {
@@ -3212,6 +3213,24 @@ window.confirmPenaltyPayment = async function (passengerId) {
   } catch (e) { showPopup('ত্রুটি', 'নিশ্চিত করতে সমস্যা হয়েছে।', '❌'); }
 };
 
+function getRideTypeHtml(ride) {
+  // Determine type from known fields and map to Bengali label + icon + capacity
+  const typeRaw = (ride.rideType || ride.vehicleType || ride.requestedVehicleType || ride.type || '').toString().toLowerCase();
+  const map = {
+    'toto': { icon: '🛺', text: 'টোটো', cap: '৫' },
+    'bike': { icon: '🏍️', text: 'বাইক', cap: '১' },
+    'maruti': { icon: '🚗', text: 'মারুতি (ফুল)', cap: '৪' },
+    'motorvan': { icon: '🚐', text: 'মটরভ্যান (ফুল)', cap: '৮' }
+  };
+  const entry = map[typeRaw];
+  if (!entry) {
+    if (!typeRaw) return '';
+    // Fallback: show the raw type string (translated where possible)
+    return `<p>🚘 ${t(typeRaw)}</p>`;
+  }
+  return `<p>${entry.icon} ${entry.text} — ${entry.cap} 👤</p>`;
+}
+
 async function listenToPendingQueue() {
   if (activeRideId) return;
 
@@ -3269,10 +3288,12 @@ async function listenToPendingQueue() {
       const item = document.createElement('div');
       item.className = 'request-item';
       item.innerHTML = `
+      
         <p>👤 <strong>${ride.passengerId.firstName} ${ride.passengerId.lastName}</strong></p>
+        <p><strong>${getRideTypeHtml(ride)}</strong></p>
         <p>📍 ${t('পিকআপ:')} ${t(ride.pickupLocation.villageName)}</p>
-        ${ride.pickupLocation.landmark ? `<p>${t('📌 নিকটবর্তী জায়গা:')} ${ride.pickupLocation.landmark}</p>` : ''}
         <p>🏁 ${t('গন্তব্য:')} ${t(ride.dropoffLocation.villageName)}</p>
+         ${ride.pickupLocation.landmark ? `<p>${t('📌 নিকটবর্তী জায়গা:')} ${ride.pickupLocation.landmark}</p>` : ''}
         <p>💰 ${t('ভাড়া:')} <span class="text-green">₹${ride.fare}</span></p>
         <div class="request-actions" style="flex-wrap: wrap;">
           <button class="button primary accept-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('গ্রহণ করুন')}</button>
