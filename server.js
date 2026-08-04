@@ -16,7 +16,7 @@ const { seedLocations } = require('./data/locations');
 const User = require('./models/User');
 const authMiddleware = require('./middleware/auth');
 let serviceAccount;
-const FIREBASE_CONFIG_FILE = './firebase-admin-config.json';
+const FIREBASE_CONFIG_FILE = '';
 console.log("🔥 SERVER VERSION 31-JULY-2026-002");
 
 // Render-compatible Firebase initialization
