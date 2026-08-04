@@ -60,7 +60,7 @@ router.post('/request', authMiddleware, async (req, res) => {
       });
     }
 
-    const { pickupVillageId, dropoffVillageId, pickupStoppageId, dropoffStoppageId, landmark, fare: requestedFare, pickupLat, pickupLng } = req.body;
+    const { pickupVillageId, dropoffVillageId, pickupStoppageId, dropoffStoppageId, landmark, fare: requestedFare, pickupLat, pickupLng, rideType } = req.body;
 
     const pVid = pickupVillageId || pickupStoppageId;
     const dVid = dropoffVillageId || dropoffStoppageId;
@@ -113,6 +113,7 @@ router.post('/request', authMiddleware, async (req, res) => {
       dropoffLocation,
       distance,
       fare,
+      rideType: rideType || null,
       rideStatus: 'pending',
       otp: Math.floor(1000 + Math.random() * 9000).toString()
     });

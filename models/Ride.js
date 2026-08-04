@@ -38,11 +38,17 @@ const rideSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  // rideType stores the requested vehicle/ride type (e.g., mini, auto, etc.)
+  rideType: {
+    type: String,
+    default: null
+  },
   rideStatus: {
     type: String,
-    enum: ['pending', 'accepted', 'in_progress', 'completed', 'cancelled'],
+    enum: ['pending', 'accepted', 'in_progress', 'completed', 'cancelled', 'driver_offered', 'arrived'],
     default: 'pending'
   },
+
   paymentStatus: {
     type: String,
     enum: ['pending', 'paid', 'failed'],
