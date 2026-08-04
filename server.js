@@ -16,41 +16,32 @@ const { seedLocations } = require('./data/locations');
 const User = require('./models/User');
 const authMiddleware = require('./middleware/auth');
 let serviceAccount;
-console.log("🔥 SERVER VERSION 30-JULY-2026-001");
-// if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-//     console.log("Using ENV Firebase");
-//     serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-// } else {
-//     console.log("Using Local Firebase JSON");
-//     serviceAccount = require("./firebase-admin-config.json");
-// }
-
-// if (!admin.apps.length) {
-//     admin.initializeApp({
-//         credential: admin.credential.cert(serviceAccount)
-//     });
-// }
-// const admin = require('firebase-admin');
+const FIREBASE_CONFIG_FILE = './firebase-admin-config.json';
+console.log("🔥 SERVER VERSION 31-JULY-2026-002");
 
 // Render-compatible Firebase initialization
-try {
-  // In production (on Render), the credentials are a JSON string in an env var
-  const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-  console.log("Firebase initialized successfully from environment variable.");
-} catch (error) {
-  // In local development, it will fall back to using the local file
-  console.log("Initializing Firebase with local service account file...");
-  const serviceAccount = require('./firebase-admin-config.json'); // Make sure this path is correct
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-  console.log("Firebase initialized successfully from local file.");
+if (process.env.FIREBASE_CREDENTIALS) {
+    try {
+        console.log("Initializing Firebase from environment variable...");
+        serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
+    } catch (e) {
+        console.error('❌ FIREBASE_CREDENTIALS environment variable is not valid JSON.', e);
+        process.exit(1); // Exit if the credentials can't be parsed in production
+    }
+} else {
+    try {
+        console.log(`Initializing Firebase with local '${FIREBASE_CONFIG_FILE}' file...`);
+        serviceAccount = require(FIREBASE_CONFIG_FILE);
+    } catch (e) {
+        console.error(`❌ Could not find '${FIREBASE_CONFIG_FILE}'.`);
+        console.error("Ensure the file exists for local development OR set the FIREBASE_CREDENTIALS environment variable for production.");
+        process.exit(1); // Exit if no credentials can be found
+    }
 }
 
-console.log("Firebase Initialized");
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
 
 console.log("🔥 Firebase initialized successfully");
 
