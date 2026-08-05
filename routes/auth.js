@@ -8,7 +8,7 @@ const router = express.Router();
 // SIGNUP
 router.post('/signup', async (req, res) => {
   try {
-    const { phone, firstName, lastName, password, userType = 'passenger', vehicleNumber } = req.body;
+    const { phone, firstName, lastName, password, userType = 'passenger', vehicleNumber, rideType } = req.body;
 
     // Validate input
     if (!phone || !firstName || !lastName || !password) {
@@ -36,15 +36,20 @@ router.post('/signup', async (req, res) => {
     }
 
     // Create new user
-    const user = new User({
+    const userPayload = {
       phone,
       firstName,
       lastName,
       password,
-      userType,
-      vehicleNumber: userType === 'driver' ? vehicleNumber : null
-    });
+      userType
+    };
 
+    if (userType === 'driver') {
+      userPayload.vehicleNumber = vehicleNumber;
+      userPayload.rideType = rideType; // Save rideType for drivers
+    }
+
+    const user = new User(userPayload);
     await user.save();
 
     // Generate token
@@ -196,11 +201,18 @@ router.put('/online-status', authMiddleware, async (req, res) => {
 // UPDATE USER PROFILE
 router.put('/profile', authMiddleware, async (req, res) => {
   try {
-    const { firstName, lastName, email, profilePhoto, upiId } = req.body;
+    const { firstName, lastName, email, profilePhoto, upiId, rideType } = req.body;
+
+    const updateData = { firstName, lastName, email, profilePhoto, upiId };
+
+    // Only allow rideType update for drivers and if it's provided
+    if (req.userType === 'driver' && rideType) {
+      updateData.rideType = rideType;
+    }
 
     const user = await User.findByIdAndUpdate(
       req.userId,
-      { firstName, lastName, email, profilePhoto, upiId },
+      { $set: updateData },
       { new: true }
     );
 
