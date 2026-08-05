@@ -2141,10 +2141,13 @@ document.querySelectorAll('.type-option').forEach(btn => {
 
     // Show/hide vehicle number field
     const vehicleWrapper = document.getElementById('vehicleNumberWrapper');
+    const rideTypeWrapper = document.getElementById('rideTypeWrapper');
     if (userType === 'driver') {
       vehicleWrapper.classList.remove('hidden');
+      rideTypeWrapper.classList.remove('hidden');
     } else {
       vehicleWrapper.classList.add('hidden');
+      rideTypeWrapper.classList.add('hidden');
     }
   });
 });
@@ -2160,6 +2163,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (vehicleWrapper) {
     vehicleWrapper.classList.add('hidden');
   }
+  const rideTypeWrapper = document.getElementById('rideTypeWrapper');
+  if (rideTypeWrapper) {
+    rideTypeWrapper.classList.add('hidden');
+  }
 });
 
 // --- Auth Event Listeners ---
@@ -2171,6 +2178,7 @@ signupForm.addEventListener('submit', async event => {
   const password = document.getElementById('password').value;
   const userType = document.getElementById('userType').value || 'passenger';
   const vehicleNumber = document.getElementById('vehicleNumber').value.trim();
+  const rideType = document.getElementById('signupRideType').value;
 
   // Validate phone number - must be 10 digits
   if (!/^\d{10}$/.test(phone)) {
@@ -2183,14 +2191,18 @@ signupForm.addEventListener('submit', async event => {
   authMessage.style.color = '#09663e';
 
   try {
-    const response = await apiCall('/auth/signup', 'POST', {
+    const payload = {
       phone,
       firstName,
       lastName,
       password,
-      userType,
-      vehicleNumber: userType === 'driver' ? vehicleNumber : undefined
-    });
+      userType
+    };
+    if (userType === 'driver') {
+      payload.vehicleNumber = vehicleNumber;
+      payload.rideType = rideType;
+    }
+    const response = await apiCall('/auth/signup', 'POST', payload);
 
     if (response.success) {
       currentUser = response.user;

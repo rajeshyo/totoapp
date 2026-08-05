@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema({
   },
   userType: {
     type: String,
-    enum: ['passenger', 'driver','admin'],
+    enum: ['passenger', 'driver', 'admin'],
     default: 'passenger'
   },
   vehicleNumber: {
@@ -52,6 +52,12 @@ const userSchema = new mongoose.Schema({
   isOnline: {
     type: Boolean,
     default: false
+  },
+  rideType: {
+    type: String,
+    // Use an enum to ensure only valid ride types are stored
+    enum: ['toto', 'bike', 'maruti', 'motorvan'],
+    default: 'toto' // Optional: set a default value
   },
   activePenalty: {
     amount: { type: Number, default: 0 },
@@ -92,11 +98,11 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Hash password before saving
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
     return next();
   }
-  
+
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -107,12 +113,12 @@ userSchema.pre('save', async function(next) {
 });
 
 // Method to compare password
-userSchema.methods.comparePassword = async function(enteredPassword) {
+userSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
 // Remove password from response
-userSchema.methods.toJSON = function() {
+userSchema.methods.toJSON = function () {
   const user = this.toObject();
   delete user.password;
   return user;

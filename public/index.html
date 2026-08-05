@@ -197,10 +197,20 @@
                 <span class="input-icon">🔒</span>
                 <input type="password" id="password" placeholder="নতুন পাসওয়ার্ড" required />
               </div>
+               <div class="input-wrapper hidden" id="rideTypeWrapper">
+                <!-- <span class="input-icon">🛺</span> -->
+                <select id="signupRideType">
+                  <option value="toto">🛺 টোটো</option>
+                  <option value="bike">🏍️ বাইক</option>
+                  <option value="maruti">🚗 মারুতি</option>
+                  <option value="motorvan">🚐 মটরভ্যান</option>
+                </select>
+              </div>
               <div class="input-wrapper hidden" id="vehicleNumberWrapper">
                 <span class="input-icon">🚗</span>
                 <input type="text" id="vehicleNumber" placeholder="গাড়ির নম্বর (যেমন: WB54T1234)" />
               </div>
+             
               <input type="hidden" id="userType" value="passenger" />
               <button type="submit" class="button primary full-width btn-xl">অ্যাকাউন্ট তৈরি করুন</button>
             </form>
