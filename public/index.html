@@ -13,7 +13,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap"
     rel="stylesheet">
-  <!-- <link rel="manifest" href="/manifest.json"> -->
+  <link rel="manifest" href="/manifest.json">
 </head>
 
 <body>
@@ -211,7 +211,7 @@
       <section id="customerDashboard" class="dashboard hidden">
         <div class="hero-banner-card">
           <div class="banner-text">
-            <h2>সহজে টোটো বুক করুন</h2>
+            <h2>সহজে রিজার্ভ টোটো বুক করুন</h2>
             <p>সুলভ, নিরাপদ ও বিশ্বস্ত পরিষেবা</p>
             <p id="nightFareWarning" class="hidden"
               style="color: var(--danger-color, #ff3b30); font-weight: 800; font-size: 11px; margin-top: 8px;">সন্ধ্যা
@@ -787,11 +787,22 @@
         <button id="closePenaltyBtn" class="button secondary full-width" style="margin-top: 10px;">বন্ধ করুন</button>
       </div>
     </div>
+
+    <!-- Install App Modal -->
+    <div id="installAppModal" class="popup-overlay hidden" aria-hidden="true" style="z-index: 10002;">
+      <div class="popup-card" role="dialog" aria-modal="true">
+        <div class="popup-icon-decor">📱</div>
+        <h3 id="installAppTitle">Install App</h3>
+        <p id="installAppMessage">Add TotoBondhu to your home screen for quick access!</p>
+        <button id="installAppBtn" class="button primary full-width">Install</button>
+        <button id="closeInstallAppBtn" class="button secondary full-width" style="margin-top: 10px;">No Thanks</button>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
   <!-- Note the type="module" here, which is required for Firebase -->
-  <script type="module" src="script.js?v=3.41"></script>
+  <script type="module" src="script.js?v=3.42"></script>
 
 </body>
 

@@ -456,12 +456,20 @@ const uiTranslations = {
   'নোটিফিকেশন সেট আপ করতে সমস্যা হয়েছে।': 'Problem setting up notifications.',
   'নোটিফিকেশন সেট আপ করতে একটি ত্রুটি হয়েছে।': 'An error occurred while setting up notifications.',
   'নোটিফিকেশন সার্ভিস চালু করতে সমস্যা হয়েছে।': 'Problem starting notification service.',
-    'করাটিয়া হাই স্কুল': 'Karatia High School',
+  'করাটিয়া হাই স্কুল': 'Karatia High School',
   'করাটিয়া বাজার': 'Karatia Bazar',
   'করাটিয়া স্বাস্থ্যকেন্দ্র': 'Karatia Health Centre',
   'গুসকরা': 'Guskara',
   'আউশগ্রাম': 'Ausgram',
-  'করাটিয়া': 'Karatia'
+  'করাটিয়া': 'Karatia',
+  'ইনস্টল অ্যাপ': 'Install App',
+  'Add TotoBondhu to your home screen for quick access!': 'Add TotoBondhu to your home screen for quick access!',
+  'Install': 'Install',
+  'No Thanks': 'No Thanks',
+  'Installed!': 'Installed!',
+  'TotoBondhu has been added to your home screen.': 'TotoBondhu has been added to your home screen.',
+  'Installation Cancelled': 'Installation Cancelled',
+  'You can install the app later from your browser menu.': 'You can install the app later from your browser menu.'
 };
 
 let currentLang = localStorage.getItem('toto_lang') || 'bn';
@@ -852,6 +860,7 @@ let popupCloseCallback = null;
 let rejectedRides = {}; // Track rejected rides with timestamp: { rideId: timestamp }
 let knownPendingRideIds = new Set(); // Tracks active requests to avoid repeating the sound
 let arrivalTimerInterval = null;
+let deferredPrompt; // Global variable to store the beforeinstallprompt event
 
 // --- Location Helpers ---
 function populateVillageSelect(selectEl, placeholder) {
@@ -3751,6 +3760,12 @@ window.addEventListener('visibilitychange', () => {
 
 window.addEventListener('load', () => {
   renderApp();
+  // Initial check on load to see if app is already installed
+  const isInstalled = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if (isInstalled) {
+    console.log('App is already installed (standalone mode).');
+    hideInstallPrompt(); // Ensure our prompt is hidden if user installs via other means
+  }
   if (currentUser?.userType === 'driver' && activeRideId) {
     startDriverPoll();
   }
