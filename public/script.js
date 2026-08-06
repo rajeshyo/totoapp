@@ -511,6 +511,7 @@ const locationTranslations = {
   "কোর্ট মোড়": "Court More",
   "আলুটিয়া": "Alutia",
   "সোমাইপুর": "Somaipur",
+  "বসন্তপুর": "Basantapur",
   "আলেফনগর": "Alefnagar",
   "ওয়ারিশপুর": "Warishpur",
   "দোখলগঞ্জ্": "Dokhalganj ",
