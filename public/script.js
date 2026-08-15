@@ -472,6 +472,7 @@ const uiTranslations = {
   'You can install the app later from your browser menu.': 'You can install the app later from your browser menu.'
 };
 uiTranslations['গাড়ির প্রকার:'] = 'Vehicle Type:';
+uiTranslations['অ্যাপ'] = 'Download App';
 
 let currentLang = localStorage.getItem('toto_lang') || 'bn';
 
@@ -698,23 +699,6 @@ function applyTranslations() {
   }
 }
 
-// Splash screen handler - show only if user not logged in
-window.addEventListener('load', () => {
-  applyTranslations();
-  const currentUser = localStorage.getItem('toto_active_user');
-  const splashScreen = document.getElementById('splashScreen');
-
-  if (splashScreen && !currentUser) {
-    // Show splash screen only if not logged in - 10 seconds
-    setTimeout(() => {
-      splashScreen.style.display = 'none';
-    }, 10000); // 10 seconds
-  } else if (splashScreen && currentUser) {
-    // Hide splash screen immediately if user is logged in
-    splashScreen.style.display = 'none';
-  }
-});
-
 let isForcedLoggedOut = false;
 function handleBlockedAccount() {
   if (isForcedLoggedOut) return;
@@ -863,6 +847,18 @@ let rejectedRides = {}; // Track rejected rides with timestamp: { rideId: timest
 let knownPendingRideIds = new Set(); // Tracks active requests to avoid repeating the sound
 let arrivalTimerInterval = null;
 let deferredPrompt; // Global variable to store the beforeinstallprompt event
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallPrompt();
+});
+
+window.addEventListener('appinstalled', () => {
+  hideInstallPrompt();
+  deferredPrompt = null;
+  showPopup(t('Installed!'), t('TotoBondhu has been added to your home screen.'), '✅');
+});
 
 // --- Location Helpers ---
 function populateVillageSelect(selectEl, placeholder) {
@@ -1046,6 +1042,69 @@ function hidePopup() {
   }
 }
 popupCloseBtn?.addEventListener('click', hidePopup);
+
+function showInstallPrompt() {
+  const isInstalled = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if (isInstalled || document.getElementById('install-prompt')) {
+    return;
+  }
+
+  const installPrompt = document.createElement('div');
+  installPrompt.id = 'install-prompt';
+  installPrompt.style.cssText = `
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--surface-color, #fff);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    padding: 15px;
+    box-sizing: border-box;
+    z-index: 10000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    border-top: 1px solid var(--border-light, #eee);
+  `;
+
+  installPrompt.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🛺%3C/text%3E%3C/svg%3E" alt="TotoBondhu" style="width: 40px; height: 40px; border-radius: 8px;">
+      <div>
+        <strong style="font-size: 1rem; color: var(--text-main);">${t('ইনস্টল অ্যাপ')}</strong>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 2px 0 0 0;">${t('Add TotoBondhu to your home screen for quick access!')}</p>
+      </div>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button id="install-cancel-btn" class="button secondary" style="padding: 8px 16px;">${t('No Thanks')}</button>
+      <button id="install-btn" class="button primary" style="padding: 8px 16px;">${t('Install')}</button>
+    </div>
+  `;
+
+  document.body.appendChild(installPrompt);
+
+  document.getElementById('install-cancel-btn').addEventListener('click', () => {
+    installPrompt.remove();
+  });
+
+  document.getElementById('install-btn').addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    installPrompt.remove();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'dismissed') {
+      console.log('User dismissed the install prompt');
+    }
+    deferredPrompt = null;
+  });
+}
+
+function hideInstallPrompt() {
+  const installPrompt = document.getElementById('install-prompt');
+  if (installPrompt) installPrompt.remove();
+}
 
 // --- Penalty Modal Helpers ---
 function showPenaltyModal(penalty) {
@@ -2050,6 +2109,32 @@ document.getElementById('navHomeBtn')?.addEventListener('click', showHomePage);
 document.getElementById('navProfileBtn')?.addEventListener('click', showProfilePage);
 document.getElementById('navHistoryBtn')?.addEventListener('click', showRideHistoryPage);
 document.getElementById('navFavBtn')?.addEventListener('click', showFavoritesPage);
+
+// Function to add the download app button to the bottom navigation
+function addDownloadAppButton() {
+  if (!appBottomNav) return;
+
+  const downloadButton = document.createElement('button'); // Changed to button
+  downloadButton.id = 'navDownloadAppBtn';
+  downloadButton.classList.add('nav-item');
+  downloadButton.style.textDecoration = 'none'; // Remove underline (though buttons don't have it by default, good for consistency)
+
+  downloadButton.innerHTML = `
+    <span class="nav-icon"><i class="fas fa-download"></i></span>
+    <span class="nav-label">${t('অ্যাপ')}</span> <!-- Changed translation key -->
+  `;
+  appBottomNav.appendChild(downloadButton);
+
+  // Add event listener to trigger download when the button is clicked
+  downloadButton.addEventListener('click', () => {
+    const link = document.createElement('a');
+    link.href = '/Toto Bondhu.apk'; // Path to your APK file
+    link.setAttribute('download', 'Toto Bondhu.apk'); // Suggests a filename for download
+    document.body.appendChild(link); // Temporarily add to DOM
+    link.click(); // Programmatically click the link
+    document.body.removeChild(link); // Remove the link
+  });
+}
 
 // Logout button in profile page
 document.getElementById('logoutProfileBtn')?.addEventListener('click', () => {
@@ -3825,14 +3910,44 @@ window.addEventListener('visibilitychange', () => {
   }
 });
 
+// Initial boot
 window.addEventListener('load', () => {
+  // --- Service Worker and PWA Installability ---
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('Service Worker registered successfully with scope:', registration.scope);
+      })
+      .catch(error => {
+        console.error('Service Worker registration failed:', error);
+      });
+  }
+
+  // --- Translations and Splash Screen ---
+  applyTranslations();
+  const splashScreen = document.getElementById('splashScreen');
+  if (splashScreen && !currentUser) {
+    // Show splash screen only if not logged in - 10 seconds
+    setTimeout(() => {
+      splashScreen.style.display = 'none';
+    }, 10000); // 10 seconds
+  } else if (splashScreen && currentUser) {
+    // Hide splash screen immediately if user is logged in
+    splashScreen.style.display = 'none';
+  }
+
+  // --- App Initialization ---
+  addDownloadAppButton(); // Add the download app button to the bottom navigation
   renderApp();
-  // Initial check on load to see if app is already installed
+
+  // --- PWA Installation Check ---
   const isInstalled = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   if (isInstalled) {
     console.log('App is already installed (standalone mode).');
     hideInstallPrompt(); // Ensure our prompt is hidden if user installs via other means
   }
+
+  // --- Driver Specific Logic ---
   if (currentUser?.userType === 'driver' && activeRideId) {
     startDriverPoll();
   }
