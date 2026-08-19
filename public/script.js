@@ -219,7 +219,7 @@ const uiTranslations = {
   'নতুন পাসওয়ার্ড': 'New Password',
   'গাড়ির নম্বর (যেমন: WB54T1234)': 'Vehicle No (e.g. WB54)',
   'অ্যাকাউন্ট তৈরি করুন': 'Create Account',
-  'সহজে টোটো বুক করুন': 'Book Toto Easily',
+  'সহজে গাড়ি বুক করুন': 'Book Toto Easily',
   'সুলভ, নিরাপদ ও বিশ্বস্ত পরিষেবা': 'Affordable, Safe, Reliable',
   'তুমি কোথা থেকে যাবে?': 'Select Pickup',
   'গ্রামের নাম লিখুন।': 'Village',
@@ -295,7 +295,7 @@ const uiTranslations = {
   'আপনার একটি রাইড ইতিমধ্যে খোঁজা হচ্ছে।': 'A ride is already searching.',
   'দয়া করে প্রথমে আপনার শুরুর স্থান (পিকআপ) নির্বাচন করুন।': 'Please select pickup location.',
   'শুরুর স্থান এবং গন্তব্য একই হতে পারে না।': 'Pickup and dropoff must differ.',
-  'আপনার টোটো বুকিং অনুরোধটি চালকদের পাঠানো হয়েছে।': 'Booking request sent to drivers.',
+  'আপনার বুকিং অনুরোধটি চালকদের পাঠানো হয়েছে।': 'Booking request sent to drivers.',
   'বুকিং করতে সমস্যা হচ্ছে, আবার চেষ্টা করুন।': 'Booking failed, please try again.',
   'রাইড শেষ করা হয়েছে।': 'Ride ended.',
   'রাইড শেষ করতে সমস্যা হয়েছে।': 'Error ending ride.',
@@ -2746,7 +2746,7 @@ function createFindingCard() {
       <h3>আমরা আপনার জন্য খুঁজছি</h3>
     </div>
     <div class="center-block">
-      <p class="muted-text">${t('কাছাকাছি একটি টোটো খুঁজে বের করা হচ্ছে...')}</p>
+      <p class="muted-text">${t('কাছাকাছি একটি গাড়ি খুঁজে বের করা হচ্ছে...')}</p>
       <p style="font-size: 2rem; margin: 20px 0;">🔍</p>
     </div>
   `;
@@ -2880,7 +2880,7 @@ function resetCustomerUI() {
 
   // Reset form
   rideSubmitBtn.disabled = false;
-  rideSubmitBtn.textContent = t('টোটো খুঁজুন');
+  rideSubmitBtn.textContent = t('বুক করুন');
   rideSubmitBtn.style.opacity = "1";
 
   selectedPickup = null;
@@ -2985,7 +2985,7 @@ rideRequestForm.addEventListener('submit', async event => {
       // Notify all drivers of new ride request
       notifyDriversOfRide(activeRideId, pickupAddress, response.ride.fare);
 
-      showPopup('অনুরোধ পাঠানো হয়েছে', 'আপনার টোটো বুকিং অনুরোধটি চালকদের পাঠানো হয়েছে।', '✅');
+      showPopup('অনুরোধ পাঠানো হয়েছে', 'আপনার বুকিং অনুরোধটি চালকদের পাঠানো হয়েছে।', '✅');
     }
   } catch (error) {
     console.error("Booking error:", error);
