@@ -584,7 +584,12 @@ const locationTranslations = {
 "পড়িশা" : "Parisha",
 "দেবসালা" : "Debsala",
 "বসুধা" : "Basudha",
-"ইলামবাজার" : "Illambazar"
+"ইলামবাজার" : "Illambazar",
+"নামখানা" : "Namkhana",
+"হুজুরের খেয়া ঘাট" : "Hujuter Kheya Ghat",
+"পাতিবুনিয়া বলিয়াড়া ফেরি ঘাট" : "Patibunia Balikara Ferry Ghat",
+"বাগদাঙা ফেরি ঘাট" : "Bagdanga Ferry Ghat",
+
 
 
 };
