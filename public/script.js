@@ -286,7 +286,7 @@ const uiTranslations = {
   'চালকের ট্রিপ শুরু করার অপেক্ষায়...': 'Waiting for driver to start...',
   'আপনার ট্রিপ চলছে...': 'Your trip is going on...',
   'ট্রিপ শুরু করতে সমস্যা হয়েছে।': 'Failed to start trip.',
-  'টোটো খোঁজা হচ্ছে...': 'Looking for Toto...',
+  'গাড়ি খোঁজা হচ্ছে...': 'Looking for Toto...',
   'চালকের জন্য অপেক্ষা করুন': 'Wait for Driver',
   'অপেক্ষা করুন...': 'Please wait...',
   'সেভ করুন': 'Save',
@@ -321,7 +321,7 @@ const uiTranslations = {
   'গন্তব্য সেট হয়েছে': 'Destination Set',
   'আপনার ট্রিপটি বাতিল হয়েছে।': 'Trip was cancelled.',
   'আমরা আপনার জন্য খুঁজছি': 'We are looking for you',
-  'কাছাকাছি একটি টোটো খুঁজে বের করা হচ্ছে...': 'Finding a nearby Toto...',
+  'কাছাকাছি একটি গাড়ি খুঁজে বের করা হচ্ছে...': 'Finding a nearby Toto...',
   'নিযুক্ত হচ্ছে...': 'Assigning...',
   'যাত্রী (Passenger)': 'Passenger',
   'টোটো চালক (Driver)': 'Driver',
@@ -399,13 +399,13 @@ const uiTranslations = {
   'করটিয়া': 'Karatia',
   '🛣️ বননবগ্ৰাম': '🛣️ Bonnabgram',
   'বননবগ্ৰাম': 'Bonnabgram',
-  'টোটোটি চালু করুন': 'Verify & Start',
+  'গাড়ি চালু করুন': 'Verify & Start',
   'ভুল পিন (Invalid OTP)': 'Invalid OTP',
   'পিন প্রয়োজন': 'PIN Required',
   'দয়া করে যাত্রীর পিন নম্বর লিখুন।': 'Please enter passenger PIN.',
   'আপনার পিন (Your PIN)': 'Your PIN',
   'পিন (PIN)': 'PIN',
-  'আপনার টোটো বাইরে অপেক্ষা করছে!': 'Your Toto is waiting outside!',
+  'আপনার গাড়ি বাইরে অপেক্ষা করছে!': 'Your car is waiting outside!',
   'আমি পৌঁছেছি': 'I Have Arrived',
   'আপডেট করতে সমস্যা হয়েছে।': 'Failed to update.',
   'সন্ধ্যা ৬টা থেকে সকাল ৬টা পর্যন্ত ₹10 অতিরিক্ত ভাড়া লাগবে।': '₹10 extra will be charged from 6 PM to 6 AM.',
@@ -2646,13 +2646,13 @@ async function pollCustomerRide() {
               const distance = cancelTime - now;
 
               if (distance < 0) {
-                customerWaitMsg.innerHTML = `${t('আপনার টোটো বাইরে অপেক্ষা করছে!')}<br><span style="color: var(--danger-color); font-size: 1.1rem; font-weight: 800;">⏳ 0:00</span>`;
+                customerWaitMsg.innerHTML = `${t('আপনার গাড়ি বাইরে অপেক্ষা করছে!')}<br><span style="color: var(--danger-color); font-size: 1.1rem; font-weight: 800;">⏳ 0:00</span>`;
                 if (arrivalTimerInterval) clearInterval(arrivalTimerInterval);
                 if (cancelRideBtn) cancelRideBtn.classList.add('hidden');
               } else {
                 const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                customerWaitMsg.innerHTML = `${t('আপনার টোটো বাইরে অপেক্ষা করছে!')}<br><span style="color: var(--danger-color); font-size: 1.1rem; font-weight: 800;">⏳ ${minutes}:${seconds < 10 ? '0' : ''}${seconds}</span>`;
+                customerWaitMsg.innerHTML = `${t('আপনার গাড়ি বাইরে অপেক্ষা করছে!')}<br><span style="color: var(--danger-color); font-size: 1.1rem; font-weight: 800;">⏳ ${minutes}:${seconds < 10 ? '0' : ''}${seconds}</span>`;
                 if (cancelRideBtn) cancelRideBtn.classList.remove('hidden');
               }
             };
@@ -2660,7 +2660,7 @@ async function pollCustomerRide() {
             arrivalTimerInterval = setInterval(updateTimer, 1000);
           }
         } else {
-          customerWaitMsg.textContent = t('আপনার টোটো বাইরে অপেক্ষা করছে!');
+          customerWaitMsg.textContent = t('আপনার গাড়ি বাইরে অপেক্ষা করছে!');
           if (cancelRideBtn) cancelRideBtn.classList.remove('hidden');
         }
 
@@ -3748,7 +3748,7 @@ async function listenToDriverActiveRide() {
     } else if (ride.rideStatus === 'arrived') {
       otpInput.style.display = 'block';
       actionBtn.className = 'button primary full-width';
-      actionBtn.textContent = t('টোটোটি চালু করুন');
+      actionBtn.textContent = t('গাড়ি চালু করুন');
       actionBtn.disabled = false;
       if (driverCancelRideBtn) driverCancelRideBtn.classList.remove('hidden');
       actionBtn.onclick = () => startDriverActiveRide();
