@@ -232,7 +232,21 @@
         </div>
 
         <div class="card ride-booking-card">
+          <div class="booking-mode-tabs" style="display:flex; gap:10px; margin-bottom:16px;">
+            <button type="button" class="booking-mode-tab active" data-mode="normal" style="flex:1; border:1px solid #ddd; border-radius:999px; padding:10px 12px; background:#fff; font-weight:700; color:#0f172a;">🛺 এখনই বুক</button>
+            <button type="button" class="booking-mode-tab" data-mode="schedule" style="flex:1; border:1px solid #ddd; border-radius:999px; padding:10px 12px; background:#fff; font-weight:700; color:#0f172a;">📅 আগে থেকে বুক</button>
+          </div>
           <form id="rideRequestForm" class="booking-flow">
+            <div id="scheduleBookingFields" class="hidden" style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
+              <div>
+                <label class="field-label" for="scheduledRideDate">📅 যাত্রার তারিখ</label>
+                <input type="date" id="scheduledRideDate" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; font-size:1rem;" />
+              </div>
+              <div>
+                <label class="field-label" for="scheduledRideTime">⏰ যাত্রার সময়</label>
+                <input type="time" id="scheduledRideTime" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; font-size:1rem;" />
+              </div>
+            </div>
             <div class="location-columns" style="display: flex; flex-direction: column;">
               <div class="location-column" id="pickupColumn">
                 <div class="column-header">
@@ -535,6 +549,16 @@
             <p class="muted-text center-block">অনলাইন যান এবং নতুন রাইড রিকোয়েস্টের জন্য অপেক্ষা করুন।</p>
           </div>
           <!-- <img src="image/footer.png" alt="Footer Image" class="footer-image" /> -->
+        </div>
+
+        <div class="request-stream-container" style="margin-top: 20px;">
+          <div class="section-title-row">
+            <h3>📅 আগাম রাইড</h3>
+            <span class="badge" id="scheduledRequestCountBadge">0</span>
+          </div>
+          <div id="scheduledRideRequests" class="request-list">
+            <p class="muted-text center-block">কোনো আগাম রাইড নেই।</p>
+          </div>
         </div>
 
         <div class="card info-card state-card hidden" id="driverAcceptedRideCard">

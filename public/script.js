@@ -221,6 +221,20 @@ const uiTranslations = {
   'অ্যাকাউন্ট তৈরি করুন': 'Create Account',
   'সহজে গাড়ি বুক করুন': 'Book Toto Easily',
   'সুলভ, নিরাপদ ও বিশ্বস্ত পরিষেবা': 'Affordable, Safe, Reliable',
+  'এখনই বুক': 'Book Now',
+  'আগে থেকে বুক': 'Schedule Booking',
+  'যাত্রার তারিখ': 'Date',
+  'যাত্রার সময়': 'Time',
+  'আগে থেকে বুক করুন': 'Schedule Booking',
+  'আগাম রাইড': 'Scheduled Ride',
+  'কোনো আগাম রাইড নেই।': 'No scheduled rides.',
+  'আপনার আগাম রাইডের অনুরোধটি চালকদের পাঠানো হয়েছে।': 'Your scheduled ride request has been sent to drivers.',
+  'তারিখ এবং সময় নির্বাচন করুন।': 'Please select a date and time.',
+  'সিডিউল করা রাইডের জন্য ভবিষ্যৎ সময় নির্বাচন করুন।': 'Please select a future time for the scheduled ride.',
+  'আগাম রাইডের জন্য কমপক্ষে ২ ঘণ্টা সময় প্রয়োজন।': 'A scheduled ride needs at least 2 hours.',
+  'দয়া করে একটি বৈধ ভাড়া লিখুন (ন্যূনতম ₹100)।': 'Please enter a valid fare (minimum ₹100).',
+  '✅ চালক আপনার আগাম রাইড গ্রহণ করেছেন': '✅ Driver has accepted your scheduled ride.',
+  '❌ কোনো চালক এই রাইডটি গ্রহণ করেননি': '❌ No driver accepted this scheduled ride.',
   'তুমি কোথা থেকে যাবে?': 'Select Pickup',
   'গ্রামের নাম লিখুন।': 'Village',
   'গ্রাম নির্বাচন করুন': 'Select Village',
@@ -778,6 +792,12 @@ const customerFareInputContainer = document.getElementById('customerFareInputCon
 const custNegFareInput = document.getElementById('custNegFareInput');
 const custNegMinusBtn = document.getElementById('custNegMinusBtn');
 const custNegPlusBtn = document.getElementById('custNegPlusBtn');
+const scheduledRideDateInput = document.getElementById('scheduledRideDate');
+const scheduledRideTimeInput = document.getElementById('scheduledRideTime');
+const scheduleBookingFields = document.getElementById('scheduleBookingFields');
+const bookingModeTabs = document.querySelectorAll('.booking-mode-tab');
+const scheduledRideRequestsContainer = document.getElementById('scheduledRideRequests');
+const scheduledRequestCountBadge = document.getElementById('scheduledRequestCountBadge');
 
 // Add Stoppage UI
 const newStoppageVillageSelect = document.getElementById('newStoppageVillage');
@@ -843,6 +863,7 @@ let searchableLocations = [];
 // --- Global State & Listeners ---
 let currentUser = JSON.parse(localStorage.getItem('toto_active_user')) || null;
 let activeRideId = localStorage.getItem('toto_active_ride_id') || null;
+let selectedBookingMode = 'normal';
 let selectedPickup = null; // { villageId, stoppageId, name }
 let selectedDropoff = null; // { villageId, stoppageId, name }
 let pollInterval = null;
@@ -1024,6 +1045,40 @@ custNegPlusBtn?.addEventListener('click', () => {
 
 custNegFareInput?.addEventListener('input', () => {
   updateRideButtonState();
+});
+
+scheduledRideDateInput?.addEventListener('input', updateRideButtonState);
+scheduledRideTimeInput?.addEventListener('input', updateRideButtonState);
+
+function setBookingMode(mode) {
+  selectedBookingMode = mode;
+  const isSchedule = mode === 'schedule';
+
+  bookingModeTabs.forEach(tab => {
+    const active = tab.dataset.mode === mode;
+    tab.classList.toggle('active', active);
+    tab.style.background = active ? '#0d6b46' : '#fff';
+    tab.style.color = active ? '#fff' : '#0f172a';
+    tab.style.borderColor = active ? '#0d6b46' : '#ddd';
+  });
+
+  if (scheduleBookingFields) {
+    scheduleBookingFields.classList.toggle('hidden', !isSchedule);
+  }
+
+  if (rideSubmitBtn) {
+    rideSubmitBtn.textContent = isSchedule ? t('আগে থেকে বুক করুন') : t('রাইড খুঁজুন');
+  }
+
+  if (isSchedule && (!custNegFareInput || Number(custNegFareInput.value) < 100)) {
+    if (custNegFareInput) custNegFareInput.value = 100;
+  }
+
+  updateRideButtonState();
+}
+
+bookingModeTabs.forEach(tab => {
+  tab.addEventListener('click', () => setBookingMode(tab.dataset.mode));
 });
 
 // --- Global Notification Alert ---
@@ -2498,7 +2553,9 @@ async function pollCustomerRide() {
       activeRideId = null;
       resetCustomerUI();
 
-      if (wasPenalized) {
+      if (ride.bookingType === 'scheduled' && ride.scheduleStatus === 'no_driver') {
+        showPopup('❌ কোনো চালক এই রাইডটি গ্রহণ করেননি', '❌ No driver accepted this scheduled ride.', '❌');
+      } else if (wasPenalized) {
         try {
           const userRes = await apiCall('/auth/profile');
           if (userRes.success && userRes.user.activePenalty && userRes.user.activePenalty.amount > 0) {
@@ -2569,6 +2626,10 @@ async function pollCustomerRide() {
       const findingCard = document.getElementById('findingRideCard');
       if (findingCard) findingCard.classList.add('hidden');
       document.getElementById('customerOfferCard')?.classList.add('hidden');
+
+      if (ride.bookingType === 'scheduled') {
+        showPopup('✅ চালক আপনার আগাম রাইড গ্রহণ করেছেন', '✅ Driver has accepted your scheduled ride.', '✅');
+      }
 
       acceptedRideCard.classList.remove('hidden');
       document.getElementById('acceptedDriverName').textContent = ride.driverId ? `${ride.driverId.firstName} ${ride.driverId.lastName}` : t('নিযুক্ত হচ্ছে...');
@@ -2893,6 +2954,8 @@ function resetCustomerUI() {
   updateRideButtonState();
   if (pickupSearch) pickupSearch.value = '';
   if (dropoffSearch) dropoffSearch.value = '';
+  if (scheduledRideDateInput) scheduledRideDateInput.value = '';
+  if (scheduledRideTimeInput) scheduledRideTimeInput.value = '';
 
   if (pickupColumn) pickupColumn.classList.remove('hidden');
   if (pickupSummary) pickupSummary.classList.add('hidden');
@@ -2918,16 +2981,41 @@ rideRequestForm.addEventListener('submit', async event => {
   }
 
   const fare = parseInt(custNegFareInput.value);
-  if (!fare || fare < 10) {
-    showPopup('ত্রুটি', 'দয়া করে একটি বৈধ ভাড়া লিখুন (ন্যূনতম ₹10)।', '❌');
+  const isScheduleBooking = selectedBookingMode === 'schedule';
+  const minimumFare = isScheduleBooking ? 100 : 10;
+
+  if (!fare || fare < minimumFare) {
+    showPopup('ত্রুটি', isScheduleBooking ? 'দয়া করে একটি বৈধ ভাড়া লিখুন (ন্যূনতম ₹100)।' : 'দয়া করে একটি বৈধ ভাড়া লিখুন (ন্যূনতম ₹10)।', '❌');
     return;
+  }
+
+  if (isScheduleBooking) {
+    const selectedDate = scheduledRideDateInput?.value;
+    const selectedTime = scheduledRideTimeInput?.value;
+    if (!selectedDate || !selectedTime) {
+      showPopup('ত্রুটি', 'তারিখ এবং সময় নির্বাচন করুন।', '❌');
+      return;
+    }
+
+    const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`);
+    const now = new Date();
+    if (scheduledDateTime <= now) {
+      showPopup('ত্রুটি', 'সিডিউল করা রাইডের জন্য ভবিষ্যৎ সময় নির্বাচন করুন।', '❌');
+      return;
+    }
+
+    const cutoffWindowMs = 2 * 60 * 60 * 1000;
+    if (scheduledDateTime.getTime() - now.getTime() < cutoffWindowMs) {
+      showPopup('ত্রুটি', 'আগাম রাইডের জন্য কমপক্ষে ২ ঘণ্টা সময় প্রয়োজন।', '❌');
+      return;
+    }
   }
 
   const pickupAddress = selectedPickup.name + (landmark ? ` (${landmark})` : '');
   const dropoffAddress = selectedDropoff.name;
 
   rideSubmitBtn.disabled = true;
-  rideSubmitBtn.textContent = t('লোকেশন চেক করা হচ্ছে...');
+  rideSubmitBtn.textContent = isScheduleBooking ? t('অপেক্ষা করুন...') : t('লোকেশন চেক করা হচ্ছে...');
 
   let pickupLat = 0;
   let pickupLng = 0;
@@ -2945,36 +3033,33 @@ rideRequestForm.addEventListener('submit', async event => {
 
   rideSubmitBtn.textContent = t('অপেক্ষা করুন...');
 
-  // Provide valid stoppage IDs for the live backend fallback
   const pickupStoppageId = selectedPickup?.stoppageId || pickupVillageId;
   const dropoffStoppageId = selectedDropoff?.stoppageId || dropoffVillageId;
 
   try {
-    const response = await apiCall('/rides/request', 'POST', {
+    const endpoint = isScheduleBooking ? '/rides/schedule-request' : '/rides/request';
+    const payload = {
       pickupVillageId,
       dropoffVillageId,
       pickupStoppageId,
       dropoffStoppageId,
-      landmark,           // For your new backend
-      fare,               // Pass explicit calculated fare
-      pickupLat,          // Explicit exact location
-      pickupLng,          // Explicit exact location
+      landmark,
+      fare,
+      pickupLat,
+      pickupLng,
       rideType: document.getElementById('rideTypeSelect')?.value || null,
-
-      // Fallback for your current live Render backend:
-      pickupLocation: {
-        address: pickupAddress,
-        latitude: 0,
-        longitude: 0
-      },
-      dropoffLocation: {
-        address: dropoffAddress,
-        latitude: 0,
-        longitude: 0
-      },
-      distance: 0, // Distance is no longer calculated on the client
+      pickupLocation: { address: pickupAddress, latitude: 0, longitude: 0 },
+      dropoffLocation: { address: dropoffAddress, latitude: 0, longitude: 0 },
+      distance: 0,
       fare: fare
-    });
+    };
+
+    if (isScheduleBooking) {
+      payload.scheduledDate = scheduledRideDateInput.value;
+      payload.scheduledTime = scheduledRideTimeInput.value;
+    }
+
+    const response = await apiCall(endpoint, 'POST', payload);
 
     if (response.success) {
       activeRideId = response.ride._id;
@@ -2982,15 +3067,15 @@ rideRequestForm.addEventListener('submit', async event => {
 
       if (cancelRideBtn) cancelRideBtn.classList.remove('hidden');
 
-      // Start polling - every 16 seconds for real-time updates
       if (pollInterval) clearInterval(pollInterval);
-      pollCustomerRide(); // Initial call
+      pollCustomerRide();
       pollInterval = setInterval(pollCustomerRide, 16000);
 
-      // Notify all drivers of new ride request
-      notifyDriversOfRide(activeRideId, pickupAddress, response.ride.fare);
+      if (!isScheduleBooking) {
+        notifyDriversOfRide(activeRideId, pickupAddress, response.ride.fare);
+      }
 
-      showPopup('অনুরোধ পাঠানো হয়েছে', 'আপনার বুকিং অনুরোধটি চালকদের পাঠানো হয়েছে।', '✅');
+      showPopup('অনুরোধ পাঠানো হয়েছে', isScheduleBooking ? 'আপনার আগাম রাইডের অনুরোধটি চালকদের পাঠানো হয়েছে।' : 'আপনার বুকিং অনুরোধটি চালকদের পাঠানো হয়েছে।', '✅');
     }
   } catch (error) {
     console.error("Booking error:", error);
@@ -3109,7 +3194,9 @@ function updateRidePreview() {
 function updateRideButtonState() {
   if (!rideSubmitBtn) return;
   const fare = custNegFareInput ? parseInt(custNegFareInput.value) : 0;
-  const canBook = !!selectedPickup && !!selectedDropoff && fare >= 10;
+  const minimumFare = selectedBookingMode === 'schedule' ? 100 : 10;
+  const scheduleReady = selectedBookingMode === 'schedule' ? !!scheduledRideDateInput?.value && !!scheduledRideTimeInput?.value : true;
+  const canBook = !!selectedPickup && !!selectedDropoff && fare >= minimumFare && scheduleReady;
   rideSubmitBtn.disabled = !canBook;
   rideSubmitBtn.style.opacity = canBook ? '1' : '0.6';
 }
@@ -3409,13 +3496,11 @@ async function listenToPendingQueue() {
     const response = await apiCall('/rides/pending');
     let rides = response.rides || [];
 
-    // Filter out recently rejected rides (within 60 seconds)
     const now = Date.now();
     rides = rides.filter(ride => {
       if (rejectedRides[ride._id] && rejectedRides[ride._id] > now) {
-        return false; // Hide this ride, it was recently rejected
+        return false;
       }
-      // Clean up expired rejections
       if (rejectedRides[ride._id] && rejectedRides[ride._id] <= now) {
         delete rejectedRides[ride._id];
       }
@@ -3428,10 +3513,11 @@ async function listenToPendingQueue() {
       return true;
     });
 
-    // Check for newly arrived rides to trigger the sound alert
+    const normalRides = rides.filter(ride => ride.bookingType !== 'scheduled');
+    const scheduledRides = rides.filter(ride => ride.bookingType === 'scheduled');
+
     let hasNewRide = false;
     const currentIds = new Set();
-
     rides.forEach(ride => {
       currentIds.add(ride._id);
       if (!knownPendingRideIds.has(ride._id)) {
@@ -3442,36 +3528,59 @@ async function listenToPendingQueue() {
     if (hasNewRide && rides.length > 0) {
       playNotificationSound();
     }
-    knownPendingRideIds = currentIds; // Update the known list for the next poll
+    knownPendingRideIds = currentIds;
 
-    requestCountBadge.textContent = rides.length.toString();
+    requestCountBadge.textContent = normalRides.length.toString();
+    scheduledRequestCountBadge.textContent = scheduledRides.length.toString();
 
-    if (rides.length === 0) {
+    if (normalRides.length === 0) {
       rideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('এই মুহূর্তে কোনো বুকিং অনুরোধ নেই।')}</p>`;
-      stopNotificationSound();
-      return;
+    } else {
+      rideRequestsContainer.innerHTML = '';
+      normalRides.forEach((ride) => {
+        const item = document.createElement('div');
+        item.className = 'request-item';
+        item.innerHTML = `
+          <p>👤 <strong>${ride.passengerId.firstName} ${ride.passengerId.lastName}</strong></p>
+          <p><strong>${getRideTypeHtml(ride)}</strong></p>
+          <p>📍 ${t('পিকআপ:')} ${t(ride.pickupLocation.villageName)}</p>
+          <p>🏁 ${t('গন্তব্য:')} ${t(ride.dropoffLocation.villageName)}</p>
+          ${ride.pickupLocation.landmark ? `<p>${t('📌 নিকটবর্তী জায়গা:')} ${ride.pickupLocation.landmark}</p>` : ''}
+          <p>💰 ${t('ভাড়া:')} <span class="text-green">₹${ride.fare}</span></p>
+          <div class="request-actions" style="flex-wrap: wrap;">
+            <button class="button primary accept-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('গ্রহণ করুন')}</button>
+            <button class="button secondary negotiate-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('ভাড়া বাড়ান')}</button>
+            <button class="button danger reject-pending-btn" data-id="${ride._id}" style="width: 100%; margin-top: 5px; background: #e0e0e0; color: #333;">${t('প্রত্যাখ্যান করুন')}</button>
+          </div>
+        `;
+        rideRequestsContainer.appendChild(item);
+      });
     }
 
-    rideRequestsContainer.innerHTML = '';
-    rides.forEach((ride) => {
-      const item = document.createElement('div');
-      item.className = 'request-item';
-      item.innerHTML = `
-      
-        <p>👤 <strong>${ride.passengerId.firstName} ${ride.passengerId.lastName}</strong></p>
-        <p><strong>${getRideTypeHtml(ride)}</strong></p>
-        <p>📍 ${t('পিকআপ:')} ${t(ride.pickupLocation.villageName)}</p>
-        <p>🏁 ${t('গন্তব্য:')} ${t(ride.dropoffLocation.villageName)}</p>
-         ${ride.pickupLocation.landmark ? `<p>${t('📌 নিকটবর্তী জায়গা:')} ${ride.pickupLocation.landmark}</p>` : ''}
-        <p>💰 ${t('ভাড়া:')} <span class="text-green">₹${ride.fare}</span></p>
-        <div class="request-actions" style="flex-wrap: wrap;">
-          <button class="button primary accept-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('গ্রহণ করুন')}</button>
-          <button class="button secondary negotiate-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('ভাড়া বাড়ান')}</button>
-          <button class="button danger reject-pending-btn" data-id="${ride._id}" style="width: 100%; margin-top: 5px; background: #e0e0e0; color: #333;">${t('প্রত্যাখ্যান করুন')}</button>
-        </div>
-      `;
-      rideRequestsContainer.appendChild(item);
-    });
+    if (scheduledRides.length === 0) {
+      scheduledRideRequestsContainer.innerHTML = `<p class="muted-text center-block">${t('কোনো আগাম রাইড নেই।')}</p>`;
+    } else {
+      scheduledRideRequestsContainer.innerHTML = '';
+      scheduledRides.forEach((ride) => {
+        const item = document.createElement('div');
+        item.className = 'request-item';
+        const rideDate = ride.scheduledDateTime ? new Date(ride.scheduledDateTime) : new Date(ride.scheduledDate || Date.now());
+        const rideDay = rideDate.toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric' });
+        item.innerHTML = `
+          <p>👤 <strong>${ride.passengerId.firstName} ${ride.passengerId.lastName}</strong></p>
+          <p>📅 ${rideDay}</p>
+          <p>⏰ ${ride.scheduledTime || '—'}</p>
+          <p>📍 ${t(ride.pickupLocation.villageName)} → ${t(ride.dropoffLocation.villageName)}</p>
+          <p>🛺 ${getRideTypeHtml(ride)}</p>
+          <p>💰 ${t('ভাড়া:')} <span class="text-green">₹${ride.fare}</span></p>
+          <div class="request-actions" style="flex-wrap: wrap;">
+            <button class="button primary accept-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('গ্রহণ করুন')}</button>
+            <button class="button secondary negotiate-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('ভাড়া বাড়ান')}</button>
+          </div>
+        `;
+        scheduledRideRequestsContainer.appendChild(item);
+      });
+    }
 
     document.querySelectorAll('.accept-btn').forEach(btn => {
       btn.addEventListener('click', (e) => submitOffer(e.target.dataset.id, e.target.dataset.fare));
@@ -3484,15 +3593,17 @@ async function listenToPendingQueue() {
     document.querySelectorAll('.reject-pending-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const rideId = e.target.dataset.id;
-        rejectedRides[rideId] = Date.now() + 60000; // Hide for 60 seconds
+        rejectedRides[rideId] = Date.now() + 60000;
         stopNotificationSound();
-        listenToPendingQueue(); // Re-render immediately
+        listenToPendingQueue();
       });
     });
 
-    // Poll for updates every 16 seconds for real-time updates
     if (pollInterval) clearInterval(pollInterval);
     pollInterval = setInterval(listenToPendingQueue, 16000);
+    if (normalRides.length === 0 && scheduledRides.length === 0) {
+      stopNotificationSound();
+    }
   } catch (error) {
     console.error("Error fetching pending rides:", error);
   }

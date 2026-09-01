@@ -38,6 +38,32 @@ const rideSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  bookingType: {
+    type: String,
+    enum: ['normal', 'scheduled'],
+    default: 'normal'
+  },
+  scheduledDate: {
+    type: Date,
+    default: null
+  },
+  scheduledTime: {
+    type: String,
+    default: null
+  },
+  scheduledDateTime: {
+    type: Date,
+    default: null
+  },
+  scheduleCutoffAt: {
+    type: Date,
+    default: null
+  },
+  scheduleStatus: {
+    type: String,
+    enum: ['pending', 'assigned', 'no_driver'],
+    default: null
+  },
   // rideType stores the requested vehicle/ride type (e.g., mini, auto, etc.)
   rideType: {
     type: String,

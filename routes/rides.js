@@ -19,6 +19,62 @@ const BASE_FARE = 10; // minimum fare
 const NIGHT_SURCHARGE = 10; // fixed night increment
 const NIGHT_SURGE_START = 18; // 6 PM
 const NIGHT_SURGE_END = 6; // 6 AM
+const SCHEDULE_OFFER_WINDOW_MS = 2 * 60 * 60 * 1000;
+
+function parseLocalDateTime(dateString, timeString) {
+  if (!dateString || !timeString) return null;
+  const normalizedTime = timeString.length === 5 ? timeString : timeString.padStart(5, '0');
+  const value = new Date(`${dateString}T${normalizedTime}:00`);
+  return Number.isNaN(value.getTime()) ? null : value;
+}
+
+function getScheduledRideCutoff(ride) {
+  if (!ride || ride.bookingType !== 'scheduled') return null;
+  if (ride.scheduleCutoffAt) return new Date(ride.scheduleCutoffAt);
+  if (ride.scheduledDateTime) return new Date(new Date(ride.scheduledDateTime).getTime() - SCHEDULE_OFFER_WINDOW_MS);
+  if (ride.scheduledDate && ride.scheduledTime) {
+    const scheduledDateTime = parseLocalDateTime(ride.scheduledDate.toISOString().slice(0, 10), ride.scheduledTime);
+    if (scheduledDateTime) return new Date(scheduledDateTime.getTime() - SCHEDULE_OFFER_WINDOW_MS);
+  }
+  return null;
+}
+
+async function processScheduledRideAssignment(ride) {
+  if (!ride || ride.bookingType !== 'scheduled') return false;
+  if (ride.rideStatus === 'accepted' || ride.rideStatus === 'cancelled') return false;
+
+  const cutoffAt = getScheduledRideCutoff(ride);
+  if (!cutoffAt || new Date() < cutoffAt) return false;
+
+  const offers = Array.isArray(ride.offers) ? ride.offers.filter(o => o && Number(o.fare) > 0) : [];
+  if (offers.length === 0) {
+    ride.rideStatus = 'cancelled';
+    ride.scheduleStatus = 'no_driver';
+    await ride.save();
+    return true;
+  }
+
+  const winner = offers.reduce((best, current) => {
+    if (!best) return current;
+    return Number(current.fare) < Number(best.fare) ? current : best;
+  }, null);
+
+  if (!winner || !winner.driverId) {
+    ride.rideStatus = 'cancelled';
+    ride.scheduleStatus = 'no_driver';
+    await ride.save();
+    return true;
+  }
+
+  ride.driverId = winner.driverId;
+  ride.fare = Number(winner.fare);
+  ride.rideStatus = 'accepted';
+  ride.startTime = new Date();
+  ride.scheduleStatus = 'assigned';
+  ride.otp = Math.floor(1000 + Math.random() * 9000).toString();
+  await ride.save();
+  return true;
+}
 
 async function buildLocationFromStoppage(stoppageId, landmark) {
   const found = await findStoppage(stoppageId);
@@ -41,6 +97,103 @@ async function buildLocationFromStoppage(stoppageId, landmark) {
 
   return location;
 }
+
+// SCHEDULED RIDE REQUEST (Passenger)
+router.post('/schedule-request', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (user && user.isBlocked) {
+      return res.status(403).json({ success: false, message: 'ACCOUNT_BLOCKED' });
+    }
+
+    const {
+      pickupVillageId,
+      dropoffVillageId,
+      pickupStoppageId,
+      dropoffStoppageId,
+      landmark,
+      fare: requestedFare,
+      pickupLat,
+      pickupLng,
+      rideType,
+      scheduledDate,
+      scheduledTime
+    } = req.body;
+
+    if (!scheduledDate || !scheduledTime) {
+      return res.status(400).json({ success: false, message: 'তারিখ ও সময় নির্বাচন করুন' });
+    }
+
+    const parsedDateTime = parseLocalDateTime(scheduledDate, scheduledTime);
+    if (!parsedDateTime) {
+      return res.status(400).json({ success: false, message: 'অবৈধ তারিখ বা সময়' });
+    }
+
+    const now = new Date();
+    if (parsedDateTime <= now) {
+      return res.status(400).json({ success: false, message: 'সিডিউল করার জন্য ভবিষ্যতের তারিখ ও সময় নির্বাচন করুন' });
+    }
+
+    if (parsedDateTime.getTime() - now.getTime() < SCHEDULE_OFFER_WINDOW_MS) {
+      return res.status(400).json({ success: false, message: 'আগাম রাইডের জন্য কমপক্ষে ২ ঘণ্টা সময় প্রয়োজন।' });
+    }
+
+    const pVid = pickupVillageId || pickupStoppageId;
+    const dVid = dropoffVillageId || dropoffStoppageId;
+    if (!pVid || !dVid) {
+      return res.status(400).json({ success: false, message: 'শুরুর স্থান ও গন্তব্য নির্বাচন করুন' });
+    }
+
+    const pickupLocation = pickupVillageId
+      ? await buildLocationFromVillage(pickupVillageId, landmark)
+      : await buildLocationFromStoppage(pickupStoppageId, landmark);
+
+    if (pickupLat && pickupLng) {
+      pickupLocation.latitude = Number(pickupLat);
+      pickupLocation.longitude = Number(pickupLng);
+    }
+
+    const dropoffLocation = dropoffVillageId
+      ? await buildLocationFromVillage(dropoffVillageId)
+      : await buildLocationFromStoppage(dropoffStoppageId);
+
+    if (!pickupLocation || !dropoffLocation) {
+      return res.status(400).json({ success: false, message: 'অবৈধ স্থান নির্বাচন করা হয়েছে' });
+    }
+
+    const distance = pickupVillageId && dropoffVillageId
+      ? await calculateDistanceKmByVillage(pickupVillageId, dropoffVillageId)
+      : await calculateDistanceKm(pickupStoppageId, dropoffStoppageId);
+
+    const fareValue = Number(requestedFare || Math.max(BASE_FARE, distance * FARE_PER_KM));
+    if (!Number.isFinite(fareValue) || fareValue < 100) {
+      return res.status(400).json({ success: false, message: 'ভাড়া ন্যূনতম ₹100 হতে হবে' });
+    }
+
+    const ride = new Ride({
+      passengerId: req.userId,
+      pickupLocation,
+      dropoffLocation,
+      distance,
+      fare: fareValue,
+      rideType: rideType || null,
+      bookingType: 'scheduled',
+      scheduledDate: new Date(`${scheduledDate}T00:00:00`),
+      scheduledTime,
+      scheduledDateTime: parsedDateTime,
+      scheduleCutoffAt: new Date(parsedDateTime.getTime() - SCHEDULE_OFFER_WINDOW_MS),
+      scheduleStatus: 'pending',
+      rideStatus: 'pending',
+      otp: Math.floor(1000 + Math.random() * 9000).toString()
+    });
+
+    await ride.save();
+    res.status(201).json({ success: true, message: 'Scheduled ride created successfully', ride });
+  } catch (error) {
+    console.error('Schedule ride error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to schedule ride' });
+  }
+});
 
 // REQUEST RIDE (Passenger)
 router.post('/request', authMiddleware, async (req, res) => {
@@ -272,11 +425,54 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Ride not found' });
     }
 
+    const cutoffAt = getScheduledRideCutoff(currentRide);
+    if (currentRide.bookingType === 'scheduled' && cutoffAt && new Date() >= cutoffAt) {
+      return res.status(400).json({
+        success: false,
+        message: 'আগাম রাইডের জন্য নতুন অফার গ্রহণ করা হয়েছে।'
+      });
+    }
+
     if (currentRide.rideStatus !== 'pending' && currentRide.rideStatus !== 'driver_offered') {
       return res.status(400).json({
         success: false,
         message: 'রাইডটি ইতিমধ্যে অন্য কেউ নিয়ে নিয়েছে অথবা বাতিল হয়েছে।'
       });
+    }
+
+    if (currentRide.bookingType === 'scheduled') {
+      const offeredFare = Number(fare ?? currentRide.fare ?? 0);
+      const isImmediateAccept = offeredFare <= Number(currentRide.fare || 0) + 1;
+
+      if (isImmediateAccept) {
+        const ride = await Ride.findOneAndUpdate(
+          { _id: req.params.rideId, bookingType: 'scheduled', rideStatus: { $in: ['pending', 'driver_offered'] }, driverId: null },
+          {
+            $set: {
+              driverId: req.userId,
+              rideStatus: 'accepted',
+              fare: Number(currentRide.fare || offeredFare),
+              startTime: new Date(),
+              otp: Math.floor(1000 + Math.random() * 9000).toString(),
+              scheduleStatus: 'assigned'
+            }
+          },
+          { new: true }
+        )
+          .populate('passengerId', 'firstName lastName phone profilePhoto')
+          .populate('driverId', 'firstName lastName phone profilePhoto vehicleNumber')
+          .populate({ path: 'offers.driverId', model: 'User', select: 'firstName lastName phone profilePhoto vehicleNumber averageRating', strictPopulate: false });
+
+        if (!ride) {
+          return res.status(400).json({ success: false, message: 'এই আগাম রাইডটি ইতিমধ্যে বরাদ্দ হয়েছে।' });
+        }
+
+        return res.status(200).json({
+          success: true,
+          message: 'Scheduled ride accepted successfully',
+          ride
+        });
+      }
     }
 
     let offers = currentRide.offers || [];
@@ -297,7 +493,8 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
       {
         $set: {
           rideStatus: 'driver_offered',
-          offers: offers
+          offers: offers,
+          scheduleStatus: currentRide.bookingType === 'scheduled' ? 'pending' : undefined
         }
       },
       { new: true }
@@ -722,6 +919,15 @@ setInterval(async () => {
     const now = new Date();
     const fifteenMinsAgo = new Date(now.getTime() - 15 * 60 * 1000);
     const fiveMinsAgo = new Date(now.getTime() - 5 * 60 * 1000);
+
+    const scheduledRides = await Ride.find({
+      bookingType: 'scheduled',
+      rideStatus: { $in: ['pending', 'driver_offered'] }
+    }).lean();
+
+    for (const ride of scheduledRides) {
+      await processScheduledRideAssignment(await Ride.findById(ride._id));
+    }
 
     // 1. Cancel rides that nobody accepted within 15 minutes
     await Ride.updateMany(
