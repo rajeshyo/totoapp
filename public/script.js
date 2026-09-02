@@ -3593,7 +3593,7 @@ async function listenToPendingQueue() {
           <p>📅 ${rideDay}</p>
           <p>⏰ ${ride.scheduledTime || '—'}</p>
           <p>📍 ${t(ride.pickupLocation.villageName)} → ${t(ride.dropoffLocation.villageName)}</p>
-          <p>🛺 ${getRideTypeHtml(ride)}</p>
+          <p>${getRideTypeHtml(ride)}</p>
           <p>💰 ${t('ভাড়া:')} <span class="text-green">₹${ride.fare}</span></p>
           <div class="request-actions" style="flex-wrap: wrap;">
             <button class="button primary accept-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('গ্রহণ করুন')}</button>
