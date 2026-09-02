@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const Ride = require('../models/Ride');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
@@ -46,11 +47,14 @@ async function processScheduledRideAssignment(ride) {
   const cutoffAt = getScheduledRideCutoff(ride);
   if (!cutoffAt || new Date() < cutoffAt) return false;
 
-  const offers = Array.isArray(ride.offers) ? ride.offers.filter(o => o && Number(o.fare) > 0) : [];
+  const offers = Array.isArray(ride.offers)
+    ? ride.offers.filter(o => o && o.driverId && Number(o.fare) > 0)
+    : [];
   if (offers.length === 0) {
-    ride.rideStatus = 'cancelled';
-    ride.scheduleStatus = 'no_driver';
-    await ride.save();
+    await Ride.updateOne(
+      { _id: ride._id, bookingType: 'scheduled', rideStatus: { $in: ['pending', 'driver_offered'] }, driverId: null },
+      { $set: { scheduleStatus: 'no_driver' } }
+    );
     return true;
   }
 
@@ -60,20 +64,37 @@ async function processScheduledRideAssignment(ride) {
   }, null);
 
   if (!winner || !winner.driverId) {
-    ride.rideStatus = 'cancelled';
-    ride.scheduleStatus = 'no_driver';
-    await ride.save();
+    await Ride.updateOne(
+      { _id: ride._id, bookingType: 'scheduled', rideStatus: { $in: ['pending', 'driver_offered'] }, driverId: null },
+      { $set: { scheduleStatus: 'no_driver' } }
+    );
     return true;
   }
 
-  ride.driverId = winner.driverId;
-  ride.fare = Number(winner.fare);
-  ride.rideStatus = 'accepted';
-  ride.startTime = new Date();
-  ride.scheduleStatus = 'assigned';
-  ride.otp = Math.floor(1000 + Math.random() * 9000).toString();
-  await ride.save();
-  return true;
+  const assigned = await Ride.findOneAndUpdate(
+    {
+      _id: ride._id,
+      bookingType: 'scheduled',
+      rideStatus: { $in: ['pending', 'driver_offered'] },
+      driverId: null,
+      $or: [
+        { scheduleCutoffAt: { $lte: new Date() } },
+        { scheduleCutoffAt: null, scheduledDateTime: { $lte: new Date(Date.now() + SCHEDULE_OFFER_WINDOW_MS) } }
+      ]
+    },
+    {
+      $set: {
+        driverId: winner.driverId,
+        fare: Number(winner.fare),
+        rideStatus: 'accepted',
+        startTime: new Date(),
+        scheduleStatus: 'assigned',
+        otp: Math.floor(1000 + Math.random() * 9000).toString()
+      }
+    },
+    { new: true }
+  );
+  return Boolean(assigned);
 }
 
 async function buildLocationFromStoppage(stoppageId, landmark) {
@@ -398,14 +419,31 @@ router.get('/pending', authMiddleware, async (req, res) => {
       return res.status(403).json({ success: false, message: 'ACCOUNT_BLOCKED' });
     }
 
-    const rides = await Ride.find({ rideStatus: { $in: ['pending', 'driver_offered'] } })
+    const now = new Date();
+    const rides = await Ride.find({
+      rideStatus: { $in: ['pending', 'driver_offered'] },
+      $or: [
+        { bookingType: { $ne: 'scheduled' } },
+        {
+          bookingType: 'scheduled',
+          scheduleStatus: 'pending',
+          scheduleCutoffAt: { $gt: now }
+        }
+      ]
+    })
       .populate('passengerId', 'firstName lastName phone profilePhoto')
       .sort({ createdAt: -1 })
       .lean();
 
+    const safeRides = rides.map(ride => {
+      if (ride.bookingType !== 'scheduled') return ride;
+      const { passengerId, ...scheduleRide } = ride;
+      return scheduleRide;
+    });
+
     res.status(200).json({
       success: true,
-      rides
+      rides: safeRides
     });
   } catch (error) {
     res.status(500).json({
@@ -429,7 +467,7 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
     if (currentRide.bookingType === 'scheduled' && cutoffAt && new Date() >= cutoffAt) {
       return res.status(400).json({
         success: false,
-        message: 'আগাম রাইডের জন্য নতুন অফার গ্রহণ করা হয়েছে।'
+        message: 'Schedule booking offer time has expired.'
       });
     }
 
@@ -441,12 +479,24 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
     }
 
     if (currentRide.bookingType === 'scheduled') {
+      if (req.userType !== 'driver') {
+        return res.status(403).json({ success: false, message: 'Only drivers can submit schedule offers.' });
+      }
       const offeredFare = Number(fare ?? currentRide.fare ?? 0);
+      if (!Number.isFinite(offeredFare) || offeredFare < 100) {
+        return res.status(400).json({ success: false, message: 'ভাড়া ন্যূনতম ₹100 হতে হবে' });
+      }
       const isImmediateAccept = offeredFare <= Number(currentRide.fare || 0) + 1;
 
       if (isImmediateAccept) {
         const ride = await Ride.findOneAndUpdate(
-          { _id: req.params.rideId, bookingType: 'scheduled', rideStatus: { $in: ['pending', 'driver_offered'] }, driverId: null },
+          {
+            _id: req.params.rideId,
+            bookingType: 'scheduled',
+            rideStatus: { $in: ['pending', 'driver_offered'] },
+            driverId: null,
+            scheduleCutoffAt: { $gt: new Date() }
+          },
           {
             $set: {
               driverId: req.userId,
@@ -475,32 +525,58 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
       }
     }
 
-    let offers = currentRide.offers || [];
-    offers = offers.filter(o => {
-      const idStr = (o.driverId && o.driverId._id) ? o.driverId._id.toString() : (o.driverId ? o.driverId.toString() : '');
-      return idStr !== req.userId;
-    });
-
-    const offerDetails = { driverId: req.userId, fare: fare || currentRide.fare };
+    const offerDetails = { driverId: req.userId, fare: Number(fare || currentRide.fare) };
     if (driverLat != null && driverLng != null) {
       offerDetails.location = { lat: driverLat, lng: driverLng };
     }
 
-    offers.push(offerDetails);
-
-    const ride = await Ride.findOneAndUpdate(
-      { _id: req.params.rideId, rideStatus: { $in: ['pending', 'driver_offered'] } },
-      {
-        $set: {
-          rideStatus: 'driver_offered',
-          offers: offers,
-          scheduleStatus: currentRide.bookingType === 'scheduled' ? 'pending' : undefined
+    let rideQuery = { _id: req.params.rideId, rideStatus: { $in: ['pending', 'driver_offered'] } };
+    let rideUpdate;
+    if (currentRide.bookingType === 'scheduled') {
+      const driverObjectId = new mongoose.Types.ObjectId(req.userId);
+      rideQuery = {
+        ...rideQuery,
+        bookingType: 'scheduled',
+        driverId: null,
+        scheduleCutoffAt: { $gt: new Date() }
+      };
+      rideUpdate = [
+        {
+          $set: {
+            rideStatus: 'driver_offered',
+            scheduleStatus: 'pending',
+            offers: {
+              $concatArrays: [
+                { $filter: { input: { $ifNull: ['$offers', []] }, as: 'offer', cond: { $ne: ['$$offer.driverId', driverObjectId] } } },
+                [{ ...offerDetails, driverId: driverObjectId }]
+              ]
+            }
+          }
         }
-      },
-      { new: true }
-    )
+      ];
+    } else {
+      let offers = currentRide.offers || [];
+      offers = offers.filter(o => {
+        const idStr = (o.driverId && o.driverId._id) ? o.driverId._id.toString() : (o.driverId ? o.driverId.toString() : '');
+        return idStr !== req.userId;
+      });
+      offers.push(offerDetails);
+      rideUpdate = { $set: { rideStatus: 'driver_offered', offers } };
+    }
+
+    const ride = await Ride.findOneAndUpdate(rideQuery, rideUpdate, { new: true })
       .populate('passengerId', 'firstName lastName phone profilePhoto')
       .populate({ path: 'offers.driverId', model: 'User', select: 'firstName lastName phone profilePhoto vehicleNumber averageRating', strictPopulate: false });
+
+    if (currentRide.bookingType === 'scheduled' && ride) {
+      const safeRide = ride.toObject();
+      delete safeRide.passengerId;
+      return res.status(200).json({
+        success: true,
+        message: 'Offer sent successfully',
+        ride: safeRide
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -717,11 +793,7 @@ router.get('/:rideId', authMiddleware, async (req, res) => {
       return res.status(403).json({ success: false, message: 'ACCOUNT_BLOCKED' });
     }
 
-    const ride = await Ride.findById(req.params.rideId)
-      .populate('passengerId', 'firstName lastName phone profilePhoto')
-      .populate('driverId', 'firstName lastName phone profilePhoto vehicleNumber')
-      .populate({ path: 'offers.driverId', model: 'User', select: 'firstName lastName phone profilePhoto vehicleNumber averageRating', strictPopulate: false })
-      .lean();
+    const ride = await Ride.findById(req.params.rideId).lean();
 
     if (!ride) {
       return res.status(404).json({
@@ -730,9 +802,32 @@ router.get('/:rideId', authMiddleware, async (req, res) => {
       });
     }
 
+    const isPassenger = ride.passengerId && ride.passengerId.toString() === req.userId;
+    const isAssignedDriver = ride.driverId && ride.driverId.toString() === req.userId;
+    const isEligibleScheduleDriver = req.userType === 'driver'
+      && ride.bookingType === 'scheduled'
+      && ['pending', 'driver_offered'].includes(ride.rideStatus)
+      && !ride.driverId;
+    if (ride.bookingType === 'scheduled' && !isPassenger && !isAssignedDriver && !isEligibleScheduleDriver) {
+      return res.status(403).json({ success: false, message: 'You are not authorized to view this ride.' });
+    }
+
+    const offerSelect = ride.bookingType === 'scheduled'
+      ? 'firstName lastName vehicleNumber averageRating'
+      : 'firstName lastName phone profilePhoto vehicleNumber averageRating';
+    const populatedRide = await Ride.findById(req.params.rideId)
+      .populate('passengerId', 'firstName lastName phone profilePhoto')
+      .populate('driverId', 'firstName lastName phone profilePhoto vehicleNumber')
+      .populate({ path: 'offers.driverId', model: 'User', select: offerSelect, strictPopulate: false })
+      .lean();
+
+    if (ride.bookingType === 'scheduled' && !isPassenger && !isAssignedDriver) {
+      delete populatedRide.passengerId;
+    }
+
     res.status(200).json({
       success: true,
-      ride
+      ride: populatedRide
     });
   } catch (error) {
     res.status(500).json({
@@ -922,7 +1017,8 @@ setInterval(async () => {
 
     const scheduledRides = await Ride.find({
       bookingType: 'scheduled',
-      rideStatus: { $in: ['pending', 'driver_offered'] }
+      rideStatus: { $in: ['pending', 'driver_offered'] },
+      scheduleStatus: 'pending'
     }).lean();
 
     for (const ride of scheduledRides) {
@@ -931,13 +1027,13 @@ setInterval(async () => {
 
     // 1. Cancel rides that nobody accepted within 15 minutes
     await Ride.updateMany(
-      { rideStatus: { $in: ['pending', 'driver_offered'] }, createdAt: { $lt: fifteenMinsAgo } },
+      { bookingType: { $ne: 'scheduled' }, rideStatus: { $in: ['pending', 'driver_offered'] }, createdAt: { $lt: fifteenMinsAgo } },
       { $set: { rideStatus: 'cancelled' } }
     );
 
     // 2. Cancel accepted rides where the driver never arrived within 15 minutes
     await Ride.updateMany(
-      { rideStatus: 'accepted', startTime: { $lt: fifteenMinsAgo } },
+      { bookingType: { $ne: 'scheduled' }, rideStatus: 'accepted', startTime: { $lt: fifteenMinsAgo } },
       { $set: { rideStatus: 'cancelled' } }
     );
 

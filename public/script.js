@@ -796,6 +796,9 @@ const scheduledRideDateInput = document.getElementById('scheduledRideDate');
 const scheduledRideTimeInput = document.getElementById('scheduledRideTime');
 const scheduleBookingFields = document.getElementById('scheduleBookingFields');
 const bookingModeTabs = document.querySelectorAll('.booking-mode-tab');
+const driverBookingTabs = document.querySelectorAll('.driver-booking-tab');
+const normalRideRequestStream = document.getElementById('normalRideRequestStream');
+const scheduledRideRequestStream = document.getElementById('scheduledRideRequestStream');
 const scheduledRideRequestsContainer = document.getElementById('scheduledRideRequests');
 const scheduledRequestCountBadge = document.getElementById('scheduledRequestCountBadge');
 
@@ -1079,6 +1082,22 @@ function setBookingMode(mode) {
 
 bookingModeTabs.forEach(tab => {
   tab.addEventListener('click', () => setBookingMode(tab.dataset.mode));
+});
+
+function setDriverBookingMode(mode) {
+  driverBookingTabs.forEach(tab => {
+    const active = tab.dataset.mode === mode;
+    tab.classList.toggle('active', active);
+    tab.style.background = active ? '#0d6b46' : '#fff';
+    tab.style.color = active ? '#fff' : '#0f172a';
+    tab.style.borderColor = active ? '#0d6b46' : '#ddd';
+  });
+  normalRideRequestStream?.classList.toggle('hidden', mode !== 'normal');
+  scheduledRideRequestStream?.classList.toggle('hidden', mode !== 'schedule');
+}
+
+driverBookingTabs.forEach(tab => {
+  tab.addEventListener('click', () => setDriverBookingMode(tab.dataset.mode));
 });
 
 // --- Global Notification Alert ---
@@ -3567,11 +3586,10 @@ async function listenToPendingQueue() {
         const rideDate = ride.scheduledDateTime ? new Date(ride.scheduledDateTime) : new Date(ride.scheduledDate || Date.now());
         const rideDay = rideDate.toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric' });
         item.innerHTML = `
-          <p>👤 <strong>${ride.passengerId.firstName} ${ride.passengerId.lastName}</strong></p>
           <p>📅 ${rideDay}</p>
           <p>⏰ ${ride.scheduledTime || '—'}</p>
           <p>📍 ${t(ride.pickupLocation.villageName)} → ${t(ride.dropoffLocation.villageName)}</p>
-          <p>🛺 ${getRideTypeHtml(ride)}</p>
+          <p> ${getRideTypeHtml(ride)}</p>
           <p>💰 ${t('ভাড়া:')} <span class="text-green">₹${ride.fare}</span></p>
           <div class="request-actions" style="flex-wrap: wrap;">
             <button class="button primary accept-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('গ্রহণ করুন')}</button>
@@ -3690,7 +3708,10 @@ async function submitOffer(rideId, fare) {
     }
   } catch (error) {
     console.error("Offer error:", error);
-    showPopup('ত্রুটি', 'রাইডটি ইতিমধ্যে অন্য কেউ নিয়ে নিয়েছে অথবা বাতিল হয়েছে।', '⚠️');
+    const message = error?.data?.message === 'Schedule booking offer time has expired.'
+      ? 'Schedule booking offer time has expired.'
+      : 'রাইডটি ইতিমধ্যে অন্য কেউ নিয়ে নিয়েছে অথবা বাতিল হয়েছে।';
+    showPopup('ত্রুটি', message, '⚠️');
     listenToPendingQueue();
   }
 }

@@ -234,7 +234,7 @@
         <div class="card ride-booking-card">
           <div class="booking-mode-tabs" style="display:flex; gap:10px; margin-bottom:16px;">
             <button type="button" class="booking-mode-tab active" data-mode="normal" style="flex:1; border:1px solid #ddd; border-radius:999px; padding:10px 12px; background:#fff; font-weight:700; color:#0f172a;">🛺 এখনই বুক</button>
-            <button type="button" class="booking-mode-tab" data-mode="schedule" style="flex:1; border:1px solid #ddd; border-radius:999px; padding:10px 12px; background:#fff; font-weight:700; color:#0f172a;">📅 আগে থেকে বুক</button>
+            <button type="button" class="booking-mode-tab" data-mode="schedule" style="flex:1; border:1px solid #ddd; border-radius:999px; padding:10px 12px; background:#fff; font-weight:700; color:#0f172a;">📅 আগাম বুক</button>
           </div>
           <form id="rideRequestForm" class="booking-flow">
             <div id="scheduleBookingFields" class="hidden" style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
@@ -540,7 +540,12 @@
         <!-- Driver Notification Area -->
         <div id="driverPenaltyNotifications" class="hidden" style="margin-bottom: 20px;"></div>
 
-        <div class="request-stream-container">
+        <div class="booking-mode-tabs driver-booking-tabs" style="display:flex; gap:10px; margin:20px 0 16px;">
+          <button type="button" class="driver-booking-tab active" data-mode="normal" style="flex:1; border:1px solid #ddd; border-radius:999px; padding:10px 12px; background:#0d6b46; font-weight:700; color:#fff;">🛺 এখন বুক</button>
+          <button type="button" class="driver-booking-tab" data-mode="schedule" style="flex:1; border:1px solid #ddd; border-radius:999px; padding:10px 12px; background:#fff; font-weight:700; color:#0f172a;">📅 আগাম বুক</button>
+        </div>
+
+        <div id="normalRideRequestStream" class="request-stream-container">
           <div class="section-title-row">
             <h3>নতুন রাইড অনুরোধ</h3>
             <span class="badge" id="requestCountBadge">0</span>
@@ -551,7 +556,7 @@
           <!-- <img src="image/footer.png" alt="Footer Image" class="footer-image" /> -->
         </div>
 
-        <div class="request-stream-container" style="margin-top: 20px;">
+        <div id="scheduledRideRequestStream" class="request-stream-container hidden" style="margin-top: 20px;">
           <div class="section-title-row">
             <h3>📅 আগাম রাইড</h3>
             <span class="badge" id="scheduledRequestCountBadge">0</span>
