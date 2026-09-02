@@ -61,8 +61,7 @@ const rideSchema = new mongoose.Schema({
   },
   scheduleStatus: {
     type: String,
-    enum: ['pending', 'assigned', 'no_driver'],
-    default: null
+    enum: ['pending', 'assigned', 'no_driver']
   },
   // rideType stores the requested vehicle/ride type (e.g., mini, auto, etc.)
   rideType: {

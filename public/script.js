@@ -1096,6 +1096,10 @@ function setDriverBookingMode(mode) {
   scheduledRideRequestStream?.classList.toggle('hidden', mode !== 'schedule');
 }
 
+function hideScheduledRequestsAfterAction() {
+  scheduledRideRequestStream?.classList.add('hidden');
+}
+
 driverBookingTabs.forEach(tab => {
   tab.addEventListener('click', () => setDriverBookingMode(tab.dataset.mode));
 });
@@ -3589,7 +3593,7 @@ async function listenToPendingQueue() {
           <p>📅 ${rideDay}</p>
           <p>⏰ ${ride.scheduledTime || '—'}</p>
           <p>📍 ${t(ride.pickupLocation.villageName)} → ${t(ride.dropoffLocation.villageName)}</p>
-          <p> ${getRideTypeHtml(ride)}</p>
+          <p>🛺 ${getRideTypeHtml(ride)}</p>
           <p>💰 ${t('ভাড়া:')} <span class="text-green">₹${ride.fare}</span></p>
           <div class="request-actions" style="flex-wrap: wrap;">
             <button class="button primary accept-btn" data-id="${ride._id}" data-fare="${ride.fare}">${t('গ্রহণ করুন')}</button>
@@ -3601,11 +3605,21 @@ async function listenToPendingQueue() {
     }
 
     document.querySelectorAll('.accept-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => submitOffer(e.target.dataset.id, e.target.dataset.fare));
+      btn.addEventListener('click', (e) => {
+        if (e.target.closest('#scheduledRideRequests')) {
+          hideScheduledRequestsAfterAction();
+        }
+        submitOffer(e.target.dataset.id, e.target.dataset.fare);
+      });
     });
 
     document.querySelectorAll('.negotiate-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => showNegotiatePopup(e.target.dataset.id, e.target.dataset.fare));
+      btn.addEventListener('click', (e) => {
+        if (e.target.closest('#scheduledRideRequests')) {
+          hideScheduledRequestsAfterAction();
+        }
+        showNegotiatePopup(e.target.dataset.id, e.target.dataset.fare);
+      });
     });
 
     document.querySelectorAll('.reject-pending-btn').forEach(btn => {
