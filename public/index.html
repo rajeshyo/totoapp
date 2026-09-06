@@ -198,14 +198,18 @@
                 <span class="input-icon">🔒</span>
                 <input type="password" id="password" placeholder="নতুন পাসওয়ার্ড" required />
               </div>
-               <div class="input-wrapper hidden" id="rideTypeWrapper">
-                <!-- <span class="input-icon">🛺</span> -->
-                <select id="signupRideType">
-                  <option value="toto">🛺 টোটো</option>
-                  <option value="bike">🏍️ বাইক</option>
-                  <option value="maruti">🚗 মারুতি</option>
-                  <option value="motorvan">🚐 মটরভ্যান</option>
-                </select>
+              <div class="input-wrapper hidden" id="rideTypeWrapper">
+                <details class="service-picker" data-service-picker>
+                  <summary><span>কোন পরিষেবা দেবেন?</span><span class="service-picker-summary" data-service-picker-summary>নির্বাচন করুন</span></summary>
+                  <div id="signupServiceTypeContainer" class="service-picker-options">
+                    <label><input type="checkbox" name="signupServiceType" value="TOTO_PERSONAL"><span>🛺 টোটো পার্সোনাল — ১ 👤</span></label>
+                    <label><input type="checkbox" name="signupServiceType" value="TOTO_SHARING"><span>🛺 টোটো শেয়ারিং — ৫ 👤</span></label>
+                    <label><input type="checkbox" name="signupServiceType" value="TOTO_GOODS"><span>🛺 টোটো মালগাড়ি — ৩০ কেজি</span></label>
+                    <label><input type="checkbox" name="signupServiceType" value="BIKE"><span>🏍️ বাইক — ১ 👤</span></label>
+                    <label><input type="checkbox" name="signupServiceType" value="MARUTI_FULL"><span>🚗 মারুতি (ফুল) — ৭ 👤</span></label>
+                    <label><input type="checkbox" name="signupServiceType" value="MOTORVAN_FULL"><span>🚐 মটরভ্যান (ফুল) — ৭ 👤</span></label>
+                  </div>
+                </details>
               </div>
               <div class="input-wrapper hidden" id="vehicleNumberWrapper">
                 <span class="input-icon">🚗</span>
@@ -322,10 +326,12 @@
               <label class="field-label" for="rideTypeSelect">কিসে যাবেন</label>
               <select id="rideTypeSelect"
                 style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; font-size:1rem;">
-                <option value="toto">🛺 টোটো — ৫ 👤</option>
-                <option value="bike">🏍️ বাইক — ১ 👤</option>
-                <option value="maruti">🚗 মারুতি (ফুল) — ৭ 👤</option>
-                <option value="motorvan">🚐 মটরভ্যান (ফুল) — ৭ 👤</option>
+                <option value="TOTO_PERSONAL">🛺 টোটো পার্সোনাল — ১ 👤</option>
+                <option value="TOTO_SHARING">🛺 টোটো শেয়ারিং — ৫ 👤</option>
+                <option value="TOTO_GOODS">🛺 টোটো মালগাড়ি — ৩০ কেজি</option>
+                <option value="BIKE">🏍️ বাইক — ১ 👤</option>
+                <option value="MARUTI_FULL">🚗 মারুতি (ফুল) — ৭ 👤</option>
+                <option value="MOTORVAN_FULL">🚐 মটরভ্যান (ফুল) — ৭ 👤</option>
               </select>
             </div>
             <br>
@@ -636,8 +642,8 @@
               <span id="profilePageVehicle">-</span>
             </div>
             <div id="rideTypeDetail" class="detail-item hidden">
-              <span class="detail-label">🛺 গাড়ির প্রকার:</span>
-              <span id="profilePageRideType">-</span>
+              <span class="detail-label">🛺 কোন পরিষেবা দেবেন?:</span>
+              <span id="profilePageRideType" style="white-space: pre-line;">-</span>
             </div>
             <div class="detail-item">
               <span class="detail-label">📊 মোট রাইড:</span>

@@ -621,6 +621,79 @@ input:checked + .slider:before { transform: translateX(24px); }
   margin-bottom: 0;
 }
 
+/* Compact multi-service selector */
+.service-picker {
+  width: 100%;
+  position: relative;
+}
+
+.service-picker summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--surface-dim);
+  color: var(--text-main);
+  cursor: pointer;
+  box-sizing: border-box;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.service-picker summary::-webkit-details-marker { display: none; }
+.service-picker summary::after { content: '⌄'; color: var(--text-muted); font-size: 1.1rem; }
+.service-picker[open] summary { border-color: var(--primary-brand); border-radius: var(--radius-md) var(--radius-md) 0 0; background: #fff; }
+.service-picker[open] summary::after { content: '⌃'; }
+.service-picker-summary { color: var(--text-muted); font-size: 0.8rem; font-weight: 500; text-align: right; }
+
+.service-picker-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 230px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--primary-brand);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.service-picker-options label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.service-picker-options label:has(input:checked) { background: var(--accent-soft); color: var(--primary-brand); font-weight: 600; }
+.service-picker-options input { width: 18px; height: 18px; margin: 0; accent-color: var(--primary-brand); flex: 0 0 auto; }
+.edit-profile-modal { padding: 12px; overflow-y: auto; }
+.edit-profile-card { width: min(100%, 420px); max-height: calc(100dvh - 24px); overflow-y: auto; padding: 18px; box-sizing: border-box; }
+.edit-profile-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+.edit-profile-actions .button { min-width: 0; }
+
+@media (max-width: 520px) {
+  .profile-card { padding: 16px; }
+  .profile-card-header { gap: 12px; margin-bottom: 18px; padding-bottom: 18px; }
+  .profile-card-avatar { width: 68px; height: 68px; flex: 0 0 68px; }
+  .profile-basic-info h3 { font-size: 1.1rem; }
+  .detail-item { align-items: flex-start; gap: 12px; font-size: 0.88rem; }
+  .detail-item span:last-child { text-align: right; overflow-wrap: anywhere; }
+  .edit-profile-card { padding: 16px; }
+  .edit-profile-actions .button { padding: 11px 8px; font-size: 0.88rem; }
+}
+
 /* Ride History List */
 .ride-list {
   display: flex;

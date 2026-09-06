@@ -2,6 +2,44 @@
 // At the top of script.js
 import { apiCall } from './api.js'; // Assuming you create api.js
 
+const DRIVER_SERVICE_OPTIONS = [
+  { value: 'TOTO_PERSONAL', label: '🛺 টোটো পার্সোনাল — ১ 👤' },
+  { value: 'TOTO_SHARING', label: '🛺 টোটো শেয়ারিং — ৫ 👤' },
+  { value: 'TOTO_GOODS', label: '🛺 টোটো মালগাড়ি — ৩০ কেজি' },
+  { value: 'BIKE', label: '🏍️ বাইক — ১ 👤' },
+  { value: 'MARUTI_FULL', label: '🚗 মারুতি (ফুল) — ৭ 👤' },
+  { value: 'MOTORVAN_FULL', label: '🚐 মটরভ্যান (ফুল) — ৭ 👤' }
+];
+
+function getDriverServiceTypes(user) {
+  if (!user) return [];
+  if (Array.isArray(user.serviceTypes) && user.serviceTypes.length > 0) {
+    return user.serviceTypes;
+  }
+  const legacyMap = { toto: 'TOTO_PERSONAL', bike: 'BIKE', maruti: 'MARUTI_FULL', motorvan: 'MOTORVAN_FULL' };
+  return legacyMap[user.rideType] ? [legacyMap[user.rideType]] : [];
+}
+
+function getCheckedDriverServiceTypes() {
+  return [...document.querySelectorAll('input[name="signupServiceType"]:checked')].map(input => input.value);
+}
+
+function updateServicePickerSummary(picker) {
+  if (!picker) return;
+  const selected = picker.querySelectorAll('input[type="checkbox"]:checked').length;
+  const summary = picker.querySelector('[data-service-picker-summary]');
+  if (summary) {
+    summary.textContent = selected ? `${selected}টি নির্বাচন করা হয়েছে` : 'নির্বাচন করুন';
+  }
+}
+
+document.addEventListener('change', event => {
+  const picker = event.target.closest?.('[data-service-picker]');
+  if (picker && event.target.matches('input[type="checkbox"]')) {
+    updateServicePickerSummary(picker);
+  }
+});
+
 // ===== Notification Helpers =====
 // import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
 // import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging.js";
@@ -485,7 +523,7 @@ const uiTranslations = {
   'Installation Cancelled': 'Installation Cancelled',
   'You can install the app later from your browser menu.': 'You can install the app later from your browser menu.'
 };
-uiTranslations['গাড়ির প্রকার:'] = 'Vehicle Type:';
+uiTranslations['কোন পরিষেবা দেবেন?:'] = 'Vehicle Type:';
 uiTranslations['অ্যাপ'] = 'Download App';
 
 let currentLang = localStorage.getItem('toto_lang') || 'bn';
@@ -1264,6 +1302,19 @@ function showSection(section) {
   section.classList.remove('hidden');
 }
 
+function setProfileAvatar(element, user) {
+  if (!element) return;
+  const name = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'User';
+  const fallback = `data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160"><rect width="160" height="160" rx="80" fill="#e8f5ef"/><text x="80" y="105" text-anchor="middle" font-size="76">👤</text></svg>`
+  )}`;
+  element.onerror = () => {
+    element.onerror = null;
+    element.src = fallback;
+  };
+  element.src = user?.profilePhoto || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`;
+}
+
 // --- Main App Logic ---
 function renderApp() {
   if (!currentUser) {
@@ -1279,7 +1330,7 @@ function renderApp() {
   appBottomNav.classList.remove('hidden');
   profileNameEl.textContent = `${currentUser.firstName} ${currentUser.lastName}`;
   profileRoleEl.textContent = currentUser.userType === 'passenger' ? t('যাত্রী (Passenger)') : (currentUser.userType === 'admin' ? t('অ্যাডমিন (Admin)') : t('টোটো চালক (Driver)'));
-  profileAvatarEl.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.firstName}`;
+  setProfileAvatar(profileAvatarEl, currentUser);
 
   // Hide Favorites Menu for Drivers and Admins
   const navFavBtn = document.getElementById('navFavBtn');
@@ -1482,7 +1533,7 @@ function displayProfileInfo() {
   document.getElementById('profilePageEmail').textContent = currentUser.email || t('লেখা নেই');
   document.getElementById('profilePagePhoneFull').textContent = currentUser.phone;
   document.getElementById('profilePageUpi').textContent = currentUser.upiId || t('যোগ করা হয়নি');
-  document.getElementById('profilePageAvatar').src = `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.firstName}`;
+  setProfileAvatar(document.getElementById('profilePageAvatar'), currentUser);
  
   const vehicleDetail = document.getElementById('vehicleNumberDetail');
   const rideTypeDetail = document.getElementById('rideTypeDetail');
@@ -1494,13 +1545,11 @@ function displayProfileInfo() {
     if (ratingDetail) ratingDetail.classList.remove('hidden');
 
     document.getElementById('profilePageVehicle').textContent = currentUser.vehicleNumber || t('না আছে');
-    const rideTypeMap = {
-        'toto': '🛺 টোটো',
-        'bike': '🏍️ বাইক',
-        'maruti': '🚗 মারুতি',
-        'motorvan': '🚐 মটরভ্যান'
-    };
-    document.getElementById('profilePageRideType').textContent = rideTypeMap[currentUser.rideType] || currentUser.rideType;
+    const selectedTypes = getDriverServiceTypes(currentUser);
+    const labels = selectedTypes
+      .map(type => DRIVER_SERVICE_OPTIONS.find(option => option.value === type)?.label || type)
+      .filter(Boolean);
+    document.getElementById('profilePageRideType').textContent = labels.join('\n') || t('না আছে');
 
   } else {
     vehicleDetail.classList.add('hidden');
@@ -2240,9 +2289,10 @@ document.getElementById('editProfileBtn')?.addEventListener('click', () => {
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'editProfileModal';
-    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;justify-content:center;align-items:center;';
+    modal.className = 'edit-profile-modal';
+    modal.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;justify-content:center;align-items:center;';
     modal.innerHTML = `
-      <div class="card" style="width:90%;max-width:400px;background:var(--surface-color, #fff);padding:20px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+      <div class="card edit-profile-card">
         <h3 style="margin-top:0;margin-bottom:15px;text-align:center;">প্রোফাইল এডিট</h3>
         <form id="editProfileForm" style="display:flex;flex-direction:column;gap:15px;">
           <div>
@@ -2266,17 +2316,18 @@ document.getElementById('editProfileBtn')?.addEventListener('click', () => {
             <input type="text" id="editVehicle" readonly style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;background:#f5f5f5;color:#888;box-sizing:border-box;margin-top:5px;font-size:1rem;">
           </div>
           <div id="editRideTypeWrapper" style="display:none;">
-            <label style="font-size:0.9rem;color:var(--text-muted, #666);">গাড়ির প্রকার</label>
-            <select id="editRideType" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;margin-top:5px;font-size:1rem;">
-              <option value="toto">🛺 টোটো</option>
-              <option value="bike">🏍️ বাইক</option>
-              <option value="maruti">🚗 মারুতি</option>
-              <option value="motorvan">🚐 মটরভ্যান</option>
-            </select>
+            <details class="service-picker" id="editServiceTypes" data-service-picker>
+              <summary><span>কোন পরিষেবা দেবেন?</span><span class="service-picker-summary" data-service-picker-summary>নির্বাচন করুন</span></summary>
+              <div class="service-picker-options">
+                ${DRIVER_SERVICE_OPTIONS.map(option => `
+                  <label><input type="checkbox" name="serviceTypes" value="${option.value}"><span>${option.label}</span></label>
+                `).join('')}
+              </div>
+            </details>
           </div>
-          <div style="display:flex;gap:10px;margin-top:10px;">
-            <button type="submit" class="button primary" style="flex:1;">সেভ করুন</button>
-            <button type="button" id="closeEditProfileBtn" class="button secondary" style="flex:1;background:#e0e0e0;color:#333;">বাতিল</button>
+          <div class="edit-profile-actions">
+            <button type="submit" class="button primary">সেভ করুন</button>
+            <button type="button" id="closeEditProfileBtn" class="button secondary">বাতিল</button>
           </div>
         </form>
       </div>
@@ -2298,33 +2349,28 @@ document.getElementById('editProfileBtn')?.addEventListener('click', () => {
       };
 
       if (currentUser.userType === 'driver') {
-        payload.rideType = document.getElementById('editRideType').value;
+        payload.serviceTypes = [...document.querySelectorAll('#editServiceTypes input[name="serviceTypes"]:checked')]
+          .map(input => input.value);
+        if (payload.serviceTypes.length === 0) {
+          submitBtn.textContent = 'সেভ করুন';
+          submitBtn.disabled = false;
+          showPopup('ত্রুটি', 'কমপক্ষে একটি গাড়ি/পরিষেবা নির্বাচন করুন।', '❌');
+          return;
+        }
       }
 
       try {
         const response = await apiCall('/auth/profile', 'PUT', payload);
-        if (response.success && response.user) {
-          currentUser = response.user;
-          localStorage.setItem('toto_active_user', JSON.stringify(currentUser));
-        } else {
-          // Fallback to optimistic update if API fails but doesn't error
-          currentUser.firstName = payload.firstName;
-          currentUser.lastName = payload.lastName;
-          currentUser.upiId = payload.upiId;
-          if (payload.rideType) {
-            currentUser.rideType = payload.rideType;
-          }
-          localStorage.setItem('toto_active_user', JSON.stringify(currentUser));
+        if (!response.success || !response.user) {
+          throw new Error(response.message || 'Profile update failed');
         }
-      } catch (err) {
-        // Optimistic update on error
-        currentUser.firstName = payload.firstName;
-        currentUser.lastName = payload.lastName;
-        currentUser.upiId = payload.upiId;
-        if (payload.rideType) {
-          currentUser.rideType = payload.rideType;
-        }
+        currentUser = response.user;
         localStorage.setItem('toto_active_user', JSON.stringify(currentUser));
+      } catch (err) {
+        submitBtn.textContent = 'সেভ করুন';
+        submitBtn.disabled = false;
+        showPopup('ত্রুটি', err.message || 'প্রোফাইল আপডেট করা যায়নি।', '❌');
+        return;
       }
 
       displayProfileInfo();
@@ -2348,7 +2394,11 @@ document.getElementById('editProfileBtn')?.addEventListener('click', () => {
   document.getElementById('editRideTypeWrapper').style.display = isDriver ? 'block' : 'none';
   if (isDriver) {
     document.getElementById('editVehicle').value = currentUser.vehicleNumber || '';
-    document.getElementById('editRideType').value = currentUser.rideType || 'toto';
+    const selectedTypes = getDriverServiceTypes(currentUser);
+    document.querySelectorAll('#editServiceTypes input[name="serviceTypes"]').forEach(input => {
+      input.checked = selectedTypes.includes(input.value);
+    });
+    updateServicePickerSummary(document.getElementById('editServiceTypes'));
   }
 
   modal.style.display = 'flex';
@@ -2401,7 +2451,6 @@ signupForm.addEventListener('submit', async event => {
   const password = document.getElementById('password').value;
   const userType = document.getElementById('userType').value || 'passenger';
   const vehicleNumber = document.getElementById('vehicleNumber').value.trim();
-  const rideType = document.getElementById('signupRideType').value;
 
   // Validate phone number - must be 10 digits
   if (!/^\d{10}$/.test(phone)) {
@@ -2422,8 +2471,15 @@ signupForm.addEventListener('submit', async event => {
       userType
     };
     if (userType === 'driver') {
+      const serviceTypes = getCheckedDriverServiceTypes();
+      if (serviceTypes.length === 0) {
+        authMessage.style.color = 'var(--danger-color)';
+        authMessage.textContent = 'কমপক্ষে একটি গাড়ি/পরিষেবা নির্বাচন করুন।';
+        return;
+      }
       payload.vehicleNumber = vehicleNumber;
-      payload.rideType = rideType;
+      payload.serviceTypes = serviceTypes;
+      payload.rideType = serviceTypes[0];
     }
     const response = await apiCall('/auth/signup', 'POST', payload);
 
@@ -3494,20 +3550,26 @@ window.confirmPenaltyPayment = async function (passengerId) {
 
 function getRideTypeHtml(ride) {
   // Determine type from known fields and map to Bengali label + icon + capacity
-  const typeRaw = (ride.rideType || ride.vehicleType || ride.requestedVehicleType || ride.type || '').toString().toLowerCase();
+  const typeRaw = (ride.rideType || ride.vehicleType || ride.requestedVehicleType || ride.type || '').toString();
+  const normalized = typeRaw.toUpperCase();
   const map = {
-    'toto': { icon: '🛺', text: 'টোটো', cap: '৫' },
-    'bike': { icon: '🏍️', text: 'বাইক', cap: '১' },
-    'maruti': { icon: '🚗', text: 'মারুতি (ফুল)', cap: '৪' },
-    'motorvan': { icon: '🚐', text: 'মটরভ্যান (ফুল)', cap: '৮' }
+    'TOTO_PERSONAL': { icon: '🛺', text: 'টোটো পার্সোনাল', cap: '১' },
+    'TOTO_SHARING': { icon: '🛺', text: 'টোটো শেয়ারিং', cap: '৫' },
+    'TOTO_GOODS': { icon: '🛺', text: 'টোটো মালগাড়ি', cap: '৩০ কেজি' },
+    'BIKE': { icon: '🏍️', text: 'বাইক', cap: '১' },
+    'MARUTI_FULL': { icon: '🚗', text: 'মারুতি (ফুল)', cap: '৭' },
+    'MOTORVAN_FULL': { icon: '🚐', text: 'মটরভ্যান (ফুল)', cap: '৭' },
+    'TOTO': { icon: '🛺', text: 'টোটো পার্সোনাল', cap: '১' },
+    'BIKE': { icon: '🏍️', text: 'বাইক', cap: '১' },
+    'MARUTI': { icon: '🚗', text: 'মারুতি (ফুল)', cap: '৭' },
+    'MOTORVAN': { icon: '🚐', text: 'মটরভ্যান (ফুল)', cap: '৭' }
   };
-  const entry = map[typeRaw];
-  if (!entry) { 
+  const entry = map[normalized] || map[typeRaw.toLowerCase()];
+  if (!entry) {
     if (!typeRaw) return '';
-    // Fallback: show the raw type string (translated where possible)
     return `<p>🚘 ${t(typeRaw)}</p>`;
   }
-  return `<p>${entry.icon} ${entry.text} — ${entry.cap} 👤</p>`;
+  return `<p>${entry.icon} ${entry.text} — ${entry.cap} ${entry.cap === '৩০ কেজি' ? '' : '👤'}</p>`;
 }
 
 async function listenToPendingQueue() {

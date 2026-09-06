@@ -4,6 +4,7 @@ const Ride = require('../models/Ride');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
 const admin = require("firebase-admin");
+const { normalizeServiceTypes, rideTypeMatchesService } = require('../config/serviceTypes');
 
 const {
   findStoppage,
@@ -414,6 +415,9 @@ router.post('/request', authMiddleware, async (req, res) => {
 // GET PENDING RIDES (For Drivers)
 router.get('/pending', authMiddleware, async (req, res) => {
   try {
+    if (req.userType !== 'driver') {
+      return res.status(403).json({ success: false, message: 'Only drivers can view pending rides.' });
+    }
     const user = await User.findById(req.userId);
     if (user && user.isBlocked) {
       return res.status(403).json({ success: false, message: 'ACCOUNT_BLOCKED' });
@@ -435,7 +439,8 @@ router.get('/pending', authMiddleware, async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    const safeRides = rides.map(ride => {
+    const eligibleRides = rides.filter(ride => rideTypeMatchesService(ride.rideType, normalizeServiceTypes(user)));
+    const safeRides = eligibleRides.map(ride => {
       if (ride.bookingType !== 'scheduled') return ride;
       const { passengerId, ...scheduleRide } = ride;
       return scheduleRide;
@@ -456,6 +461,13 @@ router.get('/pending', authMiddleware, async (req, res) => {
 // ACCEPT RIDE (Driver)
 router.post('/accept/:rideId', authMiddleware, async (req, res) => {
   try {
+    if (req.userType !== 'driver') {
+      return res.status(403).json({ success: false, message: 'Only drivers can accept rides.' });
+    }
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Driver not found' });
+    }
     const { fare, driverLat, driverLng } = req.body;
     const currentRide = await Ride.findById(req.params.rideId).lean();
 
@@ -476,6 +488,9 @@ router.post('/accept/:rideId', authMiddleware, async (req, res) => {
         success: false,
         message: 'রাইডটি ইতিমধ্যে অন্য কেউ নিয়ে নিয়েছে অথবা বাতিল হয়েছে।'
       });
+    }
+    if (!rideTypeMatchesService(currentRide.rideType, normalizeServiceTypes(user))) {
+      return res.status(403).json({ success: false, message: 'এই গাড়ির প্রকারের রাইড আপনার প্রোফাইলে নির্বাচন করা নেই।' });
     }
 
     if (currentRide.bookingType === 'scheduled') {

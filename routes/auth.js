@@ -2,13 +2,18 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
+const {
+  SERVICE_TYPE_OPTIONS,
+  SERVICE_TYPE_TO_LEGACY_RIDE_TYPE,
+  normalizeServiceTypes
+} = require('../config/serviceTypes');
 
 const router = express.Router();
 
 // SIGNUP
 router.post('/signup', async (req, res) => {
   try {
-    const { phone, firstName, lastName, password, userType = 'passenger', vehicleNumber, rideType } = req.body;
+    const { phone, firstName, lastName, password, userType = 'passenger', vehicleNumber, rideType, serviceTypes } = req.body;
 
     // Validate input
     if (!phone || !firstName || !lastName || !password) {
@@ -45,8 +50,17 @@ router.post('/signup', async (req, res) => {
     };
 
     if (userType === 'driver') {
+      const selectedServiceTypes = Array.isArray(serviceTypes) ? serviceTypes : (rideType ? [rideType] : []);
+      if (!selectedServiceTypes.length) {
+        return res.status(400).json({ success: false, message: 'কমপক্ষে একটি গাড়ি/পরিষেবা নির্বাচন করুন।' });
+      }
+      const allowedTypes = new Set(SERVICE_TYPE_OPTIONS.map(option => option.value));
+      if (selectedServiceTypes.some(type => typeof type !== 'string' || !allowedTypes.has(type)) || new Set(selectedServiceTypes).size !== selectedServiceTypes.length) {
+        return res.status(400).json({ success: false, message: 'অবৈধ গাড়ি/পরিষেবা নির্বাচন করা হয়েছে।' });
+      }
       userPayload.vehicleNumber = vehicleNumber;
-      userPayload.rideType = rideType; // Save rideType for drivers
+      userPayload.serviceTypes = selectedServiceTypes;
+      userPayload.rideType = SERVICE_TYPE_TO_LEGACY_RIDE_TYPE[selectedServiceTypes[0]] || selectedServiceTypes[0];
     }
 
     const user = new User(userPayload);
@@ -63,7 +77,7 @@ router.post('/signup', async (req, res) => {
       success: true,
       message: 'Signup successful',
       token,
-      user: user.toJSON()
+      user: { ...user.toJSON(), serviceTypes: normalizeServiceTypes(user) }
     });
   } catch (error) {
     console.error('Signup error:', error);
@@ -169,7 +183,7 @@ router.get('/profile', authMiddleware, async (req, res) => {
 
     res.status(200).json({
       success: true,
-      user: user.toJSON()
+      user: { ...user.toJSON(), serviceTypes: normalizeServiceTypes(user) }
     });
   } catch (error) {
     res.status(500).json({
@@ -201,12 +215,25 @@ router.put('/online-status', authMiddleware, async (req, res) => {
 // UPDATE USER PROFILE
 router.put('/profile', authMiddleware, async (req, res) => {
   try {
-    const { firstName, lastName, email, profilePhoto, upiId, rideType } = req.body;
+    const { firstName, lastName, email, profilePhoto, upiId, rideType, serviceTypes } = req.body;
 
     const updateData = { firstName, lastName, email, profilePhoto, upiId };
 
-    // Only allow rideType update for drivers and if it's provided
-    if (req.userType === 'driver' && rideType) {
+    if (serviceTypes !== undefined) {
+      if (req.userType !== 'driver') {
+        return res.status(403).json({ success: false, message: 'Only drivers can update service types' });
+      }
+      if (!Array.isArray(serviceTypes) || serviceTypes.length === 0) {
+        return res.status(400).json({ success: false, message: 'কমপক্ষে একটি গাড়ি/পরিষেবা নির্বাচন করুন।' });
+      }
+      const allowedTypes = new Set(SERVICE_TYPE_OPTIONS.map(option => option.value));
+      if (serviceTypes.some(type => typeof type !== 'string' || !allowedTypes.has(type)) ||
+        new Set(serviceTypes).size !== serviceTypes.length) {
+        return res.status(400).json({ success: false, message: 'অবৈধ গাড়ি/পরিষেবা নির্বাচন করা হয়েছে।' });
+      }
+      updateData.serviceTypes = serviceTypes;
+      updateData.rideType = SERVICE_TYPE_TO_LEGACY_RIDE_TYPE[serviceTypes[0]];
+    } else if (req.userType === 'driver' && rideType) {
       updateData.rideType = rideType;
     }
 
@@ -226,7 +253,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
-      user: user.toJSON()
+      user: { ...user.toJSON(), serviceTypes: normalizeServiceTypes(user) }
     });
   } catch (error) {
     res.status(500).json({

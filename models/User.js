@@ -59,6 +59,13 @@ const userSchema = new mongoose.Schema({
     enum: ['toto', 'bike', 'maruti', 'motorvan'],
     default: 'toto' // Optional: set a default value
   },
+  serviceTypes: {
+    type: [{
+      type: String,
+      enum: ['TOTO_PERSONAL', 'TOTO_SHARING', 'TOTO_GOODS', 'BIKE', 'MARUTI_FULL', 'MOTORVAN_FULL']
+    }],
+    default: undefined
+  },
   activePenalty: {
     amount: { type: Number, default: 0 },
     driverId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
