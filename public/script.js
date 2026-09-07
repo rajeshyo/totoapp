@@ -884,6 +884,10 @@ const popupTitle = document.getElementById('popupTitle');
 const popupMessage = document.getElementById('popupMessage');
 const popupIcon = document.getElementById('popupIcon');
 const popupCloseBtn = document.getElementById('popupCloseBtn');
+const sharingConsentActions = document.getElementById('sharingConsentActions');
+const sharingConsentCancelBtn = document.getElementById('sharingConsentCancelBtn');
+const sharingConsentAcceptBtn = document.getElementById('sharingConsentAcceptBtn');
+const rideTypeSelect = document.getElementById('rideTypeSelect');
 const userTypeSelect = document.getElementById('userType');
 const vehicleNumberWrapper = document.getElementById('vehicleNumberWrapper');
 
@@ -910,6 +914,7 @@ let selectedDropoff = null; // { villageId, stoppageId, name }
 let pollInterval = null;
 let adminPollInterval = null;
 let popupCloseCallback = null;
+let sharingConsentAccepted = false;
 let rejectedRides = {}; // Track rejected rides with timestamp: { rideId: timestamp }
 let knownPendingRideIds = new Set(); // Tracks active requests to avoid repeating the sound
 let arrivalTimerInterval = null;
@@ -1148,9 +1153,23 @@ function showPopup(title, message, icon = '🔔', onClose = null) {
   popupTitle.textContent = t(title);
   popupMessage.textContent = t(message);
   popupIcon.textContent = icon;
+  popupCloseBtn?.classList.remove('hidden');
+  sharingConsentActions?.classList.add('hidden');
   popupOverlay.classList.remove('hidden');
   popupOverlay.setAttribute('aria-hidden', 'false');
   popupCloseCallback = onClose;
+}
+
+function showSharingConsentPopup() {
+  if (!popupOverlay) return;
+  popupTitle.textContent = '🛺 টোটো শেয়ারিং — ১ 👤';
+  popupMessage.textContent = 'এই রাইডটি শেয়ারিং রাইড। চালক আপনার যাত্রাপথে অন্য যাত্রী তুলতে পারেন। আপনার জন্য ১টি আসন বরাদ্দ থাকবে।\n\nআপনি কি এই নিয়মে সম্মত?';
+  popupIcon.textContent = '🛺';
+  popupCloseBtn?.classList.add('hidden');
+  sharingConsentActions?.classList.remove('hidden');
+  popupCloseCallback = null;
+  popupOverlay.classList.remove('hidden');
+  popupOverlay.setAttribute('aria-hidden', 'false');
 }
 
 function hidePopup() {
@@ -1163,6 +1182,23 @@ function hidePopup() {
   }
 }
 popupCloseBtn?.addEventListener('click', hidePopup);
+sharingConsentCancelBtn?.addEventListener('click', () => {
+  sharingConsentAccepted = false;
+  hidePopup();
+});
+sharingConsentAcceptBtn?.addEventListener('click', () => {
+  sharingConsentAccepted = true;
+  hidePopup();
+});
+
+rideTypeSelect?.addEventListener('change', () => {
+  const isSharing = rideTypeSelect.value === 'TOTO_SHARING';
+  if (!isSharing) {
+    sharingConsentAccepted = false;
+    return;
+  }
+  if (!sharingConsentAccepted) showSharingConsentPopup();
+});
 
 function showInstallPrompt() {
   const isInstalled = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
@@ -3044,11 +3080,17 @@ function resetCustomerUI() {
   pricePreviewCard.classList.add('hidden');
   if (customerFareInputContainer) customerFareInputContainer.classList.add('hidden');
   if (custNegFareInput) custNegFareInput.value = '';
+  sharingConsentAccepted = false;
 }
 
 rideRequestForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (activeRideId) return;
+
+  if (rideTypeSelect?.value === 'TOTO_SHARING' && !sharingConsentAccepted) {
+    showSharingConsentPopup();
+    return;
+  }
 
   const pickupVillageId = selectedPickup?.villageId;
   const dropoffVillageId = selectedDropoff?.villageId;
