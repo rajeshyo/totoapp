@@ -3,9 +3,9 @@
 import { apiCall } from './api.js'; // Assuming you create api.js
 
 const DRIVER_SERVICE_OPTIONS = [
-  { value: 'TOTO_PERSONAL', label: '🛺 টোটো পার্সোনাল — ১ 👤' },
-  { value: 'TOTO_SHARING', label: '🛺 টোটো শেয়ারিং — ৫ 👤' },
-  { value: 'TOTO_GOODS', label: '🛺 টোটো মালগাড়ি — ৩০ কেজি' },
+  { value: 'TOTO_SHARING', label: '🛺 টোটো শেয়ারিং — ১ 👤' },
+  { value: 'TOTO_PERSONAL', label: '🛺 টোটো পার্সোনাল — ৫ 👤' },
+  { value: 'TOTO_GOODS', label: '🛺 টোটো মালগাড়ি — ২ টন' },
   { value: 'BIKE', label: '🏍️ বাইক — ১ 👤' },
   { value: 'MARUTI_FULL', label: '🚗 মারুতি (ফুল) — ৭ 👤' },
   { value: 'MOTORVAN_FULL', label: '🚐 মটরভ্যান (ফুল) — ৭ 👤' }

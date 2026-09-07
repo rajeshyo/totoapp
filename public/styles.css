@@ -416,7 +416,7 @@ body {
 .banner-text p { margin: 0; font-size: 0.85rem; opacity: 0.9; }
 .banner-graphic { font-size: 3rem; opacity: 0.9; }
 .hero-banner-card { background: var(--primary-gradient1); border-radius: var(--radius-xl); padding: 16px 20px; color: #ffffff; display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; box-shadow: 0 12px 28px rgba(5, 73, 43, 0.15); }
-.banner-text h2 { font-size: 1.2rem; margin: 0 0 4px; font-weight: 700; }
+.banner-text h2 { font-size: 1.1rem; margin: 0 0 4px; font-weight: 700; }
 .banner-text p { margin: 0; font-size: 0.8rem; opacity: 0.9; }
 .banner-graphic { font-size: 2.5rem; opacity: 0.9; }
 .location-picker-group { position: relative; display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px; }
