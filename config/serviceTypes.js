@@ -10,7 +10,7 @@ const SERVICE_TYPES = Object.freeze({
 const SERVICE_TYPE_OPTIONS = Object.freeze([
   { value: SERVICE_TYPES.TOTO_PERSONAL, label: '🛺 টোটো পার্সোনাল — ১ 👤', capacity: 1 },
   { value: SERVICE_TYPES.TOTO_SHARING, label: '🛺 টোটো শেয়ারিং — ৫ 👤', capacity: 5 },
-  { value: SERVICE_TYPES.TOTO_GOODS, label: '🛺 টোটো মালগাড়ি — ৩০ কেজি', maxWeightKg: 30 },
+  { value: SERVICE_TYPES.TOTO_GOODS, label: '🛺 টোটো মালগাড়ি — ২ টন', maxWeightKg: 30 },
   { value: SERVICE_TYPES.BIKE, label: '🏍️ বাইক — ১ 👤', capacity: 1 },
   { value: SERVICE_TYPES.MARUTI_FULL, label: '🚗 মারুতি (ফুল) — ৭ 👤', capacity: 7 },
   { value: SERVICE_TYPES.MOTORVAN_FULL, label: '🚐 মটরভ্যান (ফুল) — ৭ 👤', capacity: 7 }

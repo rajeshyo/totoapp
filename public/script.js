@@ -3597,7 +3597,7 @@ function getRideTypeHtml(ride) {
   const map = {
     'TOTO_PERSONAL': { icon: '🛺', text: 'টোটো পার্সোনাল', cap: '১' },
     'TOTO_SHARING': { icon: '🛺', text: 'টোটো শেয়ারিং', cap: '৫' },
-    'TOTO_GOODS': { icon: '🛺', text: 'টোটো মালগাড়ি', cap: '৩০ কেজি' },
+    'TOTO_GOODS': { icon: '🛺', text: 'টোটো মালগাড়ি', cap: '২ টন' },
     'BIKE': { icon: '🏍️', text: 'বাইক', cap: '১' },
     'MARUTI_FULL': { icon: '🚗', text: 'মারুতি (ফুল)', cap: '৭' },
     'MOTORVAN_FULL': { icon: '🚐', text: 'মটরভ্যান (ফুল)', cap: '৭' },
