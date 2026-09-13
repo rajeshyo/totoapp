@@ -160,6 +160,7 @@
               </div>
               <button type="submit" class="button primary full-width btn-xl">লগইন করুন</button>
             </form>
+            <button type="button" id="forgotPasswordBtn" class="forgot-password-link">পাসওয়ার্ড ভুলে গেছেন?</button>
           </div>
 
           <div id="signupPanel" class="hidden">
@@ -817,6 +818,22 @@
           <button id="sharingConsentCancelBtn" type="button" class="button secondary">বাতিল</button>
           <button id="sharingConsentAcceptBtn" type="button" class="button primary">সম্মত ✓</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Forgot Password Modal: available only from the Login tab. -->
+    <div id="forgotPasswordModal" class="popup-overlay hidden" aria-hidden="true">
+      <div class="popup-card forgot-password-card" role="dialog" aria-modal="true" aria-labelledby="forgotPasswordTitle">
+        <button type="button" id="forgotPasswordCloseBtn" class="modal-close" aria-label="বন্ধ করুন">✕</button>
+        <h3 id="forgotPasswordTitle">🔐 পাসওয়ার্ড পরিবর্তন করুন</h3>
+        <form id="forgotPasswordForm" class="form-grid" novalidate>
+          <label class="forgot-password-label" for="forgotPasswordPhone">রেজিস্টার করা মোবাইল নম্বর</label>
+          <input type="tel" id="forgotPasswordPhone" placeholder="আপনার রেজিস্টার করা মোবাইল নম্বর লিখুন" inputmode="numeric" autocomplete="tel" />
+          <label class="forgot-password-label" for="forgotPasswordNewPassword">নতুন পাসওয়ার্ড</label>
+          <input type="password" id="forgotPasswordNewPassword" placeholder="নতুন পাসওয়ার্ড লিখুন" autocomplete="new-password" />
+          <p id="forgotPasswordMessage" class="forgot-password-message" aria-live="polite"></p>
+          <button type="submit" id="forgotPasswordSubmitBtn" class="button primary full-width">পাসওয়ার্ড আপডেট করুন</button>
+        </form>
       </div>
     </div>
 

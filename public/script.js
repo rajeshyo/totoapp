@@ -2568,6 +2568,73 @@ loginForm.addEventListener('submit', async event => {
   }
 });
 
+// --- Forgot Password ---
+const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+const forgotPasswordCloseBtn = document.getElementById('forgotPasswordCloseBtn');
+const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+const forgotPasswordPhone = document.getElementById('forgotPasswordPhone');
+const forgotPasswordNewPassword = document.getElementById('forgotPasswordNewPassword');
+const forgotPasswordMessage = document.getElementById('forgotPasswordMessage');
+const forgotPasswordSubmitBtn = document.getElementById('forgotPasswordSubmitBtn');
+
+function closeForgotPasswordModal() {
+  forgotPasswordModal?.classList.add('hidden');
+  forgotPasswordModal?.setAttribute('aria-hidden', 'true');
+}
+
+function showForgotPasswordMessage(message) {
+  if (forgotPasswordMessage) forgotPasswordMessage.textContent = message;
+}
+
+forgotPasswordBtn?.addEventListener('click', () => {
+  forgotPasswordForm?.reset();
+  showForgotPasswordMessage('');
+  forgotPasswordModal?.classList.remove('hidden');
+  forgotPasswordModal?.setAttribute('aria-hidden', 'false');
+  forgotPasswordPhone?.focus();
+});
+
+forgotPasswordCloseBtn?.addEventListener('click', closeForgotPasswordModal);
+forgotPasswordModal?.addEventListener('click', event => {
+  if (event.target === forgotPasswordModal) closeForgotPasswordModal();
+});
+
+forgotPasswordForm?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const phone = forgotPasswordPhone.value.trim();
+  const newPassword = forgotPasswordNewPassword.value;
+
+  if (!phone) return showForgotPasswordMessage('⚠️ মোবাইল নম্বর লিখুন।');
+  if (!/^\d{10}$/.test(phone)) return showForgotPasswordMessage('⚠️ মোবাইল নম্বর ১০ অঙ্কের হতে হবে।');
+  if (!newPassword) return showForgotPasswordMessage('⚠️ নতুন পাসওয়ার্ড লিখুন।');
+  if (newPassword.length < 6) return showForgotPasswordMessage('⚠️ নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।');
+
+  forgotPasswordSubmitBtn.disabled = true;
+  forgotPasswordSubmitBtn.textContent = 'আপডেট হচ্ছে...';
+  showForgotPasswordMessage('');
+
+  try {
+    await apiCall('/auth/forgot-password', 'POST', { phone, newPassword });
+    closeForgotPasswordModal();
+    showPopup('সফল হয়েছে', '✅ পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে। এখন নতুন পাসওয়ার্ড দিয়ে লগইন করুন।', '🎉');
+  } catch (error) {
+    const code = error.data?.code;
+    if (code === 'PHONE_NOT_FOUND') {
+      showForgotPasswordMessage('❌ এই মোবাইল নম্বরটি রেজিস্টার করা নেই।');
+    } else if (code === 'RATE_LIMITED') {
+      showForgotPasswordMessage('❌ অনেকবার চেষ্টা করা হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করুন।');
+    } else if (error instanceof TypeError) {
+      showForgotPasswordMessage('❌ ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।');
+    } else {
+      showForgotPasswordMessage('❌ পাসওয়ার্ড আপডেট করা যায়নি। কিছুক্ষণ পরে আবার চেষ্টা করুন।');
+    }
+  } finally {
+    forgotPasswordSubmitBtn.disabled = false;
+    forgotPasswordSubmitBtn.textContent = 'পাসওয়ার্ড আপডেট করুন';
+  }
+});
+
 // Toggle vehicle number field visibility based on user type
 userTypeSelect?.addEventListener('change', () => {
   if (userTypeSelect.value === 'driver') {

@@ -10,6 +10,26 @@ const {
 
 const router = express.Router();
 
+// A small in-memory safeguard for this deliberately OTP-free reset flow.
+// It limits attempts per client without storing any credentials or passwords.
+const passwordResetAttempts = new Map();
+const PASSWORD_RESET_WINDOW_MS = 15 * 60 * 1000;
+const PASSWORD_RESET_MAX_ATTEMPTS = 5;
+
+function isPasswordResetRateLimited(req) {
+  const key = req.ip || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const attempt = passwordResetAttempts.get(key);
+
+  if (!attempt || now - attempt.startedAt >= PASSWORD_RESET_WINDOW_MS) {
+    passwordResetAttempts.set(key, { startedAt: now, count: 1 });
+    return false;
+  }
+
+  attempt.count += 1;
+  return attempt.count > PASSWORD_RESET_MAX_ATTEMPTS;
+}
+
 // SIGNUP
 router.post('/signup', async (req, res) => {
   try {
@@ -158,6 +178,51 @@ router.post('/login', async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Login failed'
+    });
+  }
+});
+
+// FORGOT PASSWORD
+// Uses the same shared User collection, phone field, and pre-save bcrypt hook as login/signup.
+router.post('/forgot-password', async (req, res) => {
+  try {
+    if (isPasswordResetRateLimited(req)) {
+      return res.status(429).json({
+        success: false,
+        code: 'RATE_LIMITED',
+        message: 'অনেকবার চেষ্টা করা হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করুন।'
+      });
+    }
+
+    const { phone, newPassword } = req.body;
+    if (!phone || !newPassword || !/^\d{10}$/.test(phone) || newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        code: 'INVALID_REQUEST',
+        message: 'তথ্য সঠিক নয়।'
+      });
+    }
+
+    const user = await User.findOne({ phone });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        code: 'PHONE_NOT_FOUND',
+        message: 'এই মোবাইল নম্বরটি রেজিস্টার করা নেই।'
+      });
+    }
+
+    // Assigning then saving intentionally invokes User's existing bcryptjs pre-save hook.
+    user.password = newPassword;
+    await user.save();
+
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Forgot password error:', error.message);
+    return res.status(500).json({
+      success: false,
+      code: 'RESET_FAILED',
+      message: 'পাসওয়ার্ড আপডেট করা যায়নি। কিছুক্ষণ পরে আবার চেষ্টা করুন।'
     });
   }
 });
