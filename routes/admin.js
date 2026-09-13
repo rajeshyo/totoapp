@@ -107,10 +107,16 @@ router.get('/feedback', authMiddleware, async (req, res) => {
     if (!user || user.userType !== 'admin') {
       return res.status(403).json({ success: false, message: 'Unauthorized access' });
     }
-    const feedbacks = await Feedback.find()
-      .populate('userId', 'firstName lastName phone userType')
-      .sort({ createdAt: -1 });
-    res.status(200).json({ success: true, feedbacks });
+    const [feedbacks, rideFeedbacks] = await Promise.all([
+      Feedback.find()
+        .populate('userId', 'firstName lastName phone userType')
+        .sort({ createdAt: -1 }),
+      Ride.find({ rideStatus: 'completed', rating: { $gte: 1, $lte: 5 } })
+        .populate('passengerId', 'firstName lastName phone')
+        .populate('driverId', 'firstName lastName phone')
+        .sort({ updatedAt: -1 })
+    ]);
+    res.status(200).json({ success: true, feedbacks, rideFeedbacks });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message || 'Failed to fetch feedback' });
   }

@@ -982,42 +982,64 @@ router.post('/reject/:rideId', authMiddleware, async (req, res) => {
 router.post('/rate/:rideId', authMiddleware, async (req, res) => {
   try {
     const { rating, feedback } = req.body;
-
-    if (!rating) {
-      return res.status(400).json({ success: false, message: 'Rating is required' });
-    }
-
     const numericRating = Number(rating);
 
-    const ride = await Ride.findByIdAndUpdate(
-      req.params.rideId,
-      { rating: numericRating, feedback },
+    if (!mongoose.isValidObjectId(req.params.rideId)) {
+      return res.status(404).json({ success: false, code: 'RIDE_NOT_FOUND', message: 'রাইড পাওয়া যায়নি।' });
+    }
+
+    if (!Number.isInteger(numericRating) || numericRating < 1 || numericRating > 5) {
+      return res.status(400).json({ success: false, code: 'INVALID_RATING', message: '১ থেকে ৫-এর মধ্যে রেটিং দিন।' });
+    }
+
+    if (req.userType !== 'passenger') {
+      return res.status(403).json({ success: false, code: 'NOT_RIDE_PASSENGER', message: 'এই রাইডে রেটিং দেওয়ার অনুমতি আপনার নেই।' });
+    }
+
+    // Conditional update prevents a second concurrent submission from overwriting the first.
+    const ride = await Ride.findOneAndUpdate(
+      {
+        _id: req.params.rideId,
+        passengerId: req.userId,
+        rideStatus: 'completed',
+        rating: null
+      },
+      { $set: { rating: numericRating, feedback: typeof feedback === 'string' ? feedback.trim() : '' } },
       { new: true }
     );
 
     if (!ride) {
-      return res.status(404).json({ success: false, message: 'Ride not found' });
+      const existingRide = await Ride.findById(req.params.rideId).select('passengerId rideStatus rating').lean();
+      if (!existingRide) {
+        return res.status(404).json({ success: false, code: 'RIDE_NOT_FOUND', message: 'রাইড পাওয়া যায়নি।' });
+      }
+      if (existingRide.passengerId?.toString() !== req.userId) {
+        return res.status(403).json({ success: false, code: 'NOT_RIDE_PASSENGER', message: 'এই রাইডে রেটিং দেওয়ার অনুমতি আপনার নেই।' });
+      }
+      if (existingRide.rideStatus !== 'completed') {
+        return res.status(400).json({ success: false, code: 'RIDE_NOT_COMPLETED', message: 'রাইডটি এখনও সম্পূর্ণ হয়নি।' });
+      }
+      return res.status(409).json({ success: false, code: 'ALREADY_RATED', message: 'এই রাইডের জন্য ইতিমধ্যেই রেটিং দেওয়া হয়েছে।' });
     }
 
-    // Update driver's overall rating
-    if (ride.driverId) {
-      const allDriverRides = await Ride.find({ driverId: ride.driverId, rating: { $ne: null } });
+    // Recalculate exclusively from completed, valid ride ratings—the Ride document remains the source of truth.
+    const [summary] = await Ride.aggregate([
+      { $match: { driverId: ride.driverId, rideStatus: 'completed', rating: { $gte: 1, $lte: 5 } } },
+      { $group: { _id: null, totalReviews: { $sum: 1 }, averageRating: { $avg: '$rating' } } }
+    ]);
+    const totalReviews = summary?.totalReviews || 0;
+    const averageRating = totalReviews ? Number(summary.averageRating.toFixed(1)) : 0;
+    await User.findByIdAndUpdate(ride.driverId, { $set: { averageRating, totalReviews } });
 
-      // Filter out invalid ratings and ensure they are numbers to prevent NaN crash
-      const validRides = allDriverRides.filter(r => r.rating !== null && r.rating !== undefined && !isNaN(Number(r.rating)));
-      const totalReviews = validRides.length;
-      const sumRating = validRides.reduce((sum, r) => sum + Number(r.rating), 0);
-
-      // Convert .toFixed(1) result back to Number so Mongoose doesn't complain about strings
-      const averageRating = totalReviews > 0 ? Number((sumRating / totalReviews).toFixed(1)) : 0;
-
-      await User.findByIdAndUpdate(ride.driverId, { averageRating, totalReviews });
-    }
-
-    res.status(200).json({ success: true, message: 'Rating submitted successfully' });
+    res.status(200).json({
+      success: true,
+      message: 'আপনার রেটিং ও মতামত সফলভাবে জমা হয়েছে। ধন্যবাদ!',
+      ride,
+      driverRating: { averageRating, totalReviews }
+    });
   } catch (error) {
     console.error('Rating error:', error);
-    res.status(500).json({ success: false, message: error.message || 'Failed to submit rating' });
+    res.status(500).json({ success: false, code: 'RATING_FAILED', message: 'রেটিং জমা দেওয়া যায়নি। কিছুক্ষণ পরে আবার চেষ্টা করুন।' });
   }
 });
 

@@ -1664,10 +1664,24 @@ async function displayRideHistory(isPolling = false) {
             <div class="status-badge ${ride.rideStatus}" style="width: 100%; text-align: center; display: block; padding: 10px; background: var(--surface-dim); border-radius: 8px; font-weight: bold;">
               ${statusText}
             </div>
+            ${isPassenger && ride.rideStatus === 'completed' && ride.driverId
+              ? (ride.rating != null
+                ? `<p class="muted-text" style="margin: 10px 0 0; text-align: center;">⭐ ${ride.rating}/5 — মতামত দেওয়া হয়েছে</p>`
+                : `<button type="button" class="button secondary full-width" style="margin-top: 10px;" data-rate-ride-id="${ride._id}">⭐ রেটিং দিন</button>`)
+              : ''}
           </div>
         </div>
       `;
     }).join('');
+
+    historyList.querySelectorAll('[data-rate-ride-id]').forEach(button => {
+      button.addEventListener('click', () => {
+        const ride = response.rides.find(item => item._id === button.dataset.rateRideId);
+        if (!ride || ride.rideStatus !== 'completed' || ride.rating != null) return;
+        const driverName = ride.driverId ? `${ride.driverId.firstName} ${ride.driverId.lastName}` : 'চালক';
+        showRatingPopup(ride._id, driverName);
+      });
+    });
   } catch (error) {
     console.error("Error loading ride history:", error);
     historyList.innerHTML = `<p class="muted-text center-block">${t('হিস্টরি লোড করতে সমস্যা হয়েছে।')}</p>`;
@@ -1965,14 +1979,36 @@ async function loadAdminFeedback() {
   list.innerHTML = `<p class="muted-text center-block">${t('লোড হচ্ছে...')}</p>`;
   try {
     const res = await apiCall('/admin/feedback');
-    if (res.success && res.feedbacks.length > 0) {
-      list.innerHTML = res.feedbacks.map(f => `
+    const escapeHtml = value => String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+    const rideFeedbacks = res.rideFeedbacks || [];
+    const generalFeedbacks = res.feedbacks || [];
+    if (res.success && (rideFeedbacks.length > 0 || generalFeedbacks.length > 0)) {
+      const rideFeedbackMarkup = rideFeedbacks.length ? `
+        <h4 style="margin: 0 0 10px;">⭐ রাইড রেটিং ও মতামত</h4>
+        ${rideFeedbacks.map(ride => {
+          const passenger = ride.passengerId;
+          const driver = ride.driverId;
+          const date = new Date(ride.endTime || ride.updatedAt || ride.createdAt).toLocaleString(currentLang === 'en' ? 'en-US' : 'bn-BD');
+          return `
+            <div class="request-item" style="margin-bottom: 10px;">
+              <p>⭐ <strong>${ride.rating}/5</strong> <span class="badge" style="float:right;">${date}</span></p>
+              <p>👤 যাত্রী: ${escapeHtml(passenger ? `${passenger.firstName} ${passenger.lastName}` : 'অজানা')}${passenger?.phone ? ` — ${escapeHtml(passenger.phone)}` : ''}</p>
+              <p>🛺 চালক: ${escapeHtml(driver ? `${driver.firstName} ${driver.lastName}` : 'অজানা')}${driver?.phone ? ` — ${escapeHtml(driver.phone)}` : ''}</p>
+              <p>📍 ${escapeHtml(ride.pickupLocation?.address || '')} ➡️ ${escapeHtml(ride.dropoffLocation?.address || '')}</p>
+              <p>💰 ₹${escapeHtml(ride.fare)}</p>
+              <p style="white-space:pre-wrap; background: var(--surface-color); padding: 10px; border-radius: 8px; border: 1px solid var(--border-light);">📝 ${escapeHtml(ride.feedback || 'কোনো মতামত দেওয়া হয়নি।')}</p>
+            </div>`;
+        }).join('')}` : '';
+      const generalFeedbackMarkup = generalFeedbacks.length ? `
+        <h4 style="margin: ${rideFeedbacks.length ? '24px' : '0'} 0 10px;">সাধারণ মতামত</h4>
+        ${generalFeedbacks.map(f => `
         <div class="request-item" style="margin-bottom: 10px;">
-          <p>👤 <strong>${f.userId ? f.userId.firstName + ' ' + f.userId.lastName : t('অজানা')}</strong> <span class="badge" style="float:right;">${new Date(f.createdAt).toLocaleString(currentLang === 'en' ? 'en-US' : 'bn-BD', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span></p>
+          <p>👤 <strong>${escapeHtml(f.userId ? f.userId.firstName + ' ' + f.userId.lastName : t('অজানা'))}</strong> <span class="badge" style="float:right;">${new Date(f.createdAt).toLocaleString(currentLang === 'en' ? 'en-US' : 'bn-BD', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span></p>
           ${f.userId && f.userId.userType ? `<p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">(${t(f.userId.userType === 'driver' ? 'চালক' : f.userId.userType === 'passenger' ? 'যাত্রী' : 'অ্যাডমিন')})</p>` : ''}
-          <p style="white-space:pre-wrap; background: var(--surface-color); padding: 10px; border-radius: 8px; border: 1px solid var(--border-light);">💬 ${f.message}</p>
+          <p style="white-space:pre-wrap; background: var(--surface-color); padding: 10px; border-radius: 8px; border: 1px solid var(--border-light);">💬 ${escapeHtml(f.message)}</p>
         </div>
-      `).join('');
+      `).join('')}` : '';
+      list.innerHTML = rideFeedbackMarkup + generalFeedbackMarkup;
     } else {
       list.innerHTML = `<p class="muted-text center-block">${t('কোনো মতামত পাওয়া যায়নি')}</p>`;
     }
@@ -2821,7 +2857,11 @@ async function pollCustomerRide() {
       activeRideId = null;
       resetCustomerUI();
 
-      showRatingPopup(rideIdToRate, driverName);
+      if (ride.rating != null) {
+        showPopup('রেটিং', '✅ আপনি এই রাইডের জন্য ইতিমধ্যেই রেটিং দিয়েছেন।', '✅');
+      } else {
+        showRatingPopup(rideIdToRate, driverName);
+      }
       return;
     } else if (ride.rideStatus === 'cancelled') {
       const wasPenalized = ride.penaltyApplied;
@@ -3396,9 +3436,8 @@ endRideBtn?.addEventListener('click', async () => {
       activeRideId = null;
       resetCustomerUI();
 
-      showPopup('সফলতা', 'রাইড শেষ করা হয়েছে।', '✅', () => {
-        showRatingPopup(currentRideId, driverName);
-      });
+      // Open the rating form immediately; it must not depend on closing another popup first.
+      showRatingPopup(currentRideId, driverName);
     } catch (error) {
       showPopup('ত্রুটি', 'রাইড শেষ করতে সমস্যা হয়েছে।', '❌');
       endRideBtn.disabled = false;
@@ -4376,11 +4415,12 @@ function showRatingPopup(rideId, driverName) {
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'ratingModal';
-    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;justify-content:center;align-items:center;';
+    modal.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;padding:16px;box-sizing:border-box;background:rgba(0,0,0,0.6);z-index:10020;display:flex;justify-content:center;align-items:center;';
     modal.innerHTML = `
-      <div class="card" style="width:90%;max-width:400px;background:var(--surface-color, #fff);padding:20px;border-radius:12px;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+      <div class="card" style="width:90%;max-width:400px;max-height:calc(100dvh - 32px);overflow-y:auto;background:var(--surface-color, #fff);padding:20px;border-radius:12px;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.2);box-sizing:border-box;">
         <h3 style="margin-top:0;margin-bottom:10px;">ট্রিপ সম্পন্ন হয়েছে! 🎉</h3>
         <p style="color:var(--text-muted);margin-bottom:15px;">আপনার চালক <strong id="ratingDriverName" style="color:var(--text-color);"></strong> কে রেটিং দিন</p>
+        <p style="margin:0 0 8px;font-weight:700;">⭐ ড্রাইভার রেটিং</p>
         <div id="starContainer" style="font-size:2.5rem;margin:15px 0;cursor:pointer;display:flex;justify-content:center;gap:10px;">
           <span class="star" data-val="1">☆</span>
           <span class="star" data-val="2">☆</span>
@@ -4388,18 +4428,20 @@ function showRatingPopup(rideId, driverName) {
           <span class="star" data-val="4">☆</span>
           <span class="star" data-val="5">☆</span>
         </div>
-        <textarea id="ratingFeedback" placeholder="আপনার মতামত লিখুন (ঐচ্ছিক)" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:15px;font-size:1rem;resize:vertical;min-height:80px;"></textarea>
-        <button id="submitRatingBtn" class="button primary" style="width:100%;margin-bottom:10px;">সাবমিট</button>
+        <label for="ratingFeedback" style="display:block;text-align:left;font-weight:700;margin-bottom:6px;">📝 মতামত দিন</label>
+        <textarea id="ratingFeedback" placeholder="আপনার মতামত লিখুন" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;margin-bottom:8px;font-size:1rem;resize:vertical;min-height:80px;"></textarea>
+        <p id="ratingFormMessage" style="min-height:20px;margin:0 0 10px;color:var(--danger-color);font-size:0.9rem;"></p>
+        <button id="submitRatingBtn" class="button primary" style="width:100%;margin-bottom:10px;">রেটিং ও মতামত জমা দিন</button>
         <button id="skipRatingBtn" class="button secondary" style="width:100%;background:none;color:#888;border:none;">স্কিপ করুন</button>
       </div>
     `;
     document.body.appendChild(modal);
 
-    let selectedRating = 0;
     const stars = modal.querySelectorAll('.star');
     stars.forEach(star => {
       star.addEventListener('click', (e) => {
-        selectedRating = parseInt(e.target.dataset.val);
+        const selectedRating = parseInt(e.target.dataset.val, 10);
+        modal.dataset.selectedRating = selectedRating;
         stars.forEach(s => {
           if (parseInt(s.dataset.val) <= selectedRating) { s.textContent = '★'; s.style.color = '#f5b041'; }
           else { s.textContent = '☆'; s.style.color = '#ccc'; }
@@ -4408,15 +4450,42 @@ function showRatingPopup(rideId, driverName) {
     });
 
     document.getElementById('submitRatingBtn').addEventListener('click', async () => {
-      if (selectedRating > 0) {
-        const btn = document.getElementById('submitRatingBtn');
-        const feedback = document.getElementById('ratingFeedback').value.trim();
-        btn.textContent = 'অপেক্ষা করুন...';
-        try { await apiCall(`/rides/rate/${modal.dataset.rideId}`, 'POST', { rating: selectedRating, feedback }); } catch (e) { }
-        btn.textContent = 'সাবমিট';
+      const selectedRating = Number(modal.dataset.selectedRating || 0);
+      const messageEl = document.getElementById('ratingFormMessage');
+      if (!selectedRating) {
+        messageEl.textContent = '⚠️ রেটিং নির্বাচন করুন।';
+        return;
       }
-      modal.style.display = 'none';
-      showPopup('ধন্যবাদ', 'আপনার মতামতের জন্য ধন্যবাদ!', '🎉');
+      if (selectedRating < 1 || selectedRating > 5) {
+        messageEl.textContent = '⚠️ ১ থেকে ৫-এর মধ্যে রেটিং দিন।';
+        return;
+      }
+
+      const btn = document.getElementById('submitRatingBtn');
+      const feedback = document.getElementById('ratingFeedback').value.trim();
+      btn.disabled = true;
+      btn.textContent = 'জমা হচ্ছে...';
+      messageEl.textContent = '';
+      try {
+        await apiCall(`/rides/rate/${modal.dataset.rideId}`, 'POST', { rating: selectedRating, feedback });
+        modal.style.display = 'none';
+        showPopup('ধন্যবাদ', '✅ আপনার রেটিং ও মতামত সফলভাবে জমা হয়েছে। ধন্যবাদ!', '🎉');
+        if (!rideHistoryPage.classList.contains('hidden')) displayRideHistory();
+      } catch (error) {
+        const messages = {
+          INVALID_RATING: '⚠️ ১ থেকে ৫-এর মধ্যে রেটিং দিন।',
+          RIDE_NOT_FOUND: '❌ রাইড পাওয়া যায়নি।',
+          NOT_RIDE_PASSENGER: '❌ এই রাইডে রেটিং দেওয়ার অনুমতি আপনার নেই।',
+          RIDE_NOT_COMPLETED: '❌ রাইডটি এখনও সম্পূর্ণ হয়নি।',
+          ALREADY_RATED: '✅ এই রাইডের জন্য ইতিমধ্যেই রেটিং দেওয়া হয়েছে।'
+        };
+        messageEl.textContent = messages[error.data?.code] || (error instanceof TypeError
+          ? '❌ ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।'
+          : '❌ রেটিং জমা দেওয়া যায়নি। কিছুক্ষণ পরে আবার চেষ্টা করুন।');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'রেটিং ও মতামত জমা দিন';
+      }
     });
 
     document.getElementById('skipRatingBtn').addEventListener('click', () => {
@@ -4427,10 +4496,13 @@ function showRatingPopup(rideId, driverName) {
 
   document.getElementById('ratingDriverName').textContent = driverName;
   modal.dataset.rideId = rideId;
+  modal.dataset.selectedRating = '0';
 
   // Reset stars and feedback
   modal.querySelectorAll('.star').forEach(s => { s.textContent = '☆'; s.style.color = '#ccc'; });
   const feedbackInput = document.getElementById('ratingFeedback');
   if (feedbackInput) feedbackInput.value = '';
+  const messageEl = document.getElementById('ratingFormMessage');
+  if (messageEl) messageEl.textContent = '';
   modal.style.display = 'flex';
 }
