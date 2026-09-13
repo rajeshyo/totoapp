@@ -519,6 +519,13 @@ input:checked + .slider:before { transform: translateX(24px); }
 .nav-item .nav-icon { font-size: 1.25rem; }
 .nav-item .nav-label { font-size: 0.72rem; font-weight: 600; }
 .nav-item.active { color: var(--primary-brand); }
+.download-app-nav { position: relative; transform: translateY(-16px); color: var(--primary-brand); }
+.download-app-nav .nav-icon { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: var(--primary-gradient1); box-shadow: 0 8px 18px rgba(9, 102, 62, 0.32); font-size: 1.45rem; }
+.download-app-nav .nav-icon i { animation: downloadIconFloat 2.4s ease-in-out infinite; }
+.download-app-nav .nav-label { margin-top: 1px; color: inherit; }
+.download-app-nav:focus-visible { outline: 3px solid rgba(9, 102, 62, 0.28); border-radius: 50%; }
+.download-app-nav:active { transform: translateY(-13px) scale(0.96); }
+@keyframes downloadIconFloat { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(3px); } }
 
 /* Page Styles */
 .page-header {
@@ -807,6 +814,14 @@ input:checked + .slider:before { transform: translateX(24px); }
 .forgot-password-label { font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: -8px; }
 .forgot-password-message { min-height: 20px; margin: -4px 0 0 !important; color: var(--danger-color) !important; text-align: center; }
 .modal-close { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: var(--text-main); font-size: 1.25rem; cursor: pointer; }
+.apk-update-card { position: relative; width: min(100%, 390px); max-height: calc(100dvh - 32px); overflow-y: auto; box-sizing: border-box; }
+.apk-update-icon { width: 58px; height: 58px; display: grid; place-items: center; margin: 0 auto 12px; border-radius: 50%; background: var(--accent-soft); }
+.apk-update-card h3 { padding: 0 28px; }
+.apk-update-features { margin: 0 0 16px; padding-left: 22px; text-align: left; color: var(--text-main); }
+.apk-update-features li { margin: 7px 0; }
+.apk-update-release-date { margin-bottom: 16px !important; font-size: 0.82rem !important; }
+.apk-update-actions, .apk-install-confirmation { display: grid; gap: 10px; }
+.apk-download-symbol { display: inline-block; margin-right: 6px; animation: downloadIconFloat 2.4s ease-in-out infinite; }
 #popupMessage { white-space: pre-line; }
 .sharing-consent-actions { display: flex; gap: 10px; }
 .sharing-consent-actions .button { flex: 1; min-height: 46px; padding: 10px 12px; }

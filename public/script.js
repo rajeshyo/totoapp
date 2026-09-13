@@ -908,6 +908,20 @@ let searchableLocations = [];
 // --- Global State & Listeners ---
 let currentUser = JSON.parse(localStorage.getItem('toto_active_user')) || null;
 let activeRideId = localStorage.getItem('toto_active_ride_id') || null;
+
+// Change only this object when publishing the next Android APK. This local
+// configuration can later be supplied by an admin API without changing the UI.
+const latestApkUpdate = {
+  enabled: false,
+  version: '1.0.0',
+  title: 'নতুন আপডেট এসেছে 🎉',
+  message: 'TotoBondhu অ্যাপের নতুন সংস্করণ ডাউনলোড করুন।',
+  features: [],
+  apkDownloadUrl: '/Toto Bondhu.apk',
+  releaseDate: '',
+  icon: '📥'
+};
+const APK_UPDATE_STATE_KEY = 'totobondhu_apk_update_state';
 let selectedBookingMode = 'normal';
 let selectedPickup = null; // { villageId, stoppageId, name }
 let selectedDropoff = null; // { villageId, stoppageId, name }
@@ -1368,23 +1382,15 @@ function renderApp() {
   profileRoleEl.textContent = currentUser.userType === 'passenger' ? t('যাত্রী (Passenger)') : (currentUser.userType === 'admin' ? t('অ্যাডমিন (Admin)') : t('টোটো চালক (Driver)'));
   setProfileAvatar(profileAvatarEl, currentUser);
 
-  // Hide Favorites Menu for Drivers and Admins
+  // Favorites remains intentionally hidden from the bottom navigation.
   const navFavBtn = document.getElementById('navFavBtn');
-  if (currentUser.userType === 'driver' || currentUser.userType === 'admin') {
-    if (navFavBtn) navFavBtn.classList.add('hidden');
-    document.querySelectorAll('.menu-item').forEach(item => {
-      if (item.textContent.includes('প্রিয়') || item.textContent.includes('Favorite')) {
-        item.classList.add('hidden');
-      }
-    });
-  } else {
-    if (navFavBtn) navFavBtn.classList.remove('hidden');
-    document.querySelectorAll('.menu-item').forEach(item => {
-      if (item.textContent.includes('প্রিয়') || item.textContent.includes('Favorite')) {
-        item.classList.remove('hidden');
-      }
-    });
-  }
+  if (navFavBtn) navFavBtn.classList.add('hidden');
+  // Preserve the existing role-specific visibility of the separate sidebar item.
+  document.querySelectorAll('.menu-item').forEach(item => {
+    if (item.textContent.includes('প্রিয়') || item.textContent.includes('Favorite')) {
+      item.classList.toggle('hidden', currentUser.userType === 'driver' || currentUser.userType === 'admin');
+    }
+  });
 
   // Show home dashboard by default
   showHomePage();
@@ -2282,27 +2288,115 @@ document.getElementById('navFavBtn')?.addEventListener('click', showFavoritesPag
 function addDownloadAppButton() {
   if (!appBottomNav) return;
 
+  if (document.getElementById('navDownloadAppBtn')) return;
+
   const downloadButton = document.createElement('button'); // Changed to button
   downloadButton.id = 'navDownloadAppBtn';
-  downloadButton.classList.add('nav-item');
+  downloadButton.classList.add('nav-item', 'download-app-nav');
   downloadButton.style.textDecoration = 'none'; // Remove underline (though buttons don't have it by default, good for consistency)
 
   downloadButton.innerHTML = `
     <span class="nav-icon"><i class="fas fa-download"></i></span>
     <span class="nav-label">${t('অ্যাপ')}</span> <!-- Changed translation key -->
   `;
-  appBottomNav.appendChild(downloadButton);
+  // Insert before Profile: with hidden Favorites, this is the exact middle of five visible items.
+  appBottomNav.insertBefore(downloadButton, document.getElementById('navProfileBtn'));
 
   // Add event listener to trigger download when the button is clicked
   downloadButton.addEventListener('click', () => {
-    const link = document.createElement('a');
-    link.href = '/Toto Bondhu.apk'; // Path to your APK file
-    link.setAttribute('download', 'Toto Bondhu.apk'); // Suggests a filename for download
-    document.body.appendChild(link); // Temporarily add to DOM
-    link.click(); // Programmatically click the link
-    document.body.removeChild(link); // Remove the link
+    if (latestApkUpdate.enabled) saveApkUpdateState('DOWNLOAD_STARTED');
+    startApkDownload(latestApkUpdate.apkDownloadUrl);
   });
 }
+
+// Retains the existing temporary-anchor APK download mechanism in one place.
+function startApkDownload(apkDownloadUrl) {
+  const link = document.createElement('a');
+  link.href = apkDownloadUrl;
+  link.setAttribute('download', 'Toto Bondhu.apk');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function getApkUpdateState() {
+  try {
+    return JSON.parse(localStorage.getItem(APK_UPDATE_STATE_KEY)) || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function saveApkUpdateState(status) {
+  localStorage.setItem(APK_UPDATE_STATE_KEY, JSON.stringify({ version: latestApkUpdate.version, status }));
+}
+
+function closeApkUpdateModal() {
+  const modal = document.getElementById('apkUpdateModal');
+  modal?.classList.add('hidden');
+  modal?.setAttribute('aria-hidden', 'true');
+}
+
+function showApkUpdateModal() {
+  if (!latestApkUpdate.enabled) return;
+  const storedState = getApkUpdateState();
+  if (storedState?.version === latestApkUpdate.version) return;
+
+  const modal = document.getElementById('apkUpdateModal');
+  if (!modal) return;
+  document.getElementById('apkUpdateIcon').textContent = latestApkUpdate.icon || '📥';
+  document.getElementById('apkUpdateTitle').textContent = latestApkUpdate.title;
+  document.getElementById('apkUpdateMessage').textContent = latestApkUpdate.message;
+  const featureList = document.getElementById('apkUpdateFeatures');
+  featureList.replaceChildren(...(latestApkUpdate.features || []).map(feature => {
+    const item = document.createElement('li');
+    item.textContent = feature;
+    return item;
+  }));
+  featureList.classList.toggle('hidden', !latestApkUpdate.features?.length);
+  const releaseDate = document.getElementById('apkUpdateReleaseDate');
+  releaseDate.textContent = latestApkUpdate.releaseDate ? `প্রকাশের তারিখ: ${latestApkUpdate.releaseDate}` : '';
+  releaseDate.classList.toggle('hidden', !latestApkUpdate.releaseDate);
+  document.getElementById('apkUpdateActions').classList.remove('hidden');
+  document.getElementById('apkInstallConfirmation').classList.add('hidden');
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function showApkInstallConfirmation() {
+  document.getElementById('apkUpdateActions')?.classList.add('hidden');
+  document.getElementById('apkInstallConfirmation')?.classList.remove('hidden');
+}
+
+document.getElementById('apkUpdateCloseBtn')?.addEventListener('click', () => {
+  saveApkUpdateState('DISMISSED');
+  closeApkUpdateModal();
+});
+
+document.getElementById('apkUpdateSkipBtn')?.addEventListener('click', () => {
+  saveApkUpdateState('SKIPPED');
+  closeApkUpdateModal();
+});
+
+document.getElementById('apkUpdateDownloadBtn')?.addEventListener('click', () => {
+  saveApkUpdateState('DOWNLOAD_STARTED');
+  startApkDownload(latestApkUpdate.apkDownloadUrl);
+  showApkInstallConfirmation();
+});
+
+document.getElementById('apkInstallConfirmedBtn')?.addEventListener('click', () => {
+  // This is a user confirmation; browsers cannot verify an APK installation.
+  saveApkUpdateState('INSTALLED_CONFIRMED');
+  closeApkUpdateModal();
+});
+
+document.getElementById('apkInstallLaterBtn')?.addEventListener('click', () => {
+  saveApkUpdateState('DOWNLOAD_STARTED');
+  closeApkUpdateModal();
+});
+
+// Delay slightly so this announcement opens cleanly after the page has painted.
+window.addEventListener('load', () => setTimeout(showApkUpdateModal, 250), { once: true });
 
 // Logout button in profile page
 document.getElementById('logoutProfileBtn')?.addEventListener('click', () => {

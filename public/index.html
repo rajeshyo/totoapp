@@ -790,7 +790,7 @@
         <span class="nav-icon">🏠</span>
         <span class="nav-label">হোম</span>
       </button>
-      <button class="nav-item" id="navFavBtn">
+      <button class="nav-item hidden" id="navFavBtn" aria-hidden="true">
         <span class="nav-icon">❤️</span>
         <span class="nav-label">প্রিয়</span>
       </button>
@@ -868,6 +868,27 @@
         <p id="installAppMessage">Add TotoBondhu to your home screen for quick access!</p>
         <button id="installAppBtn" class="button primary full-width">Install</button>
         <button id="closeInstallAppBtn" class="button secondary full-width" style="margin-top: 10px;">No Thanks</button>
+      </div>
+    </div>
+
+    <!-- APK update announcement. Its content is populated from latestApkUpdate in script.js. -->
+    <div id="apkUpdateModal" class="popup-overlay hidden" aria-hidden="true" style="z-index: 10003;">
+      <div class="popup-card apk-update-card" role="dialog" aria-modal="true" aria-labelledby="apkUpdateTitle">
+        <button type="button" id="apkUpdateCloseBtn" class="modal-close" aria-label="বন্ধ করুন">✕</button>
+        <div id="apkUpdateIcon" class="popup-icon-decor apk-update-icon">📥</div>
+        <h3 id="apkUpdateTitle"></h3>
+        <p id="apkUpdateMessage"></p>
+        <ul id="apkUpdateFeatures" class="apk-update-features hidden"></ul>
+        <p id="apkUpdateReleaseDate" class="apk-update-release-date hidden"></p>
+        <div id="apkUpdateActions" class="apk-update-actions">
+          <button type="button" id="apkUpdateDownloadBtn" class="button primary full-width"><span class="apk-download-symbol">⬇️</span> অ্যাপ ডাউনলোড করুন</button>
+          <button type="button" id="apkUpdateSkipBtn" class="button secondary full-width">এখন নয়</button>
+        </div>
+        <div id="apkInstallConfirmation" class="apk-install-confirmation hidden">
+          <p>অ্যাপ ইনস্টল করেছেন?</p>
+          <button type="button" id="apkInstallConfirmedBtn" class="button primary full-width">হ্যাঁ, ইনস্টল করেছি ✓</button>
+          <button type="button" id="apkInstallLaterBtn" class="button secondary full-width">পরে করব</button>
+        </div>
       </div>
     </div>
   </div>
