@@ -3,7 +3,7 @@
 // automatically adapt to the backend it's served from (local or production).
 const API_BASE_URL = window.location.hostname === 'totoapp.onrender.com'
         ? '/api'
-        : 'https://totoapp.onrender.com/api';
+        : 'https://totoapp-jh69.onrender.com/api';
 // Helper function to make API calls with authorization
 export async function apiCall(endpoint, method = 'GET', body = null) {
   const token = localStorage.getItem('toto_token');

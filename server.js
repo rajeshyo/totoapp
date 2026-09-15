@@ -61,7 +61,7 @@ const allowedOrigins = [
   'http://localhost:3000',      // Local fallback
   'http://127.0.0.1:5000',      // Local IP
   'http://127.0.0.1:3000',      // Local IP fallback
-  'https://totoapp.onrender.com', // Production
+  'https://totoapp-jh69.onrender.com', // Production
 ];
 
 // CORS Configuration
