@@ -1,9 +1,9 @@
 // public/api.js
 // Use a relative URL for the API base. This makes the frontend
 // automatically adapt to the backend it's served from (local or production).
-const API_BASE_URL = window.location.hostname === 'totoapp-jh69.onrender.com'
+const API_BASE_URL = window.location.hostname === 'https://totobondhu.in'
         ? '/api'
-        : 'https://totoapp-jh69.onrender.com/api';
+        : 'https://totobondhu.in/api';
 // Helper function to make API calls with authorization
 export async function apiCall(endpoint, method = 'GET', body = null) {
   const token = localStorage.getItem('toto_token');

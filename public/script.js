@@ -221,7 +221,7 @@ async function registerFCMToken() {
 //       playNotificationSound();
 // });
 // ===== API Configuration =====
-const API_BASE_URL = 'https://totoapp-jh69.onrender.com/api';
+const API_BASE_URL = 'https://totobondhu.in/api';
 
 // ===== Localization =====
 const uiTranslations = {
